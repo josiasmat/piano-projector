@@ -45,7 +45,8 @@ const settings = {
             return ( this.sostenuto ) ? "both" : "sustain";
         else
             return ( this.sostenuto ) ? "sostenuto" : "none";
-    }
+    },
+    pedaldim: true
 }
 
 const drag_state = {
@@ -95,7 +96,6 @@ function createKeyboard(svg, first_key, last_key) {
     const white_keys_g = SvgTools.createGroup();
     const black_keys_g = SvgTools.createGroup();
 
-    // Draw white keys
     let offset = 0;
     for ( let key = first_key; key <= last_key; key++ ) {
         const note = key % 12;
@@ -108,34 +108,58 @@ function createKeyboard(svg, first_key, last_key) {
                     {x:offset+WHITE_KEY_ROUNDING, y:height},
                     {x:offset, y:height-WHITE_KEY_ROUNDING}
                 ], {
-                    id: `key${key}`, class: "white-key", value: key
+                    class: "white-key", fill: settings.color_white, value: key
                 }
             );
             white_keys_g.appendChild(white_key);
-            keys[key] = white_key;
+            const white_key_fill = SvgTools.makePolygon([
+                    {x:offset+2, y:2}, 
+                    {x:offset+2+WHITE_KEY_WIDTH, y:2},
+                    {x:offset+2+WHITE_KEY_WIDTH, y:height-2-WHITE_KEY_ROUNDING},
+                    {x:offset+2+WHITE_KEY_WIDTH-WHITE_KEY_ROUNDING, y:height-2},
+                    {x:offset+2+WHITE_KEY_ROUNDING, y:height-2},
+                    {x:offset+2, y:height-2-WHITE_KEY_ROUNDING}
+                ], {
+                    id: `key${key}`, class: "white-key-fill", value: key
+                }
+            );
+            white_keys_g.appendChild(white_key_fill);
+            keys[key] = white_key_fill;
             width += WHITE_KEY_WIDTH;
             offset += WHITE_KEY_WIDTH;
         } else {
             const l = offset - (BLACK_KEY_WIDTH/2) + (BK_OFFSETS[note]*BLACK_KEY_WIDTH);
             const r = offset + (BLACK_KEY_WIDTH/2) + (BK_OFFSETS[note]*BLACK_KEY_WIDTH);
             const black_key = SvgTools.makePolygon([
-                {x:l, y:0}, 
-                {x:r, y:0},
-                {x:r, y:BLACK_KEY_HEIGHT-BLACK_KEY_ROUNDING},
-                {x:r-BLACK_KEY_ROUNDING, y:BLACK_KEY_HEIGHT},
-                {x:l+BLACK_KEY_ROUNDING, y:BLACK_KEY_HEIGHT},
-                {x:l, y:BLACK_KEY_HEIGHT-BLACK_KEY_ROUNDING}
-            ], {
-                id: `key${key}`, class: "black-key", value: key
-            }
-        );
-        black_keys_g.appendChild(black_key);
-        keys[key] = black_key;
+                    {x:l, y:0}, 
+                    {x:r, y:0},
+                    {x:r, y:BLACK_KEY_HEIGHT-BLACK_KEY_ROUNDING},
+                    {x:r-BLACK_KEY_ROUNDING, y:BLACK_KEY_HEIGHT},
+                    {x:l+BLACK_KEY_ROUNDING, y:BLACK_KEY_HEIGHT},
+                    {x:l, y:BLACK_KEY_HEIGHT-BLACK_KEY_ROUNDING}
+                ], {
+                    class: "black-key", fill: settings.color_black, value: key
+                }
+            );
+            black_keys_g.appendChild(black_key);
+            const black_key_fill = SvgTools.makePolygon([
+                    {x:l+2, y:2}, 
+                    {x:r-2, y:2},
+                    {x:r-2, y:BLACK_KEY_HEIGHT-BLACK_KEY_ROUNDING-2},
+                    {x:r-2-BLACK_KEY_ROUNDING, y:BLACK_KEY_HEIGHT-2},
+                    {x:l+2+BLACK_KEY_ROUNDING, y:BLACK_KEY_HEIGHT-2},
+                    {x:l+2, y:BLACK_KEY_HEIGHT-BLACK_KEY_ROUNDING-2}
+                ], {
+                    id: `key${key}`, class: "black-key-fill", value: key
+                }
+            );
+            black_keys_g.appendChild(black_key_fill);
+            keys[key] = black_key_fill;
         }
     }
     svg.appendChild(white_keys_g);
     svg.appendChild(black_keys_g);
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.setAttribute("viewBox", `-1 -1 ${width+1} ${height+1}`);
 
     const svg_defs = SvgTools.createElement("defs");
     const svg_wgrad = SvgTools.createElement("linearGradient", {
@@ -147,12 +171,8 @@ function createKeyboard(svg, first_key, last_key) {
     const svg_wgrad2 = SvgTools.createElement("stop", {
         offset: "40%", "stop-color": settings.color_pressed
     });
-    const svg_wgrad3 = SvgTools.createElement("stop", {
-        offset: "100%", "stop-color": settings.color_pressed
-    });
     svg_wgrad.appendChild(svg_wgrad1);
     svg_wgrad.appendChild(svg_wgrad2);
-    svg_wgrad.appendChild(svg_wgrad3);
     svg_defs.appendChild(svg_wgrad);
     const svg_bgrad = SvgTools.createElement("linearGradient", {
         id: "pressed-black-key-gradient", gradientTransform: "rotate(90)"
@@ -163,12 +183,8 @@ function createKeyboard(svg, first_key, last_key) {
     const svg_bgrad2 = SvgTools.createElement("stop", {
         offset: "25%", "stop-color": settings.color_pressed
     });
-    const svg_bgrad3 = SvgTools.createElement("stop", {
-        offset: "100%", "stop-color": settings.color_pressed
-    });
     svg_bgrad.appendChild(svg_bgrad1);
     svg_bgrad.appendChild(svg_bgrad2);
-    svg_bgrad.appendChild(svg_bgrad3);
     svg_defs.appendChild(svg_bgrad);
     svg.appendChild(svg_defs);
 
@@ -268,13 +284,14 @@ function updateKeyboardKeys(first_key=0, last_key=127) {
         if ( key ) {
             const j = i-settings.transpose;
             if ( Midi.isNoteOn(j, settings.pedals) ) {
-                key.style.fill = isWhiteKey(i) 
-                    ? "url('#pressed-white-key-gradient')" 
-                    : "url('#pressed-black-key-gradient')";
+                key.classList.add(["active"]);
+                if ( !Midi.isKeyPressed(j) && settings.pedaldim )
+                    key.classList.add(["dim"]);
+                else
+                    key.classList.remove(["dim"]);
             } else {
-                key.style.fill = isWhiteKey(i)
-                    ? settings.color_white 
-                    : settings.color_black;
+                key.classList.remove(["active"]);
+                key.classList.remove(["dim"]);
             }
         }
     }
@@ -304,6 +321,7 @@ function writeSettings() {
     storage.writeNumber("octaves", settings.octaves);
     storage.writeBool("sustain", settings.sustain);
     storage.writeBool("sostenuto", settings.sostenuto);
+    storage.writeBool("pedal-dim", settings.pedaldim);
     storage.writeNumber("offset-x", settings.offset.x);
     storage.writeNumber("offset-y", settings.offset.y);
     // storage.writeNumber("zoom", settings.zoom);
@@ -558,6 +576,7 @@ settings.height_factor = storage.readNumber("height-factor", settings.height_fac
 settings.number_of_keys = storage.readNumber("number-of-keys", settings.number_of_keys);
 settings.sustain = storage.readBool("sustain", settings.sustain);
 settings.sostenuto = storage.readBool("sostenuto", settings.sostenuto);
+settings.pedaldim = storage.readBool("pedal-dim", settings.pedaldim);
 settings.semitones = storage.readNumber("semitones", settings.semitones);
 settings.octaves = storage.readNumber("octaves", settings.octaves);
 settings.device_name = storage.readString("device", null);

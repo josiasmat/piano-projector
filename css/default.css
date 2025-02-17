@@ -78,23 +78,57 @@ body {
 #kbd {
     min-width: 100%;
     max-height: 100%;
-    /* height: auto; */
     position: absolute;
     cursor: grab;
     transform-origin: top left;
     transition-duration: 0.1s;
 
     .white-key {
-        fill: white;
         stroke: gray;
         stroke-width: 2px;
     }
 
+    .white-key-fill {
+        visibility: hidden;
+        opacity: 0%;
+        fill: url('#pressed-white-key-gradient');
+        transition-property: visibility, opacity;
+        transition-duration: 0.05s;
+        &.active {
+            visibility: visible;
+            opacity: 100%;
+            transition: none;
+            &.dim {
+                opacity: 60%;
+                transition-property: opacity;
+                transition-duration: 0.05s;
+            }
+        }
+    }
+
     .black-key {
-        fill: black;
         stroke: gray;
         stroke-width: 2px;
     }
+
+    .black-key-fill {
+        visibility: hidden;
+        opacity: 0%;
+        fill: url('#pressed-black-key-gradient');
+        transition-property: visibility, opacity;
+        transition-duration: 0.05s;
+        &.active {
+            visibility: visible;
+            opacity: 100%;
+            transition: none;
+            &.dim {
+                opacity: 60%;
+                transition-property: opacity;
+                transition-duration: 0.05s;
+            }
+        }
+    }
+
 }
 
 sl-dialog {
