@@ -152,15 +152,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                                 </sl-button-group>
                             </sl-menu-item>
                             <sl-divider></sl-divider>
-                            <sl-menu-item id="reset-transpose">Reset transposition</sl-menu-item>
+                            <sl-menu-item id="reset-transpose">
+                                Reset transposition
+                            </sl-menu-item>
                         </sl-menu>
                     </sl-dropdown>
                 </sl-button-group>
             </div>
             <div id="top-toolbar-right">
-                <sl-button id="btn-panic">
-                    <sl-icon name="exclamation-diamond" label="Panic"></sl-icon>
-                </sl-button>
+                <sl-tooltip content="Panic!">
+                    <sl-button id="btn-panic">
+                        <sl-icon name="exclamation-diamond" label="Panic"></sl-icon>
+                    </sl-button>
+                </sl-tooltip>
             </div>
         </div>
         <div id="main-area">
