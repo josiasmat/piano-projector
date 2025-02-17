@@ -28,8 +28,8 @@ body {
 #top-toolbar {
     width: 100%;
     height: auto;
-    background-color: #333;
-    padding: 10px;
+    background-image: linear-gradient(to top, #333, #222);
+    padding: 6px 12px;
     display: flex;
     justify-content: space-between;
     user-select: none;
@@ -81,6 +81,7 @@ body {
     position: absolute;
     cursor: grab;
     transform-origin: top left;
+    transition-property: none;
     transition-duration: 0.1s;
 
     .white-key {
