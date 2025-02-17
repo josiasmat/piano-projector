@@ -87,8 +87,6 @@ body {
     position: absolute;
     cursor: grab;
     transform-origin: top left;
-    transition-property: none;
-    transition-duration: 0.1s;
 
     .white-key {
         stroke: gray;

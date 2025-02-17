@@ -270,8 +270,7 @@ function updateKeyboardPosition() {
 
     // compute vertical position
     const py = (cnt_rect.height - kbd_rect.height) * settings.offset.y;
-    const ry = (py / cnt_rect.height) * 100;
-    kbd.style.top = `${ry}%`;
+    kbd.style.top = `${py}px`;
 
     // compute horizontal position
     const px = (kbd_rect.width - cnt_rect.width) * settings.offset.x;
@@ -508,6 +507,10 @@ document.getElementById("toolbar-title").addEventListener("click", () => {
     document.getElementById("dialog-about").show();
 });
 
+window.addEventListener("resize", () => {
+    updateKeyboardPosition();
+});
+
 
 Midi.onKeyPress = (key) => { updateNote(key); };
 Midi.onKeyRelease = (key) => { updateNote(key); };
@@ -516,7 +519,7 @@ Midi.onSustainPedal = () => { updateKeyboardKeys(); };
 Midi.onSostenutoPedal = () => { updateKeyboardKeys(); };
 
 
-// Drag events
+// Mouse events
 
 kbd.addEventListener("pointerdown", (e) => {
     drag_state.dragging = true;
@@ -540,8 +543,6 @@ kbd.addEventListener("pointerup", (e) => {
 kbd.addEventListener("pointermove", (e) => {
     if ( drag_state.dragging ) {
 
-        kbd.style.transitionProperty = "none";
-
         const kbd_rect = kbd.getBoundingClientRect();
         const cnt_rect = kbd_container.getBoundingClientRect();
 
@@ -561,9 +562,16 @@ kbd.addEventListener("pointermove", (e) => {
 
 kbd.addEventListener("wheel", (e) => {
     if ( !drag_state.dragging && !e.ctrlKey ) {
-        settings.zoom = Math.max(1.0, settings.zoom + (e.wheelDeltaY/2000));
-        kbd.style.transitionProperty = "transform, left, top";
-        updateKeyboardPosition();
+        const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
+        const new_zoom = Math.max(1.0, settings.zoom + (e.wheelDeltaY/1000));
+        if ( new_zoom > max_zoom ) new_zoom = max_zoom;
+        if ( settings.zoom != new_zoom ) {
+            settings.zoom = new_zoom;
+            const rect = kbd.getBoundingClientRect();
+            const relative_x = e.clientX - rect.left
+            settings.offset.x = relative_x / rect.width;
+            updateKeyboardPosition();
+        }
     }
 }, { capture: true, passive: false });
 
@@ -606,6 +614,15 @@ function clamp(value, min, max) {
     return (value < min) ? min : ( (value > max) ? max : value );
 }
 
+await Promise.allSettled([
+    customElements.whenDefined('sl-dropdown'),
+    customElements.whenDefined('sl-button'),
+    customElements.whenDefined('sl-button-group'),
+    customElements.whenDefined('sl-menu'),
+    customElements.whenDefined('sl-menu-item'),
+    customElements.whenDefined('sl-icon')
+]);
+
 // Initialize
-recreateKeyboard();
 updateMenus();
+recreateKeyboard();
