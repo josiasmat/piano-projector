@@ -9,33 +9,32 @@
 body {
     background-color: black;
     overflow: hidden;
-    margin: 0;
     width: 100vw;
     height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
+.title-text {
+    color: #777;
+    font-family: "Orbitron", serif;
+    font-size: 140%;
+    font-weight: lighter;
+    vertical-align: middle;
+    margin-right: 10px;
+    user-select: none;
+}
+
 #top-toolbar {
     width: 100%;
     height: auto;
     background-color: #333;
-    margin-bottom: 5px;
     padding: 10px;
     display: flex;
     justify-content: space-between;
+    user-select: none;
     & :not(:defined) {
         visibility: hidden;
-    }
-
-    #title-text {
-        color: #777;
-        font-family: "Orbitron", serif;
-        font-size: 140%;
-        font-weight: lighter;
-        vertical-align: middle;
-        margin-right: 10px;
-        user-select: none;
     }
 
     .strong-menu-label::part(base) {
@@ -48,6 +47,24 @@ body {
     sl-color-picker {
         margin: 20px 30px;
     }
+
+    #transpose-controls {
+        display: flex;
+        align-items: center;
+        height: auto;
+        margin: 12px;
+        > div {
+            text-align: center;
+        }
+        div:first-child {
+            margin-right: 10px;
+        }
+        span {
+            color: var(--sl-color-neutral-700);
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+    }
 }
 
 #main-area {
@@ -55,6 +72,7 @@ body {
     flex-grow: 1;
     position: relative;
     overflow: hidden;
+    margin: 5px;
 }
 
 #kbd {
@@ -77,4 +95,10 @@ body {
         stroke: gray;
         stroke-width: 2px;
     }
+}
+
+sl-dialog {
+    font-family: var(--sl-font-sans);
+    color: var(--sl-color-neutral-700);
+    --width: 45ch;
 }
