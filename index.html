@@ -1,0 +1,170 @@
+<!--
+Pitch-class set visualizer
+Copyright (C) 2024 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html>
+<html class="sl-theme-dark">
+    <head>
+        <title i18n="main-title">Piano Projector</title>
+        <link rel="stylesheet" href="css/default.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/dark.css" />
+        <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace-autoloader.js"></script>
+        <script type="module" src="js/main.js" defer></script>
+        <script type="module" src="js/svgtools.js" defer></script>
+        <script type="module" src="js/midi.js" async></script>
+        <script type="module" src="js/storage-handler.js" async></script>
+        <link rel="icon" type="image/png" href="favicon.png">
+    </head>
+    <body>
+        <div id="top-toolbar">
+            <div id="top-toolbar-left">
+                <span id="title-text">Piano Projector</span>
+                <sl-dropdown>
+                    <sl-button id="midi-connect-button" slot="trigger" caret>
+                        Connection
+                        <sl-icon id="connection-power-icon" slot="prefix" name="power"></sl-icon>
+                    </sl-button>
+                    <sl-menu id="midi-connection-menu">
+                        <sl-menu-item disabled>No MIDI input devices available</sl-menu-item>
+                    </sl-menu>
+                </sl-dropdown>
+                <sl-dropdown stay-open-on-select>
+                    <sl-button id="btn-size" slot="trigger" caret>Size</sl-button>
+                    <sl-menu>
+                        <sl-menu-label>Number of keys:</sl-menu-label>
+                        <sl-menu-item class="menu-number-of-keys" value="88" type="checkbox" checked>88 keys</sl-menu-item>
+                        <sl-menu-item class="menu-number-of-keys" value="61" type="checkbox">61 keys</sl-menu-item>
+                        <sl-menu-item class="menu-number-of-keys" value="49" type="checkbox">49 keys</sl-menu-item>
+                        <sl-menu-item class="menu-number-of-keys" value="37" type="checkbox">37 keys</sl-menu-item>
+                        <sl-menu-item class="menu-number-of-keys" value="25" type="checkbox">25 keys</sl-menu-item>
+                        <sl-divider></sl-divider>
+                        <sl-menu-label>Key height:</sl-menu-label>
+                        <sl-menu-item class="menu-key-height" value="1.0"  type="checkbox" checked>Full</sl-menu-item>
+                        <sl-menu-item class="menu-key-height" value="0.75" type="checkbox">3/4</sl-menu-item>
+                        <sl-menu-item class="menu-key-height" value="0.5"  type="checkbox">1/2</sl-menu-item>
+                    </sl-menu>
+                </sl-dropdown>
+                <sl-dropdown id="btn-colors" stay-open-on-select>
+                    <sl-button slot="trigger" caret>Colors</sl-button>
+                    <sl-menu>
+                        <sl-menu-item>
+                            White keys
+                            <sl-menu slot="submenu">
+                                <sl-color-picker id="color-white" inline value="#fff" 
+                                    swatches="#fff; #ccc; #333; #000;"
+                                    label="Unpressed white key color">
+                                </sl-color-picker>
+                            </sl-menu>
+                        </sl-menu-item>
+                        <sl-menu-item>
+                            Black keys
+                            <sl-menu slot="submenu">
+                                <sl-color-picker id="color-black" inline value="#000" 
+                                    swatches="#fff; #ccc; #333; #000;"
+                                    label="Unpressed black key color">
+                                </sl-color-picker>
+                            </sl-menu>
+                        </sl-menu-item>
+                        <sl-menu-item>
+                            Pressed keys
+                            <sl-menu slot="submenu">
+                                <sl-color-picker id="color-pressed" inline value="#f00" 
+                                    swatches="#f00; #f70; #ff0; #0f0; #0ff; #00f; #70f; #f0f;
+                                              #a00; #a50; #aa0; #0a0; #0aa; #00a; #50a; #a0a;"
+                                    label="Pressed key color">
+                                </sl-color-picker>
+                            </sl-menu>
+                        </sl-menu-item>
+                    </sl-menu>
+                </sl-dropdown>
+                <!-- <sl-dropdown stay-open-on-select>
+                    <sl-button id="btn-labels" slot="trigger" caret>Labels</sl-button>
+                    <sl-menu>
+                        <sl-menu-label>Type:</sl-menu-label>
+                        <sl-menu-item type="checkbox" checked>English (C1 C2 … C4 C5)</sl-menu-item>
+                        <sl-menu-item type="checkbox">German (C,, C, … c' c'')</sl-menu-item>
+                        <sl-menu-item type="checkbox">Italian (Do-1 Do1 … Do3 Do4)</sl-menu-item>
+                        <sl-menu-item type="checkbox">French (Ut-1 Ut1 … Ut3 Ut4)</sl-menu-item>
+                        <sl-menu-item type="checkbox">Pitch class</sl-menu-item>
+                        <sl-menu-item type="checkbox">MIDI value</sl-menu-item>
+                        <sl-divider></sl-divider>
+                        <sl-menu-label>Which keys:</sl-menu-label>
+                        <sl-menu-item type="checkbox" checked>All keys</sl-menu-item>
+                        <sl-menu-item type="checkbox">White keys</sl-menu-item>
+                        <sl-menu-item type="checkbox">C-keys</sl-menu-item>
+                        <sl-menu-item type="checkbox">Played keys</sl-menu-item>
+                    </sl-menu>
+                </sl-dropdown> -->
+                <sl-dropdown stay-open-on-select>
+                    <sl-button id="btn-pedals" slot="trigger" caret>Pedals</sl-button>
+                    <sl-menu id="pedal-menu">
+                        <sl-menu-item id="menu-pedal-sustain" value="sustain" type="checkbox" checked>Follow sustain pedal</sl-menu-item>
+                        <sl-menu-item id="menu-pedal-sostenuto" value="sostenuto" type="checkbox" checked>Follow sostenuto pedal</sl-menu-item>
+                    </sl-menu>
+                </sl-dropdown>
+                <sl-button-group label="Transpose">
+                    <!-- <sl-button>
+                        Transpose
+                        <sl-icon name="power" slot="suffix" label="Enable transpose"></sl-icon>
+                    </sl-button> -->
+                    <sl-dropdown placement="bottom-end" stay-open-on-select>
+                        <sl-button slot="trigger" caret>
+                            Transpose
+                            <sl-icon id="transpose-power-icon" name="power" slot="prefix" label="Enable transpose"></sl-icon>
+                        </sl-button>
+                        <sl-menu>
+                            <sl-menu-label class="strong-menu-label">Semitones:</sl-menu-label>
+                            <sl-menu-item>
+                                <sl-button-group label="Transpose semitones">
+                                    <sl-button id="btn-semitone-minus">
+                                        <sl-icon name="dash" label="Settings"></sl-icon>
+                                    </sl-button>
+                                    <sl-input id="input-semitones" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
+                                    <sl-button id="btn-semitone-plus">
+                                        <sl-icon name="plus" label="Settings"></sl-icon>
+                                    </sl-button>
+                                </sl-button-group>
+                            </sl-menu-item>
+                            <sl-divider></sl-divider>
+                            <sl-menu-label class="strong-menu-label">Octaves:</sl-menu-label>
+                            <sl-menu-item>
+                                <sl-button-group label="Transpose octaves">
+                                    <sl-button id="btn-octave-minus">
+                                        <sl-icon name="dash" label="Settings"></sl-icon>
+                                    </sl-button>
+                                    <sl-input id="input-octaves" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
+                                    <sl-button id="btn-octave-plus">
+                                        <sl-icon name="plus" label="Settings"></sl-icon>
+                                    </sl-button>
+                                </sl-button-group>
+                            </sl-menu-item>
+                            <sl-divider></sl-divider>
+                            <sl-menu-item id="reset-transpose">Reset transposition</sl-menu-item>
+                        </sl-menu>
+                    </sl-dropdown>
+                </sl-button-group>
+            </div>
+            <div id="top-toolbar-right">
+                <sl-button id="btn-panic">
+                    <sl-icon name="exclamation-diamond" label="Panic"></sl-icon>
+                </sl-button>
+            </div>
+        </div>
+        <div id="main-area">
+            <svg id="kbd"></svg>
+        </div>
+    </body>
+</html>

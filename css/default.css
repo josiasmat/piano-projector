@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+
+body {
+    background-color: black;
+    overflow: hidden;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+#top-toolbar {
+    width: 100%;
+    height: auto;
+    box-sizing: border-box;
+    background-color: #333;
+    margin-bottom: 5px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    & :not(:defined) {
+        visibility: hidden;
+    }
+
+    #title-text {
+        color: #777;
+        font-family: "Orbitron", serif;
+        font-size: 140%;
+        font-weight: lighter;
+        vertical-align: middle;
+        margin-right: 10px;
+        user-select: none;
+    }
+
+    .strong-menu-label::part(base) {
+        color: var(--sl-color-neutral-700);
+    }
+    ::part(input) {
+        text-align: center; 
+    }
+
+    sl-color-picker {
+        margin: 20px 30px;
+    }
+}
+
+#main-area {
+    width: 100%;
+    height: 100%;
+    vertical-align: middle;
+}
+
+#kbd {
+    min-width: 100%;
+    max-height: 100%;
+    height: auto;
+    position: relative;
+    cursor: grab;
+
+    .white-key {
+        fill: white;
+        stroke: gray;
+        stroke-width: 2px;
+    }
+
+    .black-key {
+        fill: black;
+        stroke: gray;
+        stroke-width: 2px;
+    }
+}
