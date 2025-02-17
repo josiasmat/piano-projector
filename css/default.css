@@ -93,13 +93,13 @@ body {
         opacity: 0%;
         fill: url('#pressed-white-key-gradient');
         transition-property: visibility, opacity;
-        transition-duration: 0.05s;
+        transition-duration: 0.1s;
         &.active {
             visibility: visible;
             opacity: 100%;
             transition: none;
             &.dim {
-                opacity: 60%;
+                opacity: 70%;
                 transition-property: opacity;
                 transition-duration: 0.05s;
             }
@@ -116,13 +116,13 @@ body {
         opacity: 0%;
         fill: url('#pressed-black-key-gradient');
         transition-property: visibility, opacity;
-        transition-duration: 0.05s;
+        transition-duration: 0.1s;
         &.active {
             visibility: visible;
             opacity: 100%;
             transition: none;
             &.dim {
-                opacity: 60%;
+                opacity: 70%;
                 transition-property: opacity;
                 transition-duration: 0.05s;
             }
