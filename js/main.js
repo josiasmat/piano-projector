@@ -1,5 +1,5 @@
 /*
-MKP - Midi Keyboard Projector
+Piano Projector
 Copyright (C) 2024 Josias Matschulat
 
 This program is free software: you can redistribute it and/or modify
@@ -22,6 +22,11 @@ import { LocalStorageHandler } from "./storage-handler.js";
 
 const settings = {
     device_name: null,
+    offset: {
+        x: 0.5,
+        y: 0.5,
+    },
+    zoom: 1.0,
     number_of_keys: 88,
     height: 500,
     height_factor: 1,
@@ -43,7 +48,20 @@ const settings = {
     }
 }
 
+const drag_state = {
+    dragging: false,
+    origin: {
+        x: 0, y: 0
+    },
+    original: {
+        x: 0, y: 0
+    }
+}
+
 const keys = Array(128).fill(null);
+
+const kbd_container = document.getElementById("main-area");
+const kbd = document.getElementById("kbd");
 
 
 function isWhiteKey(key) {
@@ -174,27 +192,26 @@ function noteToMidi(note_str) {
 
 
 function recreateKeyboard() {
-    const svg = document.getElementById("kbd");
     switch ( settings.number_of_keys ) {
         case 88:
-            createKeyboard(svg, noteToMidi("a0"), noteToMidi("c8"));
+            createKeyboard(kbd, noteToMidi("a0"), noteToMidi("c8"));
             break;
         case 61:
-            createKeyboard(svg, noteToMidi("c2"), noteToMidi("c7"));
+            createKeyboard(kbd, noteToMidi("c2"), noteToMidi("c7"));
             break;
         case 49:
-            createKeyboard(svg, noteToMidi("c2"), noteToMidi("c6"));
+            createKeyboard(kbd, noteToMidi("c2"), noteToMidi("c6"));
             break;
         case 37:
-            createKeyboard(svg, noteToMidi("c3"), noteToMidi("c6"));
+            createKeyboard(kbd, noteToMidi("c3"), noteToMidi("c6"));
             break;
         case 25:
-            createKeyboard(svg, noteToMidi("c3"), noteToMidi("c5"));
+            createKeyboard(kbd, noteToMidi("c3"), noteToMidi("c5"));
             break;
         default:
             const ln = noteToMidi("e4") - Math.trunc(settings.number_of_keys / 2);
             const hn = noteToMidi("e4") + Math.ceil(settings.number_of_keys / 2) - 1;
-            createKeyboard(svg, ln, hn, height);
+            createKeyboard(kbd, ln, hn, height);
     }
     updateKeyboard();
 }
@@ -213,13 +230,35 @@ function updateMenus(excluded_elm = null) {
         ( Midi.getConnectedPort() ) ? "#7f7" : null
     );
     changePowerIcon("transpose-power-icon",
-        ( settings.transpose != 0 ) ? "yellow" : null
+        ( settings.transpose != 0 ) ? "#ff4" : null
     );
     writeSettings();
 }
 
 
-function updateKeyboard(first_key=0, last_key=127) {
+function updateKeyboardPosition() {
+    const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
+    if ( settings.zoom > 1 ) {
+        if ( settings.zoom > max_zoom ) settings.zoom = max_zoom;
+        kbd.style.transform = `scale(${settings.zoom}, ${settings.zoom})`;
+    } else
+        kbd.style.removeProperty("transform");
+
+    const kbd_rect = kbd.getBoundingClientRect();
+    const cnt_rect = kbd_container.getBoundingClientRect();
+
+    // compute vertical position
+    const py = (cnt_rect.height - kbd_rect.height) * settings.offset.y;
+    const ry = (py / cnt_rect.height) * 100;
+    kbd.style.top = `${ry}%`;
+
+    // compute horizontal position
+    const px = (kbd_rect.width - cnt_rect.width) * settings.offset.x;
+    kbd_container.scroll(px, 0);
+}
+
+
+function updateKeyboardKeys(first_key=0, last_key=127) {
     for ( let i = first_key; i <= last_key; i++ ) {
         const key = keys[i];
         if ( key ) {
@@ -237,10 +276,16 @@ function updateKeyboard(first_key=0, last_key=127) {
 }
 
 
+function updateKeyboard() {
+    updateKeyboardPosition();
+    updateKeyboardKeys();
+}
+
+
 function updateNote(note) {
     const key = note+settings.transpose;
     if ( key >= 0 && key < 128 )
-        updateKeyboard(key, key);
+        updateKeyboardKeys(key, key);
 }
 
 
@@ -254,6 +299,9 @@ function writeSettings() {
     storage.writeNumber("octaves", settings.octaves);
     storage.writeBool("sustain", settings.sustain);
     storage.writeBool("sostenuto", settings.sostenuto);
+    storage.writeNumber("offset-x", settings.offset.x);
+    storage.writeNumber("offset-y", settings.offset.y);
+    // storage.writeNumber("zoom", settings.zoom);
     if ( settings.device_name )
         storage.writeString("device", settings.device_name);
     else
@@ -265,9 +313,9 @@ function changePowerIcon(id, color) {
     const elm = document.getElementById(id);
     if ( color ) {
         elm.style.color = color;
-        elm.style.filter = `drop-shadow(0px 0px 2px ${color}`;
+        elm.style.filter = `drop-shadow(0px 0px 3px) drop-shadow(0px 0px 1px)`;
     } else {
-        elm.style.removeProperty("color");
+        elm.style.color = "#555";
         elm.style.removeProperty("filter");
     }
 }
@@ -391,53 +439,105 @@ document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
 document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
     const item = e.detail.item;
     settings[item.value] = item.checked;
-    updateKeyboard();
+    updateKeyboardKeys();
     writeSettings();
 });
 
 document.getElementById("btn-semitone-plus").addEventListener("click", (e) => {
     settings.semitones += 1;
     updateMenus();
-    updateKeyboard();
+    updateKeyboardKeys();
 });
 
 document.getElementById("btn-semitone-minus").addEventListener("click", (e) => {
     settings.semitones -= 1;
     updateMenus();
-    updateKeyboard();
+    updateKeyboardKeys();
 });
 
 document.getElementById("btn-octave-plus").addEventListener("click", (e) => {
     settings.octaves += 1;
     updateMenus();
-    updateKeyboard();
+    updateKeyboardKeys();
 });
 
 document.getElementById("btn-octave-minus").addEventListener("click", (e) => {
     settings.octaves -= 1;
     updateMenus();
-    updateKeyboard();
+    updateKeyboardKeys();
 });
 
 document.getElementById("reset-transpose").addEventListener("click", (e) => {
     settings.semitones = 0;
     settings.octaves = 0;
     updateMenus();
-    updateKeyboard();
+    updateKeyboardKeys();
 });
 
 document.getElementById("btn-panic").addEventListener("click", (e) => {
     Midi.reset();
     updateMenus();
-    updateKeyboard();
+    updateKeyboardKeys();
 });
 
 
 Midi.onKeyPress = (key) => { updateNote(key); };
 Midi.onKeyRelease = (key) => { updateNote(key); };
 
-Midi.onSustainPedal = () => { updateKeyboard(); };
-Midi.onSostenutoPedal = () => { updateKeyboard(); };
+Midi.onSustainPedal = () => { updateKeyboardKeys(); };
+Midi.onSostenutoPedal = () => { updateKeyboardKeys(); };
+
+
+// Drag events
+
+kbd.addEventListener("pointerdown", (e) => {
+    drag_state.dragging = true;
+    drag_state.origin.x = e.screenX;
+    drag_state.origin.y = e.screenY;
+    drag_state.original.x = settings.offset.x;
+    drag_state.original.y = settings.offset.y;
+    kbd.style.cursor = "grabbing";
+    kbd.setPointerCapture(e.pointerId);
+}, { capture: true, passive: false });
+
+kbd.addEventListener("pointerup", (e) => {
+    if ( drag_state.dragging ) {
+        drag_state.dragging = false;
+        kbd.style.removeProperty("cursor");
+        kbd.releasePointerCapture(e.pointerId);
+        writeSettings();
+    }
+}, { capture: true, passive: false });
+
+kbd.addEventListener("pointermove", (e) => {
+    if ( drag_state.dragging ) {
+
+        kbd.style.transitionProperty = "none";
+
+        const kbd_rect = kbd.getBoundingClientRect();
+        const cnt_rect = kbd_container.getBoundingClientRect();
+
+        // X-axis - move container perspective
+        const offset_x = e.screenX - drag_state.origin.x;
+        const ratio_x = offset_x / (kbd_rect.width - cnt_rect.width);
+        settings.offset.x = clamp(drag_state.original.x - ratio_x, 0.0, 1.0);
+
+        // Y-axis - move keyboard
+        const offset_y = e.screenY - drag_state.origin.y;
+        const ratio_y = offset_y / (cnt_rect.height - kbd_rect.height);
+        settings.offset.y = clamp(drag_state.original.y + ratio_y, 0.0, 1.0);
+
+        updateKeyboardPosition();
+    }
+}, { capture: true, passive: true });
+
+kbd.addEventListener("wheel", (e) => {
+    if ( !drag_state.dragging && !e.ctrlKey ) {
+        settings.zoom = Math.max(1.0, settings.zoom + (e.wheelDeltaY/2000));
+        kbd.style.transitionProperty = "transform, left, top";
+        updateKeyboardPosition();
+    }
+}, { capture: true, passive: false });
 
 
 // Read storage
@@ -452,6 +552,9 @@ settings.sostenuto = storage.readBool("sostenuto", settings.sostenuto);
 settings.semitones = storage.readNumber("semitones", settings.semitones);
 settings.octaves = storage.readNumber("octaves", settings.octaves);
 settings.device_name = storage.readString("device", null);
+settings.offset.x = storage.readNumber("offset-x", settings.offset.x);
+settings.offset.y = storage.readNumber("offset-y", settings.offset.y);
+// settings.zoom = storage.readNumber("zoom", settings.zoom);
 
 // Connect to stored device name
 if ( settings.device_name ) {
@@ -468,6 +571,10 @@ if ( settings.device_name ) {
             changePowerIcon("connection-power-icon", "#7f7");
         }
     );
+}
+
+function clamp(value, min, max) {
+    return (value < min) ? min : ( (value > max) ? max : value );
 }
 
 // Initialize
