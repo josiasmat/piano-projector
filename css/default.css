@@ -65,6 +65,15 @@ body {
             display: inline-block;
         }
     }
+
+    sl-color-picker {
+        &::part(input) {
+            display: none;
+        }
+        &::part(grid) {
+            height: 150px;
+        }
+    }
 }
 
 #outer-main-area {
