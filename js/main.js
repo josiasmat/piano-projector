@@ -247,12 +247,11 @@ function updateMenus(excluded_elm = null) {
         document.getElementById("reset-transpose").removeAttribute("disabled");
     else
         document.getElementById("reset-transpose").setAttribute("disabled", "");
-    changePowerIcon("connection-power-icon",
-        ( Midi.getConnectedPort() ) ? "#7f7" : null
-    );
-    changePowerIcon("transpose-power-icon",
-        ( settings.transpose != 0 ) ? "#ff4" : null
-    );
+    changeElmLight("connection-power-icon", ( Midi.getConnectedPort() ) ? "#7f7" : null, true);
+    changeElmLight("transpose-power-icon", ( settings.transpose != 0 ) ? "#ff4" : null, true);
+    changeElmLight("pedr", ( Midi.getLastControlValue(64) > 63 ) ? "#fa7" : null);
+    changeElmLight("pedm", ( Midi.getLastControlValue(66) > 63 ) ? "#47f" : null);
+    changeElmLight("pedl", ( Midi.getLastControlValue(67) > 63 ) ? "#7d0" : null);
     writeSettings();
 }
 
@@ -332,11 +331,14 @@ function writeSettings() {
 }
 
 
-function changePowerIcon(id, color) {
+function changeElmLight(id, color, strong=false) {
     const elm = document.getElementById(id);
     if ( color ) {
         elm.style.color = color;
-        elm.style.filter = `drop-shadow(0px 0px 3px) drop-shadow(0px 0px 1px)`;
+        if ( strong )
+            elm.style.filter = `drop-shadow(0px 0px 3px) drop-shadow(0px 0px 1px)`;
+        else
+            elm.style.filter = `drop-shadow(0px 0px 1.5px)`;
     } else {
         elm.style.color = "#555";
         elm.style.removeProperty("filter");
@@ -348,7 +350,7 @@ function changePowerIcon(id, color) {
 
 document.getElementById("midi-connect-button").addEventListener("click", (e) => {
     const menu = document.getElementById("midi-connection-menu");
-    changePowerIcon("connection-power-icon", "lightred");
+    changeElmLight("connection-power-icon", "lightred");
     menu.innerHTML = "";
     const temp_menu_item = document.createElement("sl-menu-item");
     temp_menu_item.innerText = "Requesting MIDI device list...";
@@ -365,17 +367,17 @@ document.getElementById("midi-connect-button").addEventListener("click", (e) => 
                 menu_item.value = port.id;
                 if ( connected_port && connected_port.id == port.id ) {
                     menu_item.setAttribute("checked", "");
-                    changePowerIcon("connection-power-icon", "#7f7");
+                    changeElmLight("connection-power-icon", "#7f7", true);
                 }
                 menu_item.addEventListener("click", (e) => {
                     const cp = Midi.getConnectedPort();
                     if ( cp && cp.id == e.target.value ) {
                         Midi.disconnect();
-                        changePowerIcon("connection-power-icon", null);
+                        changeElmLight("connection-power-icon", null);
                         settings.device_name = null;
                     } else {
                         Midi.connect(port);
-                        changePowerIcon("connection-power-icon", "#7f7");
+                        changeElmLight("connection-power-icon", "#7f7", true);
                         for ( const mi of Array.from(menu.children) )
                             mi.removeAttribute("checked");
                         settings.device_name = port.name;
@@ -389,7 +391,7 @@ document.getElementById("midi-connect-button").addEventListener("click", (e) => 
                 menu_item.innerText = "No MIDI input devices available";
                 menu_item.setAttribute("disabled", "");
                 menu.appendChild(menu_item);
-                changePowerIcon("connection-power-icon", null);
+                changeElmLight("connection-power-icon", null);
             }
         },
         () => {
@@ -398,7 +400,7 @@ document.getElementById("midi-connect-button").addEventListener("click", (e) => 
             menu_item.innerText = "MIDI access denied";
             menu_item.setAttribute("disabled", "");
             menu.appendChild(menu_item);
-            changePowerIcon("connection-power-icon", none);
+            changeElmLight("connection-power-icon", null);
         }
     );
 });
@@ -515,6 +517,11 @@ window.addEventListener("resize", () => {
 Midi.onKeyPress = (key) => { updateNote(key); };
 Midi.onKeyRelease = (key) => { updateNote(key); };
 
+Midi.onControlChange = (number) => {
+    if ( number > 63 && number < 68 ) 
+        updateMenus();
+};
+
 Midi.onSustainPedal = () => { updateKeyboardKeys(); };
 Midi.onSostenutoPedal = () => { updateKeyboardKeys(); };
 
@@ -605,7 +612,7 @@ if ( settings.device_name ) {
                 }
             }
             Midi.connect(port);
-            changePowerIcon("connection-power-icon", "#7f7");
+            changeElmLight("connection-power-icon", "#7f7", true);
         }
     );
 }

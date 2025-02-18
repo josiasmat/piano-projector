@@ -110,7 +110,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     </sl-menu>
                 </sl-dropdown> -->
                 <sl-dropdown stay-open-on-select>
-                    <sl-button id="btn-pedals" slot="trigger" caret>Pedals</sl-button>
+                    <sl-button id="btn-pedals" slot="trigger" caret>
+                        Pedals
+                        <div slot="prefix" style="font-size: 80%;">
+                            <span id="pedl" class="pedal-indicator">L</span>
+                            <span id="pedm" class="pedal-indicator">M</span>
+                            <span id="pedr" class="pedal-indicator">R</span>
+                        </div>
+                    </sl-button>
                     <sl-menu id="pedal-menu">
                         <sl-menu-item id="menu-pedal-sustain" value="sustain" type="checkbox" checked>Follow sustain pedal</sl-menu-item>
                         <sl-menu-item id="menu-pedal-sostenuto" value="sostenuto" type="checkbox" checked>Follow sostenuto pedal</sl-menu-item>
