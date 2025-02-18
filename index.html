@@ -35,7 +35,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 <sl-dropdown>
                     <sl-button id="midi-connect-button" slot="trigger" caret>
                         Connect
-                        <sl-icon id="connection-power-icon" slot="prefix" name="power"></sl-icon>
+                        <sl-icon id="connection-power-icon" class="led-strong" slot="prefix" name="power"></sl-icon>
                     </sl-button>
                     <sl-menu id="midi-connection-menu">
                         <sl-menu-item disabled>No MIDI input devices available</sl-menu-item>
@@ -113,9 +113,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     <sl-button id="btn-pedals" slot="trigger" caret>
                         Pedals
                         <div slot="prefix" style="font-size: 80%;">
-                            <span id="pedl" class="pedal-indicator">L</span>
-                            <span id="pedm" class="pedal-indicator">M</span>
-                            <span id="pedr" class="pedal-indicator">R</span>
+                            <span id="pedl" class="pedal-indicator led-weak">L</span>
+                            <span id="pedm" class="pedal-indicator led-weak">M</span>
+                            <span id="pedr" class="pedal-indicator led-weak">R</span>
                         </div>
                     </sl-button>
                     <sl-menu id="pedal-menu">
@@ -129,7 +129,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     <sl-dropdown stay-open-on-select>
                         <sl-button slot="trigger" caret>
                             Transpose
-                            <sl-icon id="transpose-power-icon" name="power" slot="prefix" label="Enable transpose"></sl-icon>
+                            <sl-icon id="transpose-power-icon" class="led-strong" name="power" slot="prefix" label="Enable transpose"></sl-icon>
                         </sl-button>
                         <sl-menu>
                             <!-- <sl-menu-item> -->

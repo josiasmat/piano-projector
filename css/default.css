@@ -80,6 +80,29 @@ body {
         border: 1px solid var(--sl-color-neutral-400);
         padding: 0px 3px;
     }
+
+    .led-strong, .led-weak {
+        &:not(.active) {
+            color: #555;
+            transition-property: color, filter;
+            transition-duration: 0.05s;
+            transition-timing-function: ease-out;
+        }
+        &.active {
+            &.led-strong {
+                filter: drop-shadow(0px 0px 1px) drop-shadow(0px 0px 3px);
+            }
+            &.led-weak {
+                filter: drop-shadow(0px 0px 2px);
+            }
+            &#pedl { color: #7d0; }
+            &#pedm { color: #47f; }
+            &#pedr { color: #fa7; }
+            &#connection-power-icon { color: #7f7; }
+            &#transpose-power-icon { color: #ff4; }
+        }
+    }
+
 }
 
 #outer-main-area {
