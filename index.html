@@ -112,17 +112,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 <sl-dropdown stay-open-on-select>
                     <sl-button id="btn-pedals" slot="trigger" caret>
                         Pedals
-                        <div slot="prefix" style="font-size: 80%;">
-                            <span id="pedl" class="pedal-indicator led-weak">L</span>
-                            <span id="pedm" class="pedal-indicator led-weak">M</span>
-                            <span id="pedr" class="pedal-indicator led-weak">R</span>
+                        <div id="pedal-icons" slot="prefix">
+                            <sl-icon id="pedl" class="pedal-indicator led-weak" slot="prefix" src="svg/lped.svg"></sl-icon>
+                            <sl-icon id="pedm" class="pedal-indicator led-weak" slot="prefix" src="svg/mped.svg"></sl-icon>
+                            <sl-icon id="pedr" class="pedal-indicator led-weak" slot="prefix" src="svg/rped.svg"></sl-icon>
                         </div>
                     </sl-button>
                     <sl-menu id="pedal-menu">
                         <sl-menu-item id="menu-pedal-sustain" value="sustain" type="checkbox" checked>Follow sustain pedal</sl-menu-item>
                         <sl-menu-item id="menu-pedal-sostenuto" value="sostenuto" type="checkbox" checked>Follow sostenuto pedal</sl-menu-item>
+                        <sl-menu-item id="menu-pedal-dim" value="pedal-dim" type="checkbox" checked>Dim pedalized notes</sl-menu-item>
                         <sl-divider></sl-divider>
-                        <sl-menu-item id="menu-pedal-dim" value="pedaldim" type="checkbox" checked>Dim pedalized notes</sl-menu-item>
+                        <sl-menu-item id="menu-pedal-icons" value="pedal-icons" type="checkbox" checked>Show pedal indicators</sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
                 <sl-button-group label="Transpose">

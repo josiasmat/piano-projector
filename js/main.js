@@ -46,7 +46,8 @@ const settings = {
         else
             return ( this.sostenuto ) ? "sostenuto" : "none";
     },
-    pedaldim: true
+    pedal_dim: true,
+    pedal_icons: true
 }
 
 const drag_state = {
@@ -234,6 +235,30 @@ function recreateKeyboard() {
 }
 
 
+function updatePedalIcons() {
+    const btn_pedals = document.getElementById("btn-pedals");
+    const btn_pedals_button = btn_pedals.shadowRoot.querySelector("button");
+    const btn_pedals_prefix = btn_pedals_button.querySelector(".button__prefix");
+    if ( settings.pedal_icons ) {
+        btn_pedals_button.classList.add("button--has-prefix");
+        btn_pedals_prefix.style.display = "flex";
+        changeLed("pedr", ( Midi.getLastControlValue(64) > 63 ));
+        changeLed("pedm", ( Midi.getLastControlValue(66) > 63 ));
+        changeLed("pedl", ( Midi.getLastControlValue(67) > 63 ));
+    } else {
+        btn_pedals_button.classList.remove("button--has-prefix");
+        btn_pedals_prefix.style.display = "none";
+    }
+}
+
+
+function updateToolbar() {
+    changeLed("connection-power-icon", ( Midi.getConnectedPort() ));
+    changeLed("transpose-power-icon", ( settings.transpose != 0 ));
+    updatePedalIcons();
+}
+
+
 function updateMenus(excluded_elm = null) {
     for ( const elm of document.querySelectorAll(".menu-number-of-keys") )
         if ( elm != excluded_elm )
@@ -247,11 +272,7 @@ function updateMenus(excluded_elm = null) {
         document.getElementById("reset-transpose").removeAttribute("disabled");
     else
         document.getElementById("reset-transpose").setAttribute("disabled", "");
-    changeLed("connection-power-icon", ( Midi.getConnectedPort() ));
-    changeLed("transpose-power-icon", ( settings.transpose != 0 ));
-    changeLed("pedr", ( Midi.getLastControlValue(64) > 63 ));
-    changeLed("pedm", ( Midi.getLastControlValue(66) > 63 ));
-    changeLed("pedl", ( Midi.getLastControlValue(67) > 63 ));
+    updateToolbar();
     writeSettings();
 }
 
@@ -284,7 +305,7 @@ function updateKeyboardKeys(first_key=0, last_key=127) {
             const j = i-settings.transpose;
             if ( Midi.isNoteOn(j, settings.pedals) ) {
                 key.classList.add(["active"]);
-                if ( !Midi.isKeyPressed(j) && settings.pedaldim )
+                if ( !Midi.isKeyPressed(j) && settings.pedal_dim )
                     key.classList.add(["dim"]);
                 else
                     key.classList.remove(["dim"]);
@@ -320,7 +341,8 @@ function writeSettings() {
     storage.writeNumber("octaves", settings.octaves);
     storage.writeBool("sustain", settings.sustain);
     storage.writeBool("sostenuto", settings.sostenuto);
-    storage.writeBool("pedal-dim", settings.pedaldim);
+    storage.writeBool("pedal-dim", settings.pedal_dim);
+    storage.writeBool("pedal-icons", settings.pedal_icons);
     storage.writeNumber("offset-x", settings.offset.x);
     storage.writeNumber("offset-y", settings.offset.y);
     // storage.writeNumber("zoom", settings.zoom);
@@ -418,6 +440,8 @@ document.getElementById("btn-colors").addEventListener("click", () => {
 document.getElementById("btn-pedals").addEventListener("click", () => {
     document.getElementById("menu-pedal-sustain").checked = settings.sustain;
     document.getElementById("menu-pedal-sostenuto").checked = settings.sostenuto;
+    document.getElementById("menu-pedal-dim").checked = settings.pedal_dim;
+    document.getElementById("menu-pedal-icons").checked = settings.pedal_icons;
 });
 
 for ( const elm of document.querySelectorAll(".menu-number-of-keys") ) {
@@ -456,7 +480,13 @@ document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
 
 document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
     const item = e.detail.item;
-    settings[item.value] = item.checked;
+    switch ( item.value ) {
+        case "sustain": settings.sustain = item.checked; break;
+        case "sostenuto": settings.sostenuto = item.checked; break;
+        case "pedal-dim": settings.pedal_dim = item.checked; break;
+        case "pedal-icons": settings.pedal_icons = item.checked; break;
+    }
+    updatePedalIcons();
     updateKeyboardKeys();
     writeSettings();
 });
@@ -511,12 +541,11 @@ Midi.onKeyPress = (key) => { updateNote(key); };
 Midi.onKeyRelease = (key) => { updateNote(key); };
 
 Midi.onControlChange = (number) => {
-    if ( number > 63 && number < 68 ) 
-        updateMenus();
+    if ( number > 63 && number < 68 ) {
+        updateKeyboardKeys();
+        updatePedalIcons();
+    }
 };
-
-Midi.onSustainPedal = () => { updateKeyboardKeys(); };
-Midi.onSostenutoPedal = () => { updateKeyboardKeys(); };
 
 
 // Mouse events
@@ -585,7 +614,8 @@ settings.height_factor = storage.readNumber("height-factor", settings.height_fac
 settings.number_of_keys = storage.readNumber("number-of-keys", settings.number_of_keys);
 settings.sustain = storage.readBool("sustain", settings.sustain);
 settings.sostenuto = storage.readBool("sostenuto", settings.sostenuto);
-settings.pedaldim = storage.readBool("pedal-dim", settings.pedaldim);
+settings.pedal_dim = storage.readBool("pedal-dim", settings.pedal_dim);
+settings.pedal_icons = storage.readBool("pedal-icons", settings.pedal_icons);
 settings.semitones = storage.readNumber("semitones", settings.semitones);
 settings.octaves = storage.readNumber("octaves", settings.octaves);
 settings.device_name = storage.readString("device", null);

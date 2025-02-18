@@ -76,9 +76,16 @@ body {
     }
 
     .pedal-indicator {
-        font-family: monospace;
-        border: 1px solid var(--sl-color-neutral-400);
-        padding: 0px 3px;
+        margin-bottom: -2px;
+    }
+
+    #pedl {
+        margin-right: -5px;
+    }
+
+    #pedr {
+        margin-left: -5px;
+        margin-right: -2px;
     }
 
     .led-strong, .led-weak {
