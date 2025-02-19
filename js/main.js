@@ -16,8 +16,8 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import SvgTools from "./svgtools.js";
 import Midi from "./midi.js";
+import SvgTools from "./svgtools.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
 
 const settings_storage = new LocalStorageHandler("piano-projector");
@@ -76,15 +76,14 @@ const kbd = document.getElementById("kbd");
  * @param {number} height
  */
 function drawKeyboard(svg, first_key, last_key) {
-    const WHITE_KEY_HEIGHT = settings.height;
     const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
     const BK_OFFSETS = [,-0.1,,+0.1,,,-0.1,,0,,+0.1,];
+    const WHITE_KEY_HEIGHT = settings.height;
+    const BLACK_KEY_HEIGHT = WHITE_KEY_HEIGHT * 0.6;
     const WHITE_KEY_WIDTH = WHITE_KEY_HEIGHT * 2.2 / 15.5 / settings.height_factor;
     const BLACK_KEY_WIDTH = WHITE_KEY_HEIGHT * 1.6 / 15.5 / settings.height_factor;
     const BLACK_KEY_WIDTH_HALF = BLACK_KEY_WIDTH / 2;
-    const BLACK_KEY_HEIGHT = WHITE_KEY_HEIGHT * 0.6;
-    const WHITE_KEY_ROUNDING = WHITE_KEY_WIDTH / 15;
-    const BLACK_KEY_ROUNDING = WHITE_KEY_ROUNDING;
+    const KEY_ROUNDING = WHITE_KEY_WIDTH / 15;
     const FILL_BORDER = 6;
     let width = 0;
 
@@ -118,11 +117,11 @@ function drawKeyboard(svg, first_key, last_key) {
         const note = key % 12;
         if ( WHITE_NOTE[note] ) {
             const white_key = drawKey(
-                white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, WHITE_KEY_ROUNDING, 0,
+                white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, KEY_ROUNDING, 0,
                 { class: "white-key", fill: settings.color_white, value: key }
             );
             const white_key_fill = drawKey(
-                white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, WHITE_KEY_ROUNDING, FILL_BORDER,
+                white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, KEY_ROUNDING, FILL_BORDER,
                 { id: `key${key}`, class: "white-key-fill", value: key }
             );
             white_keys_g.appendChild(white_key);
@@ -133,11 +132,11 @@ function drawKeyboard(svg, first_key, last_key) {
         } else {
             const black_left = white_left - BLACK_KEY_WIDTH_HALF + (BK_OFFSETS[note]*BLACK_KEY_WIDTH);
             const black_key = drawKey(
-                black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, BLACK_KEY_ROUNDING, 0,
+                black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, KEY_ROUNDING, 0,
                 { class: "black-key", fill: settings.color_black, value: key }
             );
             const black_key_fill = drawKey(
-                black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, BLACK_KEY_ROUNDING, FILL_BORDER,
+                black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, KEY_ROUNDING, FILL_BORDER,
                 { id: `key${key}`, class: "black-key-fill", value: key }
             );
             black_keys_g.appendChild(black_key);
@@ -243,18 +242,17 @@ function updateColorsMenu() {
 function updatePedalsMenu() {
     document.getElementById("menu-pedal-sustain").checked = settings.sustain;
     document.getElementById("menu-pedal-sostenuto").checked = settings.sostenuto;
-    document.getElementById("menu-pedal-dim").checked = settings.pedal_dim;
     document.getElementById("menu-pedal-icons").checked = settings.pedal_icons;
+    const menu_pedal_dim = document.getElementById("menu-pedal-dim");
+    menu_pedal_dim.checked = settings.pedal_dim;
+    menu_pedal_dim.toggleAttribute("disabled", !(settings.sustain || settings.sostenuto));
 }
 
 
 function updateTransposeMenuAndButton() {
     document.getElementById("input-semitones").value = settings.semitones;
     document.getElementById("input-octaves").value = settings.octaves;
-    if ( settings.transpose != 0 )
-        document.getElementById("reset-transpose").removeAttribute("disabled");
-    else
-        document.getElementById("reset-transpose").setAttribute("disabled", "");
+    document.getElementById("reset-transpose").toggleAttribute("disabled", settings.transpose == 0);
     changeLed("transpose-power-icon", ( settings.transpose != 0 ));
 }
 
@@ -373,7 +371,7 @@ document.getElementById("midi-connect-button").addEventListener("click", () => {
     function doOnAccessDenied() {
         const menu_item = document.createElement("sl-menu-item");
         menu_item.innerText = "MIDI access denied.";
-        menu_item.setAttribute("disabled", "");
+        menu_item.toggleAttribute("disabled", true);
         menu.appendChild(menu_item);
         changeLed("connection-power-icon", false);
     }
@@ -388,7 +386,7 @@ document.getElementById("midi-connect-button").addEventListener("click", () => {
                     menu_item.setAttribute("type", "checkbox");
                     menu_item.value = port.id;
                     if ( connected_port && connected_port.id == port.id ) {
-                        menu_item.setAttribute("checked", "");
+                        menu_item.toggleAttribute("checked", true);
                         changeLed("connection-power-icon", true);
                     }
                     menu_item.addEventListener("click", (e) => {
@@ -412,7 +410,7 @@ document.getElementById("midi-connect-button").addEventListener("click", () => {
                 if ( ports.length == 0 ) {
                     const menu_item = document.createElement("sl-menu-item");
                     menu_item.innerText = "No MIDI input devices available";
-                    menu_item.setAttribute("disabled", "");
+                    menu_item.toggleAttribute("disabled", true);
                     menu.appendChild(menu_item);
                     changeLed("connection-power-icon", false);
                 }
@@ -429,7 +427,7 @@ document.getElementById("midi-connect-button").addEventListener("click", () => {
         () => {
             const temp_menu_item = document.createElement("sl-menu-item");
             temp_menu_item.innerText = "Requesting MIDI access...";
-            temp_menu_item.setAttribute("loading", "");
+            temp_menu_item.toggleAttribute("loading", true);
             menu.appendChild(temp_menu_item);
             Midi.requestMidiAccess(
                 () => {
@@ -503,6 +501,8 @@ document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
         case "pedal-dim": settings.pedal_dim = item.checked; break;
         case "pedal-icons": settings.pedal_icons = item.checked; break;
     }
+    document.getElementById("menu-pedal-dim").toggleAttribute(
+        "disabled", !(settings.sustain || settings.sostenuto));
     updatePedalIcons();
     updateKeyboardKeys();
     writeSettings();
