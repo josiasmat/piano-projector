@@ -146,7 +146,7 @@ function drawKeyboard(svg, first_key, last_key) {
     }
     svg.appendChild(white_keys_g);
     svg.appendChild(black_keys_g);
-    svg.setAttribute("viewBox", `-2 -2 ${width+2} ${WHITE_KEY_HEIGHT+2}`);
+    svg.setAttribute("viewBox", `-2 -2 ${width+4} ${WHITE_KEY_HEIGHT+4}`);
 
     function makeGradient(id, stops_attrs) {
         const grad = SvgTools.createElement("linearGradient", {
