@@ -67,11 +67,21 @@ body {
     }
 
     sl-color-picker {
-        &::part(input) {
+        &::part(input),
+        &::part(eye-dropper-button),
+        &::part(format-button) {
             display: none;
         }
+        &::part(preview) {
+            margin-top: -3px;
+            margin-bottom: -12px;
+        }
+        &::part(slider) {
+            margin-top: 10px;
+            margin-left: 6px;
+        }
         &::part(grid) {
-            height: 150px;
+            height: 130px;
         }
     }
 
@@ -90,7 +100,7 @@ body {
 
     .led-strong, .led-weak {
         &:not(.active) {
-            color: #555;
+            color: var(--sl-color-neutral-400);
             transition-property: color, filter;
             transition-duration: 0.05s;
             transition-timing-function: ease-out;
