@@ -488,8 +488,8 @@ document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
 document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
     const item = e.detail.item;
     switch ( item.id ) {
-        case "menu-sustain": settings.sustain = item.checked; break;
-        case "menu-sostenuto": settings.sostenuto = item.checked; break;
+        case "menu-pedal-sustain": settings.sustain = item.checked; break;
+        case "menu-pedal-sostenuto": settings.sostenuto = item.checked; break;
         case "menu-pedal-dim": settings.pedal_dim = item.checked; break;
         case "menu-pedal-icons": settings.pedal_icons = item.checked; break;
     }
