@@ -138,45 +138,37 @@ body {
         stroke-width: 2px;
     }
 
-    .white-key-fill {
-        visibility: hidden;
-        opacity: 0%;
-        fill: url('#pressed-white-key-gradient');
-        transition-property: visibility, opacity;
-        transition-duration: 0.1s;
-        &.active {
-            visibility: visible;
-            opacity: 100%;
-            transition: none;
-            &.dim {
-                opacity: 70%;
-                transition-property: opacity;
-                transition-duration: 0.05s;
-            }
-        }
-    }
-
     .black-key {
         stroke: gray;
         stroke-width: 2px;
     }
 
-    .black-key-fill {
-        visibility: hidden;
-        opacity: 0%;
-        fill: url('#pressed-black-key-gradient');
-        transition-property: visibility, opacity;
-        transition-duration: 0.1s;
+    .white-key-fill, .black-key-fill {
+        &:not(.active) {
+            visibility: hidden;
+            opacity: 0%;
+            transition-property: visibility, opacity;
+            transition-duration: 0.05s;
+            transition-timing-function: ease-out;
+        }
         &.active {
             visibility: visible;
             opacity: 100%;
-            transition: none;
             &.dim {
                 opacity: 70%;
                 transition-property: opacity;
                 transition-duration: 0.05s;
+                transition-timing-function: ease-out;
             }
         }
+    }
+
+    .white-key-fill {
+        fill: url('#pressed-white-key-gradient');
+    }
+
+    .black-key-fill {
+        fill: url('#pressed-black-key-gradient');
     }
 
 }
