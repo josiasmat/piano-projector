@@ -188,3 +188,8 @@ sl-dialog {
     color: var(--sl-color-neutral-700);
     --width: 45ch;
 }
+
+sl-menu > sl-divider {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
