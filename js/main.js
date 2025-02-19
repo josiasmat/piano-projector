@@ -36,14 +36,7 @@ const settings = {
     color_white: "#fff",
     color_black: "#000",
     color_pressed: "#f00",
-    sustain: true,
-    sostenuto: true,
-    get pedals() {
-        if ( this.sustain )
-            return ( this.sostenuto ) ? "both" : "sustain";
-        else
-            return ( this.sostenuto ) ? "sostenuto" : "none";
-    },
+    pedals: true,
     pedal_dim: true,
     pedal_icons: true,
     semitones: 0,
@@ -240,12 +233,11 @@ function updateColorsMenu() {
 
 
 function updatePedalsMenu() {
-    document.getElementById("menu-pedal-sustain").checked = settings.sustain;
-    document.getElementById("menu-pedal-sostenuto").checked = settings.sostenuto;
+    document.getElementById("menu-pedal-follow").checked = settings.pedals;
     document.getElementById("menu-pedal-icons").checked = settings.pedal_icons;
     const menu_pedal_dim = document.getElementById("menu-pedal-dim");
     menu_pedal_dim.checked = settings.pedal_dim;
-    menu_pedal_dim.toggleAttribute("disabled", !(settings.sustain || settings.sostenuto));
+    menu_pedal_dim.toggleAttribute("disabled", !settings.pedals);
 }
 
 
@@ -283,7 +275,7 @@ function updateKeyboardKeys(first_key=0, last_key=127) {
         const key = keys[i];
         if ( key ) {
             const j = i-settings.transpose;
-            if ( Midi.isNoteOn(j, settings.pedals) ) {
+            if ( Midi.isNoteOn(j, (settings.pedals ? "both" : "none")) ) {
                 key.classList.add(["active"]);
                 if ( !Midi.isKeyPressed(j) && settings.pedal_dim )
                     key.classList.add(["dim"]);
@@ -317,8 +309,7 @@ function writeSettings() {
     settings_storage.writeString("color-pressed", settings.color_pressed);
     settings_storage.writeNumber("height-factor", settings.height_factor);
     settings_storage.writeNumber("number-of-keys", settings.number_of_keys);
-    settings_storage.writeBool("sustain", settings.sustain);
-    settings_storage.writeBool("sostenuto", settings.sostenuto);
+    settings_storage.writeBool("pedals", settings.pedals);
     settings_storage.writeBool("pedal-dim", settings.pedal_dim);
     settings_storage.writeBool("pedal-icons", settings.pedal_icons);
     settings_storage.writeNumber("offset-x", settings.offset.x);
@@ -338,8 +329,7 @@ function loadSettings() {
     settings.color_pressed = settings_storage.readString("color-pressed", settings.color_pressed);
     settings.height_factor = settings_storage.readNumber("height-factor", settings.height_factor);
     settings.number_of_keys = settings_storage.readNumber("number-of-keys", settings.number_of_keys);
-    settings.sustain = settings_storage.readBool("sustain", settings.sustain);
-    settings.sostenuto = settings_storage.readBool("sostenuto", settings.sostenuto);
+    settings.pedals = settings_storage.readBool("pedals", settings.pedals);
     settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
     settings.pedal_icons = settings_storage.readBool("pedal-icons", settings.pedal_icons);
     settings.offset.x = settings_storage.readNumber("offset-x", settings.offset.x);
@@ -488,13 +478,12 @@ document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
 document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
     const item = e.detail.item;
     switch ( item.id ) {
-        case "menu-pedal-sustain": settings.sustain = item.checked; break;
-        case "menu-pedal-sostenuto": settings.sostenuto = item.checked; break;
+        case "menu-pedal-follow": settings.pedals = item.checked; break;
         case "menu-pedal-dim": settings.pedal_dim = item.checked; break;
         case "menu-pedal-icons": settings.pedal_icons = item.checked; break;
     }
     document.getElementById("menu-pedal-dim").toggleAttribute(
-        "disabled", !(settings.sustain || settings.sostenuto));
+        "disabled", !settings.pedals);
     updatePedalIcons();
     updateKeyboardKeys();
     writeSettings();
@@ -538,7 +527,7 @@ document.getElementById("reset-transpose").addEventListener("click", () => {
 
 document.getElementById("btn-panic").addEventListener("click", () => {
     Midi.reset();
-    updateKeyboardKeys();
+    createKeyboard();
     updatePedalIcons();
 });
 
