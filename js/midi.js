@@ -127,8 +127,8 @@ export const Midi = {
             case "both":
                 return midi_state.keys[key] || midi_state.sustain[key] || midi_state.sostenuto[key];
             default:
+                return midi_state.keys[key];
         }
-        return midi_state.keys[key];
     },
 
     /**
