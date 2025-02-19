@@ -43,7 +43,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 </sl-dropdown>
                 <sl-dropdown stay-open-on-select>
                     <sl-button id="btn-size" slot="trigger" caret>Size</sl-button>
-                    <sl-menu>
+                    <sl-menu id="menu-size">
                         <sl-menu-label>Number of keys:</sl-menu-label>
                         <sl-menu-item class="menu-number-of-keys" value="88" type="checkbox" checked>88 keys</sl-menu-item>
                         <sl-menu-item class="menu-number-of-keys" value="61" type="checkbox">61 keys</sl-menu-item>
@@ -119,11 +119,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         </div>
                     </sl-button>
                     <sl-menu id="pedal-menu">
-                        <sl-menu-item id="menu-pedal-sustain" value="sustain" type="checkbox" checked>Follow sustain pedal</sl-menu-item>
-                        <sl-menu-item id="menu-pedal-sostenuto" value="sostenuto" type="checkbox" checked>Follow sostenuto pedal</sl-menu-item>
-                        <sl-menu-item id="menu-pedal-dim" value="pedal-dim" type="checkbox" checked>Dim pedalized notes</sl-menu-item>
+                        <sl-menu-item id="menu-pedal-sustain" type="checkbox" checked>Follow sustain pedal</sl-menu-item>
+                        <sl-menu-item id="menu-pedal-sostenuto" type="checkbox" checked>Follow sostenuto pedal</sl-menu-item>
+                        <sl-menu-item id="menu-pedal-dim" type="checkbox" checked>Dim pedalized notes</sl-menu-item>
                         <sl-divider></sl-divider>
-                        <sl-menu-item id="menu-pedal-icons" value="pedal-icons" type="checkbox" checked>Show pedal indicators</sl-menu-item>
+                        <sl-menu-item id="menu-pedal-icons" type="checkbox" checked>Show pedal indicators</sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
                 <sl-dropdown stay-open-on-select>

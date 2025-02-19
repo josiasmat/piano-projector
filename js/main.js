@@ -78,10 +78,10 @@ const kbd = document.getElementById("kbd");
 function drawKeyboard(svg, first_key, last_key) {
     const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
     const BK_OFFSETS = [,-0.1,,+0.1,,,-0.1,,0,,+0.1,];
-    const WHITE_KEY_HEIGHT = settings.height;
+    const WHITE_KEY_HEIGHT = settings.height * settings.height_factor;
     const BLACK_KEY_HEIGHT = WHITE_KEY_HEIGHT * 0.6;
-    const WHITE_KEY_WIDTH = WHITE_KEY_HEIGHT * 2.2 / 15.5 / settings.height_factor;
-    const BLACK_KEY_WIDTH = WHITE_KEY_HEIGHT * 1.6 / 15.5 / settings.height_factor;
+    const WHITE_KEY_WIDTH = settings.height * 2.2 / 15.5;
+    const BLACK_KEY_WIDTH = settings.height * 1.6 / 15.5;
     const BLACK_KEY_WIDTH_HALF = BLACK_KEY_WIDTH / 2;
     const KEY_ROUNDING = WHITE_KEY_WIDTH / 15;
     const FILL_BORDER = 6;
@@ -457,23 +457,15 @@ document.getElementById("btn-transpose")
 //     //...
 // });
 
-for ( const elm of document.querySelectorAll(".menu-number-of-keys") ) {
-    elm.addEventListener("click", (e) => {
-        settings.number_of_keys = parseInt(e.target.value);
-        updateSizeMenu(e.target);
-        createKeyboard();
-        writeSettings();
-    });
-}
-
-for ( const elm of document.querySelectorAll(".menu-key-height") ) {
-    elm.addEventListener("click", (e) => {
-        settings.height_factor = parseFloat(e.target.value);
-        updateSizeMenu(e.target);
-        createKeyboard();
-        writeSettings();
-    });
-}
+document.getElementById("menu-size").addEventListener("sl-select", (e) => {
+    if ( e.detail.item.classList.contains("menu-number-of-keys") )
+        settings.number_of_keys = parseInt(e.detail.item.value);
+    else if ( e.detail.item.classList.contains("menu-key-height") )
+        settings.height_factor = parseFloat(e.detail.item.value);
+    updateSizeMenu();
+    createKeyboard();
+    writeSettings();
+});
 
 document.getElementById("color-white").addEventListener("sl-change", (e) => {
     settings.color_white = e.target.value;
@@ -495,11 +487,11 @@ document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
 
 document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
     const item = e.detail.item;
-    switch ( item.value ) {
-        case "sustain": settings.sustain = item.checked; break;
-        case "sostenuto": settings.sostenuto = item.checked; break;
-        case "pedal-dim": settings.pedal_dim = item.checked; break;
-        case "pedal-icons": settings.pedal_icons = item.checked; break;
+    switch ( item.id ) {
+        case "menu-sustain": settings.sustain = item.checked; break;
+        case "menu-sostenuto": settings.sostenuto = item.checked; break;
+        case "menu-pedal-dim": settings.pedal_dim = item.checked; break;
+        case "menu-pedal-icons": settings.pedal_icons = item.checked; break;
     }
     document.getElementById("menu-pedal-dim").toggleAttribute(
         "disabled", !(settings.sustain || settings.sostenuto));
@@ -657,25 +649,6 @@ function clamp(value, min, max) {
 
 loadSettings();
 
-// Connect to stored device name
-if ( settings.device_name ) {
-    Midi.requestInputPortList(
-        (ports) => {
-            let port = null;
-            for ( const p of ports ) {
-                if ( p.name == settings.device_name ) {
-                    port = p;
-                    break;
-                }
-            }
-            Midi.connect(port);
-            updateToolbar();
-            updateKeyboard();
-        },
-        () => { updateToolbar(); }
-    );
-}
-
 await Promise.allSettled([
     customElements.whenDefined('sl-dropdown'),
     customElements.whenDefined('sl-button'),
@@ -687,3 +660,20 @@ await Promise.allSettled([
 
 updateToolbar();
 createKeyboard();
+
+// Connect to stored device name
+if ( settings.device_name ) {
+    Midi.requestInputPortList(
+        (ports) => {
+            for ( const port of ports ) {
+                if ( port.name == settings.device_name ) {
+                    Midi.connect(port);
+                    updateKeyboard();
+                    break;
+                }
+            }
+            updateToolbar();
+        },
+        () => { updateToolbar(); }
+    );
+}
