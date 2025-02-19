@@ -41,7 +41,6 @@ export const Midi = {
     queryMidiAccess(callback_granted, callback_denied, callback_prompt) {
         navigator.permissions.query({ name: "midi", sysex: false })
         .then((perm) => {
-            console.log(perm.state);
             switch ( perm.state ) {
                 case "granted":
                     if ( callback_granted ) callback_granted();
