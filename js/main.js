@@ -18,7 +18,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import SvgTools from "./svgtools.js";
 import Midi from "./midi.js";
-import { LocalStorageHandler } from "./storage-handler.js";
+import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
+
+const settings_storage = new LocalStorageHandler("piano-projector");
+const session_storage = new SessionStorageHandler("piano-projector-session");
 
 const settings = {
     device_name: null,
@@ -33,11 +36,6 @@ const settings = {
     color_white: "#fff",
     color_black: "#000",
     color_pressed: "#f00",
-    semitones: 0,
-    octaves: 0,
-    get transpose() {
-        return this.semitones + (this.octaves*12);
-    },
     sustain: true,
     sostenuto: true,
     get pedals() {
@@ -47,7 +45,12 @@ const settings = {
             return ( this.sostenuto ) ? "sostenuto" : "none";
     },
     pedal_dim: true,
-    pedal_icons: true
+    pedal_icons: true,
+    semitones: 0,
+    octaves: 0,
+    get transpose() {
+        return this.semitones + (this.octaves*12);
+    }
 }
 
 const drag_state = {
@@ -66,18 +69,13 @@ const kbd_container = document.getElementById("main-area");
 const kbd = document.getElementById("kbd");
 
 
-function isWhiteKey(key) {
-    return [true,false,true,false,true,true,false,true,false,true,false,true][key%12];
-}
-
-
 /** 
  * @param {SVGElement} svg 
  * @param {number} first_key
  * @param {number} last_key
  * @param {number} height
  */
-function createKeyboard(svg, first_key, last_key) {
+function drawKeyboard(svg, first_key, last_key) {
     const height = settings.height;
     const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
     const BK_OFFSETS = [,-0.1,,+0.1,,,-0.1,,0,,+0.1,];
@@ -101,7 +99,7 @@ function createKeyboard(svg, first_key, last_key) {
     let offset = 0;
     for ( let key = first_key; key <= last_key; key++ ) {
         const note = key % 12;
-        if ( WHITE_NOTE[note] == 1 ) {
+        if ( WHITE_NOTE[note] ) {
             const white_key = SvgTools.makePolygon([
                     {x:offset, y:0}, 
                     {x:offset+WHITE_KEY_WIDTH, y:0},
@@ -193,43 +191,27 @@ function createKeyboard(svg, first_key, last_key) {
 }
 
 
-/**
- * @param {string} note_str 
- * @returns {number}
- */
-function noteToMidi(note_str) {
-    const NOTES = {
-        'c': 0, 'c#': 1, 'db': 1, 'd': 2, 'd#': 3, 'eb': 3, 'e': 4, 'fb': 4, 
-        'e#': 5, 'f': 5, 'f#': 6, 'gb': 6, 'g': 7, 'g#': 8, 'ab': 8, 'a': 9,
-        'a#': 10, 'bb': 10, 'b': 11, 'b#': 12, 'cb': -1
-    }
-    const pc = NOTES[note_str.slice(0, note_str.length-1).toLowerCase()];
-    const octave = parseInt(note_str.slice(note_str.length-1));
-    return pc + 12*(octave+1);
-}
-
-
-function recreateKeyboard() {
+function createKeyboard() {
     switch ( settings.number_of_keys ) {
         case 88:
-            createKeyboard(kbd, noteToMidi("a0"), noteToMidi("c8"));
+            drawKeyboard(kbd, noteToMidi("a0"), noteToMidi("c8"));
             break;
         case 61:
-            createKeyboard(kbd, noteToMidi("c2"), noteToMidi("c7"));
+            drawKeyboard(kbd, noteToMidi("c2"), noteToMidi("c7"));
             break;
         case 49:
-            createKeyboard(kbd, noteToMidi("c2"), noteToMidi("c6"));
+            drawKeyboard(kbd, noteToMidi("c2"), noteToMidi("c6"));
             break;
         case 37:
-            createKeyboard(kbd, noteToMidi("c3"), noteToMidi("c6"));
+            drawKeyboard(kbd, noteToMidi("c3"), noteToMidi("c6"));
             break;
         case 25:
-            createKeyboard(kbd, noteToMidi("c3"), noteToMidi("c5"));
+            drawKeyboard(kbd, noteToMidi("c3"), noteToMidi("c5"));
             break;
         default:
             const ln = noteToMidi("e4") - Math.trunc(settings.number_of_keys / 2);
             const hn = noteToMidi("e4") + Math.ceil(settings.number_of_keys / 2) - 1;
-            createKeyboard(kbd, ln, hn, height);
+            drawKeyboard(kbd, ln, hn, height);
     }
     updateKeyboard();
 }
@@ -259,21 +241,39 @@ function updateToolbar() {
 }
 
 
-function updateMenus(excluded_elm = null) {
+function updateSizeMenu(excluded_elm = null) {
     for ( const elm of document.querySelectorAll(".menu-number-of-keys") )
         if ( elm != excluded_elm )
             elm.checked = ( parseInt(elm.value) == settings.number_of_keys );
     for ( const elm of document.querySelectorAll(".menu-key-height") )
         if ( elm != excluded_elm )
             elm.checked = ( parseFloat(elm.value) == settings.height_factor );
+}
+
+
+function updateColorsMenu() {
+    document.getElementById("color-white").value = settings.color_white;
+    document.getElementById("color-black").value = settings.color_black;
+    document.getElementById("color-pressed").value = settings.color_pressed;
+}
+
+
+function updatePedalsMenu() {
+    document.getElementById("menu-pedal-sustain").checked = settings.sustain;
+    document.getElementById("menu-pedal-sostenuto").checked = settings.sostenuto;
+    document.getElementById("menu-pedal-dim").checked = settings.pedal_dim;
+    document.getElementById("menu-pedal-icons").checked = settings.pedal_icons;
+}
+
+
+function updateTransposeMenuAndButton() {
     document.getElementById("input-semitones").value = settings.semitones;
     document.getElementById("input-octaves").value = settings.octaves;
     if ( settings.transpose != 0 )
         document.getElementById("reset-transpose").removeAttribute("disabled");
     else
         document.getElementById("reset-transpose").setAttribute("disabled", "");
-    updateToolbar();
-    writeSettings();
+    changeLed("transpose-power-icon", ( settings.transpose != 0 ));
 }
 
 
@@ -332,149 +332,184 @@ function updateNote(note) {
 
 
 function writeSettings() {
-    storage.writeString("color-white", settings.color_white);
-    storage.writeString("color-black", settings.color_black);
-    storage.writeString("color-pressed", settings.color_pressed);
-    storage.writeNumber("height-factor", settings.height_factor);
-    storage.writeNumber("number-of-keys", settings.number_of_keys);
-    storage.writeNumber("semitones", settings.semitones);
-    storage.writeNumber("octaves", settings.octaves);
-    storage.writeBool("sustain", settings.sustain);
-    storage.writeBool("sostenuto", settings.sostenuto);
-    storage.writeBool("pedal-dim", settings.pedal_dim);
-    storage.writeBool("pedal-icons", settings.pedal_icons);
-    storage.writeNumber("offset-x", settings.offset.x);
-    storage.writeNumber("offset-y", settings.offset.y);
-    // storage.writeNumber("zoom", settings.zoom);
+    settings_storage.writeString("color-white", settings.color_white);
+    settings_storage.writeString("color-black", settings.color_black);
+    settings_storage.writeString("color-pressed", settings.color_pressed);
+    settings_storage.writeNumber("height-factor", settings.height_factor);
+    settings_storage.writeNumber("number-of-keys", settings.number_of_keys);
+    settings_storage.writeBool("sustain", settings.sustain);
+    settings_storage.writeBool("sostenuto", settings.sostenuto);
+    settings_storage.writeBool("pedal-dim", settings.pedal_dim);
+    settings_storage.writeBool("pedal-icons", settings.pedal_icons);
+    settings_storage.writeNumber("offset-x", settings.offset.x);
+    settings_storage.writeNumber("offset-y", settings.offset.y);
     if ( settings.device_name )
-        storage.writeString("device", settings.device_name);
+        settings_storage.writeString("device", settings.device_name);
     else
-        storage.remove("device");
+        settings_storage.remove("device");
+    session_storage.writeNumber("semitones", settings.semitones);
+    session_storage.writeNumber("octaves", settings.octaves);
 }
 
 
-function changeLed(id, state) {
-    if ( state )
-        document.getElementById(id).classList.add(["active"]);
-    else
-        document.getElementById(id).classList.remove(["active"]);
+function loadSettings() {
+    settings.color_white = settings_storage.readString("color-white", settings.color_white);
+    settings.color_black = settings_storage.readString("color-black", settings.color_black);
+    settings.color_pressed = settings_storage.readString("color-pressed", settings.color_pressed);
+    settings.height_factor = settings_storage.readNumber("height-factor", settings.height_factor);
+    settings.number_of_keys = settings_storage.readNumber("number-of-keys", settings.number_of_keys);
+    settings.sustain = settings_storage.readBool("sustain", settings.sustain);
+    settings.sostenuto = settings_storage.readBool("sostenuto", settings.sostenuto);
+    settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
+    settings.pedal_icons = settings_storage.readBool("pedal-icons", settings.pedal_icons);
+    settings.offset.x = settings_storage.readNumber("offset-x", settings.offset.x);
+    settings.offset.y = settings_storage.readNumber("offset-y", settings.offset.y);
+    settings.device_name = settings_storage.readString("device", null);
+    settings.semitones = session_storage.readNumber("semitones", 0);
+    settings.octaves = session_storage.readNumber("octaves", 0);
+}
+
+
+function changeLed(id, state, color=null) {
+    const elm = document.getElementById(id);
+    if ( state ) {
+        elm.classList.add(["active"]);
+        if ( color ) elm.style.color = color;
+    } else {
+        elm.classList.remove(["active"]);
+        elm.style.removeProperty("color");
+    }
 }
 
 
 // Set event listeners
 
-document.getElementById("midi-connect-button").addEventListener("click", (e) => {
+document.getElementById("midi-connect-button").addEventListener("click", () => {
     const menu = document.getElementById("midi-connection-menu");
-    changeLed("connection-power-icon", true);
     menu.innerHTML = "";
-    const temp_menu_item = document.createElement("sl-menu-item");
-    temp_menu_item.innerText = "Requesting MIDI device list...";
-    temp_menu_item.setAttribute("loading", "");
-    menu.appendChild(temp_menu_item);
-    Midi.requestInputPortList(
-        (ports) => {
-            menu.removeChild(temp_menu_item);
-            const connected_port = Midi.getConnectedPort();
-            for ( const port of ports ) {
-                const menu_item = document.createElement("sl-menu-item");
-                menu_item.innerText = port.name;
-                menu_item.setAttribute("type", "checkbox");
-                menu_item.value = port.id;
-                if ( connected_port && connected_port.id == port.id ) {
-                    menu_item.setAttribute("checked", "");
-                    changeLed("connection-power-icon", true);
-                }
-                menu_item.addEventListener("click", (e) => {
-                    const cp = Midi.getConnectedPort();
-                    if ( cp && cp.id == e.target.value ) {
-                        Midi.disconnect();
-                        changeLed("connection-power-icon", false);
-                        settings.device_name = null;
-                    } else {
-                        Midi.connect(port);
+
+    function doOnAccessDenied() {
+        const menu_item = document.createElement("sl-menu-item");
+        menu_item.innerText = "MIDI access denied.";
+        menu_item.setAttribute("disabled", "");
+        menu.appendChild(menu_item);
+        changeLed("connection-power-icon", false);
+    }
+
+    function doOnAccessGranted() {
+        Midi.requestInputPortList(
+            (ports) => {
+                const connected_port = Midi.getConnectedPort();
+                for ( const port of ports ) {
+                    const menu_item = document.createElement("sl-menu-item");
+                    menu_item.innerText = port.name;
+                    menu_item.setAttribute("type", "checkbox");
+                    menu_item.value = port.id;
+                    if ( connected_port && connected_port.id == port.id ) {
+                        menu_item.setAttribute("checked", "");
                         changeLed("connection-power-icon", true);
-                        for ( const mi of Array.from(menu.children) )
-                            mi.removeAttribute("checked");
-                        settings.device_name = port.name;
                     }
-                    writeSettings();
-                });
-                menu.appendChild(menu_item);
+                    menu_item.addEventListener("click", (e) => {
+                        const cp = Midi.getConnectedPort();
+                        if ( cp && cp.id == e.target.value ) {
+                            Midi.disconnect();
+                            changeLed("connection-power-icon", false);
+                            settings.device_name = null;
+                        } else {
+                            Midi.connect(port);
+                            changeLed("connection-power-icon", true);
+                            for ( const mi of Array.from(menu.children) )
+                                mi.removeAttribute("checked");
+                            settings.device_name = port.name;
+                        }
+                        updateKeyboard();
+                        writeSettings();
+                    });
+                    menu.appendChild(menu_item);
+                }
+                if ( ports.length == 0 ) {
+                    const menu_item = document.createElement("sl-menu-item");
+                    menu_item.innerText = "No MIDI input devices available";
+                    menu_item.setAttribute("disabled", "");
+                    menu.appendChild(menu_item);
+                    changeLed("connection-power-icon", false);
+                }
+            },
+            () => {
+                doOnAccessDenied();
             }
-            if ( ports.length == 0 ) {
-                const menu_item = document.createElement("sl-menu-item");
-                menu_item.innerText = "No MIDI input devices available";
-                menu_item.setAttribute("disabled", "");
-                menu.appendChild(menu_item);
-                changeLed("connection-power-icon", false);
-            }
-        },
+        );
+    }
+
+    Midi.queryMidiAccess(
+        doOnAccessGranted,
+        doOnAccessDenied,
         () => {
-            menu.removeChild(temp_menu_item);
-            const menu_item = document.createElement("sl-menu-item");
-            menu_item.innerText = "MIDI access denied";
-            menu_item.setAttribute("disabled", "");
-            menu.appendChild(menu_item);
-            changeLed("connection-power-icon", false);
+            const temp_menu_item = document.createElement("sl-menu-item");
+            temp_menu_item.innerText = "Requesting MIDI access...";
+            temp_menu_item.setAttribute("loading", "");
+            menu.appendChild(temp_menu_item);
+            Midi.requestMidiAccess(
+                () => {
+                    menu.removeChild(temp_menu_item);
+                    doOnAccessGranted();
+                },
+                () => {
+                    menu.removeChild(temp_menu_item);
+                    doOnAccessDenied();
+                }
+            );
         }
-    );
+    )
+    
 });
 
-document.getElementById("btn-size").addEventListener("click", () => {
-    for ( const elm of document.querySelectorAll(".menu-number-of-keys") )
-        elm.checked = ( parseInt(elm.value) == settings.number_of_keys );
-    for ( const elm of document.querySelectorAll(".menu-key-height") )
-        elm.checked = ( parseFloat(elm.value) == settings.height_factor );
-});
-
-document.getElementById("btn-colors").addEventListener("click", () => {
-    document.getElementById("color-white").value = settings.color_white;
-    document.getElementById("color-black").value = settings.color_black;
-    document.getElementById("color-pressed").value = settings.color_pressed;
-});
+document.getElementById("btn-size")
+    .addEventListener("click", updateSizeMenu);
+document.getElementById("btn-colors")
+    .addEventListener("click", updateColorsMenu);
+document.getElementById("btn-pedals")
+    .addEventListener("click", updatePedalsMenu);
+document.getElementById("btn-transpose")
+    .addEventListener("click", updateTransposeMenuAndButton);
 
 // document.getElementById("btn-labels").addEventListener("click", () => {
 //     //...
 // });
 
-document.getElementById("btn-pedals").addEventListener("click", () => {
-    document.getElementById("menu-pedal-sustain").checked = settings.sustain;
-    document.getElementById("menu-pedal-sostenuto").checked = settings.sostenuto;
-    document.getElementById("menu-pedal-dim").checked = settings.pedal_dim;
-    document.getElementById("menu-pedal-icons").checked = settings.pedal_icons;
-});
-
 for ( const elm of document.querySelectorAll(".menu-number-of-keys") ) {
     elm.addEventListener("click", (e) => {
         settings.number_of_keys = parseInt(e.target.value);
-        updateMenus(e.target);
-        recreateKeyboard();
+        updateSizeMenu(e.target);
+        createKeyboard();
+        writeSettings();
     });
 }
 
 for ( const elm of document.querySelectorAll(".menu-key-height") ) {
     elm.addEventListener("click", (e) => {
         settings.height_factor = parseFloat(e.target.value);
-        updateMenus(e.target);
-        recreateKeyboard();
+        updateSizeMenu(e.target);
+        createKeyboard();
+        writeSettings();
     });
 }
 
 document.getElementById("color-white").addEventListener("sl-change", (e) => {
     settings.color_white = e.target.value;
-    recreateKeyboard();
+    createKeyboard();
     writeSettings();
 });
 
 document.getElementById("color-black").addEventListener("sl-change", (e) => {
     settings.color_black = e.target.value;
-    recreateKeyboard();
+    createKeyboard();
     writeSettings();
 });
 
 document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
     settings.color_pressed = e.target.value;
-    recreateKeyboard();
+    createKeyboard();
     writeSettings();
 });
 
@@ -493,39 +528,44 @@ document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
 
 document.getElementById("btn-semitone-plus").addEventListener("click", () => {
     settings.semitones += 1;
-    updateMenus();
+    updateTransposeMenuAndButton();
     updateKeyboardKeys();
+    writeSettings();
 });
 
 document.getElementById("btn-semitone-minus").addEventListener("click", () => {
     settings.semitones -= 1;
-    updateMenus();
+    updateTransposeMenuAndButton();
     updateKeyboardKeys();
+    writeSettings();
 });
 
 document.getElementById("btn-octave-plus").addEventListener("click", () => {
     settings.octaves += 1;
-    updateMenus();
+    updateTransposeMenuAndButton();
     updateKeyboardKeys();
+    writeSettings();
 });
 
 document.getElementById("btn-octave-minus").addEventListener("click", () => {
     settings.octaves -= 1;
-    updateMenus();
+    updateTransposeMenuAndButton();
     updateKeyboardKeys();
+    writeSettings();
 });
 
 document.getElementById("reset-transpose").addEventListener("click", () => {
     settings.semitones = 0;
     settings.octaves = 0;
-    updateMenus();
+    updateTransposeMenuAndButton();
     updateKeyboardKeys();
+    writeSettings();
 });
 
 document.getElementById("btn-panic").addEventListener("click", () => {
     Midi.reset();
-    updateMenus();
     updateKeyboardKeys();
+    updatePedalIcons();
 });
 
 document.getElementById("toolbar-title").addEventListener("click", () => {
@@ -535,17 +575,6 @@ document.getElementById("toolbar-title").addEventListener("click", () => {
 window.addEventListener("resize", () => {
     updateKeyboardPosition();
 });
-
-
-Midi.onKeyPress = (key) => { updateNote(key); };
-Midi.onKeyRelease = (key) => { updateNote(key); };
-
-Midi.onControlChange = (number) => {
-    if ( number > 63 && number < 68 ) {
-        updateKeyboardKeys();
-        updatePedalIcons();
-    }
-};
 
 
 // Mouse events
@@ -565,6 +594,7 @@ kbd.addEventListener("pointerup", (e) => {
         drag_state.dragging = false;
         kbd.style.removeProperty("cursor");
         kbd.releasePointerCapture(e.pointerId);
+        updateKeyboardPosition();
         writeSettings();
     }
 }, { capture: true, passive: false });
@@ -605,23 +635,45 @@ kbd.addEventListener("wheel", (e) => {
 }, { capture: true, passive: false });
 
 
-// Read storage
-const storage = new LocalStorageHandler("piano-projector");
-settings.color_white = storage.readString("color-white", settings.color_white);
-settings.color_black = storage.readString("color-black", settings.color_black);
-settings.color_pressed = storage.readString("color-pressed", settings.color_pressed);
-settings.height_factor = storage.readNumber("height-factor", settings.height_factor);
-settings.number_of_keys = storage.readNumber("number-of-keys", settings.number_of_keys);
-settings.sustain = storage.readBool("sustain", settings.sustain);
-settings.sostenuto = storage.readBool("sostenuto", settings.sostenuto);
-settings.pedal_dim = storage.readBool("pedal-dim", settings.pedal_dim);
-settings.pedal_icons = storage.readBool("pedal-icons", settings.pedal_icons);
-settings.semitones = storage.readNumber("semitones", settings.semitones);
-settings.octaves = storage.readNumber("octaves", settings.octaves);
-settings.device_name = storage.readString("device", null);
-settings.offset.x = storage.readNumber("offset-x", settings.offset.x);
-settings.offset.y = storage.readNumber("offset-y", settings.offset.y);
-// settings.zoom = storage.readNumber("zoom", settings.zoom);
+// MIDI events
+
+Midi.onKeyPress   = updateNote;
+Midi.onKeyRelease = updateNote;
+
+Midi.onControlChange = (number) => {
+    if ( number > 63 && number < 68 ) {
+        updateKeyboardKeys();
+        updatePedalIcons();
+    }
+};
+
+
+// Auxiliary functions
+
+/**
+ * @param {string} note_str 
+ * @returns {number}
+ */
+function noteToMidi(note_str) {
+    const NOTES = {
+        'c': 0, 'c#': 1, 'db': 1, 'd': 2, 'd#': 3, 'eb': 3, 'e': 4, 'fb': 4, 
+        'e#': 5, 'f': 5, 'f#': 6, 'gb': 6, 'g': 7, 'g#': 8, 'ab': 8, 'a': 9,
+        'a#': 10, 'bb': 10, 'b': 11, 'b#': 12, 'cb': -1
+    }
+    const pc = NOTES[note_str.slice(0, note_str.length-1).toLowerCase()];
+    const octave = parseInt(note_str.slice(note_str.length-1));
+    return pc + 12*(octave+1);
+}
+
+
+function clamp(value, min, max) {
+    return (value < min) ? min : ( (value > max) ? max : value );
+}
+
+
+// Initialize
+
+loadSettings();
 
 // Connect to stored device name
 if ( settings.device_name ) {
@@ -635,24 +687,21 @@ if ( settings.device_name ) {
                 }
             }
             Midi.connect(port);
-            changeLed("connection-power-icon", true);
-        }
+            updateToolbar();
+            updateKeyboard();
+        },
+        () => { updateToolbar(); }
     );
-}
-
-function clamp(value, min, max) {
-    return (value < min) ? min : ( (value > max) ? max : value );
 }
 
 await Promise.allSettled([
     customElements.whenDefined('sl-dropdown'),
     customElements.whenDefined('sl-button'),
     customElements.whenDefined('sl-button-group'),
+    customElements.whenDefined('sl-icon'),
     customElements.whenDefined('sl-menu'),
-    customElements.whenDefined('sl-menu-item'),
-    customElements.whenDefined('sl-icon')
+    customElements.whenDefined('sl-menu-item')
 ]);
 
-// Initialize
-updateMenus();
-recreateKeyboard();
+updateToolbar();
+createKeyboard();

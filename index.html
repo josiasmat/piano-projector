@@ -126,49 +126,47 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         <sl-menu-item id="menu-pedal-icons" value="pedal-icons" type="checkbox" checked>Show pedal indicators</sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
-                <sl-button-group label="Transpose">
-                    <sl-dropdown stay-open-on-select>
-                        <sl-button slot="trigger" caret>
-                            Transpose
-                            <sl-icon id="transpose-power-icon" class="led-strong" name="power" slot="prefix" label="Enable transpose"></sl-icon>
-                        </sl-button>
-                        <sl-menu>
-                            <!-- <sl-menu-item> -->
-                                <div id="transpose-controls">
-                                    <div>
-                                        <span>Semitones</span><br />
-                                        <sl-button-group label="Transpose semitones">
-                                            <sl-button id="btn-semitone-minus" pill>
-                                                <sl-icon name="dash" label="Settings"></sl-icon>
-                                            </sl-button>
-                                            <sl-input id="input-semitones" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
-                                            <sl-button id="btn-semitone-plus" pill>
-                                                <sl-icon name="plus" label="Settings"></sl-icon>
-                                            </sl-button>
-                                        </sl-button-group>
-                                    </div>
-                                    <div>
-                                        <span>Octaves</span><br />
-                                        <sl-button-group label="Transpose octaves">
-                                            <sl-button id="btn-octave-minus" pill>
-                                                <sl-icon name="dash" label="Settings"></sl-icon>
-                                            </sl-button>
-                                            <sl-input id="input-octaves" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
-                                            <sl-button id="btn-octave-plus" pill>
-                                                <sl-icon name="plus" label="Settings"></sl-icon>
-                                            </sl-button>
-                                        </sl-button-group>
-                                    </div>
+                <sl-dropdown stay-open-on-select>
+                    <sl-button id="btn-transpose" slot="trigger" caret>
+                        Transpose
+                        <sl-icon id="transpose-power-icon" class="led-strong" name="power" slot="prefix" label="Enable transpose"></sl-icon>
+                    </sl-button>
+                    <sl-menu>
+                        <!-- <sl-menu-item> -->
+                            <div id="transpose-controls">
+                                <div>
+                                    <span>Semitones</span><br />
+                                    <sl-button-group label="Transpose semitones">
+                                        <sl-button id="btn-semitone-minus" pill>
+                                            <sl-icon name="dash" label="Settings"></sl-icon>
+                                        </sl-button>
+                                        <sl-input id="input-semitones" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
+                                        <sl-button id="btn-semitone-plus" pill>
+                                            <sl-icon name="plus" label="Settings"></sl-icon>
+                                        </sl-button>
+                                    </sl-button-group>
                                 </div>
-                            <!-- </sl-menu-item> -->
-                            <sl-divider style="margin-top: 8px;"></sl-divider>
-                            <sl-menu-item id="reset-transpose" disabled>
-                                <sl-icon slot="prefix" name="arrow-counterclockwise"></sl-icon>&nbsp;
-                                Reset transposition
-                            </sl-menu-item>
-                        </sl-menu>
-                    </sl-dropdown>
-                </sl-button-group>
+                                <div>
+                                    <span>Octaves</span><br />
+                                    <sl-button-group label="Transpose octaves">
+                                        <sl-button id="btn-octave-minus" pill>
+                                            <sl-icon name="dash" label="Settings"></sl-icon>
+                                        </sl-button>
+                                        <sl-input id="input-octaves" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
+                                        <sl-button id="btn-octave-plus" pill>
+                                            <sl-icon name="plus" label="Settings"></sl-icon>
+                                        </sl-button>
+                                    </sl-button-group>
+                                </div>
+                            </div>
+                        <!-- </sl-menu-item> -->
+                        <sl-divider style="margin-top: 8px;"></sl-divider>
+                        <sl-menu-item id="reset-transpose" disabled>
+                            &nbsp;Reset transposition
+                            <sl-icon slot="prefix" name="arrow-counterclockwise"></sl-icon>
+                        </sl-menu-item>
+                    </sl-menu>
+                </sl-dropdown>
             </div>
             <div id="top-toolbar-right">
                 <sl-tooltip content="Panic!">

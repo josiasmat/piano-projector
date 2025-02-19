@@ -33,12 +33,12 @@ export const Midi = {
     onReset: null,
 
     /**
-     * Request access to MIDI instruments.
+     * Queries access to MIDI instruments.
      * @param {Function} callback_granted 
      * @param {Function} callback_denied 
      * @param {Function} callback_prompt 
      */
-    requestMidiAccess(callback_granted, callback_denied, callback_prompt) {
+    queryMidiAccess(callback_granted, callback_denied, callback_prompt) {
         navigator.permissions.query({ name: "midi", sysex: false })
         .then((perm) => {
             console.log(perm.state);
@@ -53,6 +53,15 @@ export const Midi = {
                     if ( callback_prompt ) callback_prompt();
             }
         });
+    },
+
+    /**
+     * Request access to MIDI instruments.
+     * @param {(MIDIInput[])} callback_ok
+     * @param {Function} callback_fail 
+     */
+    requestMidiAccess(callback_granted, callback_denied) {
+        navigator.requestMIDIAccess().then(callback_granted, callback_denied);
     },
 
     /**
