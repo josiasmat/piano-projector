@@ -77,7 +77,8 @@ function drawKeyboard(svg, first_key, last_key) {
     const BLACK_KEY_WIDTH = settings.height * 1.6 / 15.5;
     const BLACK_KEY_WIDTH_HALF = BLACK_KEY_WIDTH / 2;
     const KEY_ROUNDING = WHITE_KEY_WIDTH / 15;
-    const FILL_BORDER = 6;
+    const WHITE_KEY_FILL_BORDER = 4;
+    const BLACK_KEY_FILL_BORDER = 5;
     let width = 0;
 
     for ( let key = 0; key < 128; key++ )
@@ -90,11 +91,11 @@ function drawKeyboard(svg, first_key, last_key) {
     const black_keys_g = SvgTools.createGroup();
 
     function drawKey(left, width, height, round, border, attrs) {
-        const right = left + width;
+        const right = left + width - 2;
         const key = SvgTools.makePolygon(
             [
-                {x:left+border, y:border}, 
-                {x:right-border, y:border},
+                {x:left+border, y:border?1:0}, 
+                {x:right-border, y:border?1:0},
                 {x:right-border, y:height-border-round},
                 {x:right-round-border, y:height-border},
                 {x:left+border+round, y:height-border},
@@ -114,7 +115,7 @@ function drawKeyboard(svg, first_key, last_key) {
                 { class: "white-key", fill: settings.color_white, value: key }
             );
             const white_key_fill = drawKey(
-                white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, KEY_ROUNDING, FILL_BORDER,
+                white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, KEY_ROUNDING, WHITE_KEY_FILL_BORDER,
                 { id: `key${key}`, class: "white-key-fill", value: key }
             );
             white_keys_g.appendChild(white_key);
@@ -129,7 +130,7 @@ function drawKeyboard(svg, first_key, last_key) {
                 { class: "black-key", fill: settings.color_black, value: key }
             );
             const black_key_fill = drawKey(
-                black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, KEY_ROUNDING, FILL_BORDER,
+                black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, KEY_ROUNDING, BLACK_KEY_FILL_BORDER,
                 { id: `key${key}`, class: "black-key-fill", value: key }
             );
             black_keys_g.appendChild(black_key);
@@ -141,26 +142,32 @@ function drawKeyboard(svg, first_key, last_key) {
     svg.appendChild(black_keys_g);
     svg.setAttribute("viewBox", `-2 -2 ${width+4} ${WHITE_KEY_HEIGHT+4}`);
 
-    function makeGradient(id, stops_attrs) {
-        const grad = SvgTools.createElement("linearGradient", {
-            id: id, gradientTransform: "rotate(90)"
-        });
-        for ( const stop_attr of stops_attrs ) {
+    function makeGradient(id, stops, vertical=false) {
+        const grad = SvgTools.createElement("linearGradient", 
+            vertical ? { id: id, x2: "0%", y2: "100%" } : { id: id });
+        for ( const stop_attr of stops )
             grad.appendChild(SvgTools.createElement("stop", stop_attr));
-        }
         return grad;
     }
 
     const svg_defs = SvgTools.createElement("defs");
     svg_defs.appendChild(makeGradient("pressed-white-key-gradient", [
-        { offset: "0%", "stop-color": settings.color_white },
-        { offset: "30%", "stop-color": settings.color_pressed }
-    ]));
+        { offset: "0%", "stop-color": settings.color_pressed, "stop-opacity": "50%" },
+        { offset: "90%", "stop-color": settings.color_pressed }
+    ], true));
     svg_defs.appendChild(makeGradient("pressed-black-key-gradient", [
-        { offset: "0%", "stop-color": settings.color_black },
-        { offset: "25%", "stop-color": settings.color_pressed }
-    ]));
+        { offset: "0%", "stop-color": settings.color_pressed, "stop-opacity": "50%" },
+        { offset: "90%", "stop-color": settings.color_pressed },
+    ], true));
+    svg_defs.appendChild(makeGradient("key-border-gradient", [
+        { offset: "1%", "stop-color": "#000" },
+        { offset: "8%", "stop-color": "#aaa" },
+    ], false ));
     svg.appendChild(svg_defs);
+
+    svg.appendChild(SvgTools.makeLine(
+        -1, -1, width, -1, { "stroke": "#000", "stroke-width": "3px" }
+    ));
 
 }
 

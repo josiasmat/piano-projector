@@ -143,13 +143,9 @@ body {
     cursor: grab;
     transform-origin: top left;
 
-    .white-key {
-        stroke: gray;
-        stroke-width: 2px;
-    }
-
-    .black-key {
-        stroke: gray;
+    .white-key, black-key {
+        /* stroke: gray; */
+        stroke: url("#key-border-gradient");
         stroke-width: 2px;
     }
 
