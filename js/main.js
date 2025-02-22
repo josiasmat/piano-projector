@@ -16,8 +16,8 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import Midi from "./midi.js";
 import SvgTools from "./svgtools.js";
+import { Midi, noteToMidi } from "./midi.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
 
 const settings_storage = new LocalStorageHandler("piano-projector");
@@ -33,8 +33,8 @@ const settings = {
     number_of_keys: 88,
     height: 500,
     height_factor: 1,
-    color_white: "#fff",
-    color_black: "#000",
+    color_white: "#ddd",
+    color_black: "#222",
     color_pressed: "#f00",
     pedals: true,
     pedal_dim: true,
@@ -56,10 +56,9 @@ const drag_state = {
     }
 }
 
-const keys = Array(128).fill(null);
-
 const kbd_container = document.getElementById("main-area");
 const kbd = document.getElementById("kbd");
+const keys = Array(128).fill(null);
 
 
 /** 
@@ -68,17 +67,31 @@ const kbd = document.getElementById("kbd");
  * @param {number} last_key
  * @param {number} height
  */
-function drawKeyboard(svg, first_key, last_key) {
+function drawKeyboard(svg, options = {}) {
+
+    const height = options.height ?? 500;
+    const height_factor = options.height_factor ?? 1.0;
+    const first_key = options.first_key ?? noteToMidi("a0");
+    const last_key = options.last_key ?? noteToMidi("c8");
+    const colors = {
+        white_key: options.white_key_color ?? "#fff",
+        black_key: options.black_key_color ?? "#000",
+        highlight: options.highlight ?? "#f00",
+    };
+    
+
+    // } height, height_factor, first_key, last_key) {
     const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
     const BK_OFFSETS = [,-0.1,,+0.1,,,-0.1,,0,,+0.1,];
-    const WHITE_KEY_HEIGHT = settings.height * settings.height_factor;
-    const BLACK_KEY_HEIGHT = WHITE_KEY_HEIGHT * 0.6;
-    const WHITE_KEY_WIDTH = settings.height * 2.2 / 15.5;
-    const BLACK_KEY_WIDTH = settings.height * 1.6 / 15.5;
+    const WHITE_KEY_HEIGHT = height * height_factor;
+    const BLACK_KEY_HEIGHT = WHITE_KEY_HEIGHT * (0.2 * height_factor + 0.45);
+    const WHITE_KEY_WIDTH = height * 2.2 / 15.5;
+    const BLACK_KEY_WIDTH = height * 1.4 / 15.5;
     const BLACK_KEY_WIDTH_HALF = BLACK_KEY_WIDTH / 2;
-    const KEY_ROUNDING = WHITE_KEY_WIDTH / 15;
-    const WHITE_KEY_FILL_BORDER = 4;
-    const BLACK_KEY_FILL_BORDER = 5;
+    const KEY_ROUNDING = WHITE_KEY_WIDTH / 20;
+    const WHITE_KEY_HIGHLIGHT_INSET = 2;
+    const BLACK_KEY_HIGHLIGHT_INSET = 3;
+    const STROKE_WIDTH = 1.5;
     let width = 0;
 
     for ( let key = 0; key < 128; key++ )
@@ -90,111 +103,234 @@ function drawKeyboard(svg, first_key, last_key) {
     const white_keys_g = SvgTools.createGroup();
     const black_keys_g = SvgTools.createGroup();
 
-    function drawKey(left, width, height, round, border, attrs) {
-        const right = left + width - 2;
-        const key = SvgTools.makePolygon(
-            [
-                {x:left+border, y:border?1:0}, 
-                {x:right-border, y:border?1:0},
-                {x:right-border, y:height-border-round},
-                {x:right-round-border, y:height-border},
-                {x:left+border+round, y:height-border},
-                {x:left+border, y:height-border-round}
+    function drawWhiteKey(key, note, offset, width, height, round) {
+        const left = offset + STROKE_WIDTH;
+        const right = left + width - (2*STROKE_WIDTH);
+        const cut_point = BLACK_KEY_HEIGHT + (3*STROKE_WIDTH);
+
+        const black_before = key > first_key && [2,4,7,9,11].includes(note);
+        const black_after = key < last_key && [0,2,5,7,9].includes(note);
+        const left_offset = left + ( black_before 
+            ? BLACK_KEY_WIDTH_HALF + (BLACK_KEY_WIDTH * BK_OFFSETS[note-1]) + STROKE_WIDTH : 0);
+        const right_offset = right - ( black_after 
+            ? BLACK_KEY_WIDTH_HALF - (BLACK_KEY_WIDTH * BK_OFFSETS[note+1]) + STROKE_WIDTH : 0);
+
+        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "white-key" });
+
+        const key_fill = SvgTools.makePolygon([
+                {x:left_offset, y:0}, 
+                {x:right_offset, y:0},
+                black_after ? {x:right_offset, y:cut_point-round} : null,
+                black_after ? {x:right_offset+round, y:cut_point} : null,
+                black_after ? {x:right, y:cut_point} : null,
+                {x:right, y:height-round},
+                {x:right-round, y:height},
+                {x:left+round, y:height},
+                {x:left, y:height-round},
+                black_before ? {x:left, y:cut_point} : null,
+                black_before ? {x:left_offset-round, y:cut_point} : null,
+                black_before ? {x:left_offset, y:cut_point-round} : null
             ], 
-            attrs
+            { class: "key-fill", fill: colors.white_key }
         );
-        return key;
+
+        const inset = WHITE_KEY_HIGHLIGHT_INSET;
+        const key_highlight = SvgTools.makePolygon([
+                {x:left_offset+inset, y:inset}, 
+                {x:right_offset-inset, y:inset},
+                black_after ? {x:right_offset-inset, y:cut_point+inset-round} : null,
+                black_after ? {x:right_offset-inset+round, y:cut_point+inset} : null,
+                black_after ? {x:right-inset, y:cut_point+inset} : null,
+                {x:right-inset, y:height-inset-round},
+                {x:right-round-inset, y:height-inset},
+                {x:left+inset+round, y:height-inset},
+                {x:left+inset, y:height-inset-round},
+                black_before ? {x:left+inset, y:cut_point+inset} : null,
+                black_before ? {x:left_offset+inset-round, y:cut_point+inset} : null,
+                black_before ? {x:left_offset+inset, y:cut_point+inset-round} : null
+            ], 
+            { class: "key-highlight", fill: 'url("#pressed-white-key-highlight-gradient")' }
+        );
+
+        const light_array = ['M', left_offset, 0,];
+        if ( black_before ) 
+            light_array.push(
+                'V', cut_point-round,
+                'L', left_offset-round, cut_point,
+                'H', left
+            );
+        light_array.push('L', left, height-round-STROKE_WIDTH/2);
+        if ( black_after ) 
+            light_array.push(
+                'M', right, cut_point,
+                'H', right_offset+round, 
+                'L', right_offset+STROKE_WIDTH/4, cut_point-round+STROKE_WIDTH/4
+            );
+        const light_border = SvgTools.makePath(light_array, { class: "key-light-border" } );
+
+        const dark_array = [
+            'M', left, height-round,
+            'L', left+round, height,
+            'H', right-round,
+            'L', right, height-round
+        ];
+        if ( black_after ) 
+            dark_array.push(
+                'V', cut_point,
+                'M', right_offset, cut_point-round-STROKE_WIDTH/2,
+            );
+        else
+            dark_array.push('V', 0);
+        dark_array.push('L', right_offset, 0);
+        const dark_border = SvgTools.makePath(dark_array, { class: "key-dark-border" } );
+
+        key_group.appendChild(key_fill);
+        key_group.appendChild(dark_border);
+        key_group.appendChild(light_border);
+        key_group.appendChild(key_highlight);
+        return key_group;
+    }
+
+    function drawBlackKey(key, note, offset, width, height, round, attrs) {
+        const left = offset + STROKE_WIDTH;
+        const right = left + width - (2*STROKE_WIDTH);
+        // Black keys
+        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "black-key" });
+        const key_fill = SvgTools.makePolygon(
+            [
+                {x:left, y:0}, 
+                {x:right, y:0},
+                {x:right, y:height-round},
+                {x:right-round, y:height},
+                {x:left+round, y:height},
+                {x:left, y:height-round}
+            ], 
+            { class: "key-base", fill: colors.black_key }
+        );
+        const inset = BLACK_KEY_HIGHLIGHT_INSET;
+        const key_highlight = SvgTools.makePolygon(
+            [
+                {x:left+inset, y:inset}, 
+                {x:right-inset, y:inset},
+                {x:right-inset, y:height-inset-round},
+                {x:right-round-inset, y:height-inset},
+                {x:left+inset+round, y:height-inset},
+                {x:left+inset, y:height-inset-round}
+            ], 
+            { class: "key-highlight", fill: 'url("#pressed-black-key-highlight-gradient")'}
+        );
+        key_group.appendChild(key_fill);
+        key_group.appendChild(key_highlight);
+        return key_group;
     }
 
     let white_left = 0;
     for ( let key = first_key; key <= last_key; key++ ) {
         const note = key % 12;
+
         if ( WHITE_NOTE[note] ) {
-            const white_key = drawKey(
-                white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, KEY_ROUNDING, 0,
-                { class: "white-key", fill: settings.color_white, value: key }
-            );
-            const white_key_fill = drawKey(
-                white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, KEY_ROUNDING, WHITE_KEY_FILL_BORDER,
-                { id: `key${key}`, class: "white-key-fill", value: key }
+
+            const white_key = drawWhiteKey(key, note,
+                white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, KEY_ROUNDING
             );
             white_keys_g.appendChild(white_key);
-            white_keys_g.appendChild(white_key_fill);
-            keys[key] = white_key_fill;
+            keys[key] = white_key;
             width += WHITE_KEY_WIDTH;
             white_left += WHITE_KEY_WIDTH;
+
         } else {
+
             const black_left = white_left - BLACK_KEY_WIDTH_HALF + (BK_OFFSETS[note]*BLACK_KEY_WIDTH);
-            const black_key = drawKey(
-                black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, KEY_ROUNDING, 0,
-                { class: "black-key", fill: settings.color_black, value: key }
+            const black_key = drawBlackKey(key, note,
+                black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, KEY_ROUNDING
             );
-            const black_key_fill = drawKey(
-                black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, KEY_ROUNDING, BLACK_KEY_FILL_BORDER,
-                { id: `key${key}`, class: "black-key-fill", value: key }
-            );
+            keys[key] = black_key;
             black_keys_g.appendChild(black_key);
-            black_keys_g.appendChild(black_key_fill);
-            keys[key] = black_key_fill;
+
         }
     }
     svg.appendChild(white_keys_g);
+    svg.appendChild(SvgTools.makeLine(0, 0, width, 0, { id: "top-rope" }));
     svg.appendChild(black_keys_g);
-    svg.setAttribute("viewBox", `-2 -2 ${width+4} ${WHITE_KEY_HEIGHT+4}`);
+    svg.setAttribute("viewBox", `-2 -2 ${width+(2*STROKE_WIDTH)} ${(WHITE_KEY_HEIGHT)+(2*STROKE_WIDTH)}`);
 
-    function makeGradient(id, stops, vertical=false) {
+    function makeGradient(id, stops, vertical=false, attrs={}) {
         const grad = SvgTools.createElement("linearGradient", 
             vertical ? { id: id, x2: "0%", y2: "100%" } : { id: id });
         for ( const stop_attr of stops )
             grad.appendChild(SvgTools.createElement("stop", stop_attr));
+        for ( const [k,v] of Object.entries(attrs) )
+            grad.setAttribute(k, v);
         return grad;
     }
 
     const svg_defs = SvgTools.createElement("defs");
-    svg_defs.appendChild(makeGradient("pressed-white-key-gradient", [
-        { offset: "0%", "stop-color": settings.color_pressed, "stop-opacity": "50%" },
-        { offset: "90%", "stop-color": settings.color_pressed }
+    svg_defs.appendChild(makeGradient("pressed-white-key-highlight-gradient", [
+        { offset: "0%", "stop-color": colors.highlight, "stop-opacity": "50%" },
+        { offset: "60%", "stop-color": colors.highlight }
     ], true));
-    svg_defs.appendChild(makeGradient("pressed-black-key-gradient", [
-        { offset: "0%", "stop-color": settings.color_pressed, "stop-opacity": "50%" },
-        { offset: "90%", "stop-color": settings.color_pressed },
+    svg_defs.appendChild(makeGradient("pressed-black-key-highlight-gradient", [
+        { offset: "0%", "stop-color": colors.highlight, "stop-opacity": "50%" },
+        { offset: "80%", "stop-color": colors.highlight }
     ], true));
     svg_defs.appendChild(makeGradient("key-border-gradient", [
-        { offset: "1%", "stop-color": "#000" },
-        { offset: "8%", "stop-color": "#aaa" },
-    ], false ));
+        { offset: "69%", "stop-color": "#aaa" },
+        { offset: "71%", "stop-color": "#555" }
+    ], false, { gradientTransform: "rotate(45)"} ));
     svg.appendChild(svg_defs);
-
-    svg.appendChild(SvgTools.makeLine(
-        -1, -1, width, -1, { "stroke": "#000", "stroke-width": "3px" }
-    ));
 
 }
 
 
 function createKeyboard() {
+    const options = {
+        height_factor: settings.height_factor,
+        white_key_color: settings.color_white,
+        black_key_color: settings.color_black,
+        highlight: settings.color_pressed
+    };
     switch ( settings.number_of_keys ) {
         case 88:
-            drawKeyboard(kbd, noteToMidi("a0"), noteToMidi("c8"));
+            options.first_key = noteToMidi("a0");
+            options.last_key = noteToMidi("c8");
             break;
         case 61:
-            drawKeyboard(kbd, noteToMidi("c2"), noteToMidi("c7"));
+            options.first_key = noteToMidi("c2");
+            options.last_key = noteToMidi("c7");
             break;
         case 49:
-            drawKeyboard(kbd, noteToMidi("c2"), noteToMidi("c6"));
+            options.first_key = noteToMidi("c2");
+            options.last_key = noteToMidi("c6");
             break;
         case 37:
-            drawKeyboard(kbd, noteToMidi("c3"), noteToMidi("c6"));
+            options.first_key = noteToMidi("c3");
+            options.last_key = noteToMidi("c6");
             break;
         case 25:
-            drawKeyboard(kbd, noteToMidi("c3"), noteToMidi("c5"));
+            options.first_key = noteToMidi("c3");
+            options.last_key = noteToMidi("c5");
             break;
         default:
-            const ln = noteToMidi("e4") - Math.trunc(settings.number_of_keys / 2);
-            const hn = noteToMidi("e4") + Math.ceil(settings.number_of_keys / 2) - 1;
-            drawKeyboard(kbd, ln, hn, height);
+            options.first_key = noteToMidi("e4") - Math.trunc(settings.number_of_keys / 2);
+            options.last_key = noteToMidi("e4") + Math.ceil(settings.number_of_keys / 2) - 1;
     }
+    drawKeyboard(kbd, options);
     updateKeyboard();
+}
+
+
+function updateKeyboardKeys(first_key=0, last_key=127) {
+    for ( let i = first_key; i <= last_key; i++ ) {
+        const key = keys[i];
+        if ( key ) {
+            const j = i-settings.transpose;
+            const note_on = Midi.isNoteOn(j, (settings.pedals ? "both" : "none"));
+            const key_pressed = Midi.isKeyPressed(j);
+            key.classList.toggle("active", note_on);
+            key.classList.toggle("pressed", key_pressed);
+            key.classList.toggle("dim", settings.pedal_dim && note_on && (!key_pressed));
+        }
+    }
 }
 
 
@@ -274,26 +410,6 @@ function updateKeyboardPosition() {
     // compute horizontal position
     const px = (kbd_rect.width - cnt_rect.width) * settings.offset.x;
     kbd_container.scroll(px, 0);
-}
-
-
-function updateKeyboardKeys(first_key=0, last_key=127) {
-    for ( let i = first_key; i <= last_key; i++ ) {
-        const key = keys[i];
-        if ( key ) {
-            const j = i-settings.transpose;
-            if ( Midi.isNoteOn(j, (settings.pedals ? "both" : "none")) ) {
-                key.classList.add(["active"]);
-                if ( !Midi.isKeyPressed(j) && settings.pedal_dim )
-                    key.classList.add(["dim"]);
-                else
-                    key.classList.remove(["dim"]);
-            } else {
-                key.classList.remove(["active"]);
-                key.classList.remove(["dim"]);
-            }
-        }
-    }
 }
 
 
@@ -592,7 +708,7 @@ kbd.addEventListener("pointermove", (e) => {
 kbd.addEventListener("wheel", (e) => {
     if ( !drag_state.dragging && !e.ctrlKey ) {
         const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
-        const new_zoom = Math.max(1.0, settings.zoom + (e.wheelDeltaY/1000));
+        let new_zoom = Math.max(1.0, settings.zoom + (e.wheelDeltaY/1000));
         if ( new_zoom > max_zoom ) new_zoom = max_zoom;
         if ( settings.zoom != new_zoom ) {
             settings.zoom = new_zoom;
@@ -619,22 +735,6 @@ Midi.onControlChange = (number) => {
 
 
 // Auxiliary functions
-
-/**
- * @param {string} note_str 
- * @returns {number}
- */
-function noteToMidi(note_str) {
-    const NOTES = {
-        'c': 0, 'c#': 1, 'db': 1, 'd': 2, 'd#': 3, 'eb': 3, 'e': 4, 'fb': 4, 
-        'e#': 5, 'f': 5, 'f#': 6, 'gb': 6, 'g': 7, 'g#': 8, 'ab': 8, 'a': 9,
-        'a#': 10, 'bb': 10, 'b': 11, 'b#': 12, 'cb': -1
-    }
-    const pc = NOTES[note_str.slice(0, note_str.length-1).toLowerCase()];
-    const octave = parseInt(note_str.slice(note_str.length-1));
-    return pc + 12*(octave+1);
-}
-
 
 function clamp(value, min, max) {
     return (value < min) ? min : ( (value > max) ? max : value );
