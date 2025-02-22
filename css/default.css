@@ -143,18 +143,12 @@ body {
     cursor: grab;
     transform-origin: top left;
 
-    #top-rope {
-        stroke: #000;
-        stroke-width: 1.5px;
+    #top-felt {
+        fill: url("#top-felt-gradient");
     }
 
     .white-key, .black-key {
         transform-origin: center top 0px;
-
-        .key-base {
-            stroke: url("#key-border-gradient");
-            stroke-width: 1.5px;
-        }
 
         .key-light-border, .key-dark-border {
             fill: none;
@@ -163,26 +157,28 @@ body {
         }
 
         .key-light-border {
-            stroke: #aaa;
+            stroke: #888;
         }        
 
         .key-dark-border {
             stroke: #555;
         }
 
-        &:not(.active) {
-            .key-highlight {
-                visibility: hidden;
-                opacity: 0%;
-                transition-property: visibility, opacity;
-                transition-duration: 0.05s;
-                transition-timing-function: ease-out;
-            }
+        .key-highlight {
+            will-change: opacity;
+        }
+
+        &:not(.active) .key-highlight {
+            /* visibility: hidden; */
+            opacity: 0%;
+            transition-property: opacity;
+            transition-duration: 0.05s;
+            transition-timing-function: ease-out;
         }
 
         &.active {
             .key-highlight {
-                visibility: visible;
+                /* visibility: visible; */
                 opacity: 100%;
             }
             &.dim .key-highlight {

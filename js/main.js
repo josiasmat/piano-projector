@@ -33,7 +33,7 @@ const settings = {
     number_of_keys: 88,
     height: 500,
     height_factor: 1,
-    color_white: "#ddd",
+    color_white: "#eee",
     color_black: "#222",
     color_pressed: "#f00",
     pedals: true,
@@ -43,7 +43,9 @@ const settings = {
     octaves: 0,
     get transpose() {
         return this.semitones + (this.octaves*12);
-    }
+    },
+    top_felt: true,
+    top_bar: true,
 }
 
 const drag_state = {
@@ -78,7 +80,6 @@ function drawKeyboard(svg, options = {}) {
         black_key: options.black_key_color ?? "#000",
         highlight: options.highlight ?? "#f00",
     };
-    
 
     // } height, height_factor, first_key, last_key) {
     const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
@@ -90,7 +91,7 @@ function drawKeyboard(svg, options = {}) {
     const BLACK_KEY_WIDTH_HALF = BLACK_KEY_WIDTH / 2;
     const KEY_ROUNDING = WHITE_KEY_WIDTH / 20;
     const WHITE_KEY_HIGHLIGHT_INSET = 2;
-    const BLACK_KEY_HIGHLIGHT_INSET = 3;
+    const BLACK_KEY_HIGHLIGHT_INSET = 2;
     const STROKE_WIDTH = 1.5;
     let width = 0;
 
@@ -152,7 +153,7 @@ function drawKeyboard(svg, options = {}) {
             { class: "key-highlight", fill: 'url("#pressed-white-key-highlight-gradient")' }
         );
 
-        const light_array = ['M', left_offset, 0,];
+        const light_array = ['M', left_offset, STROKE_WIDTH/2,];
         if ( black_before ) 
             light_array.push(
                 'V', cut_point-round,
@@ -177,25 +178,24 @@ function drawKeyboard(svg, options = {}) {
         if ( black_after ) 
             dark_array.push(
                 'V', cut_point,
-                'M', right_offset, cut_point-round-STROKE_WIDTH/2,
+                'M', right_offset, cut_point-round,
             );
-        else
-            dark_array.push('V', 0);
-        dark_array.push('L', right_offset, 0);
+        dark_array.push('V', STROKE_WIDTH/2);
         const dark_border = SvgTools.makePath(dark_array, { class: "key-dark-border" } );
 
         key_group.appendChild(key_fill);
+        key_group.appendChild(key_highlight);
         key_group.appendChild(dark_border);
         key_group.appendChild(light_border);
-        key_group.appendChild(key_highlight);
         return key_group;
     }
 
-    function drawBlackKey(key, note, offset, width, height, round, attrs) {
+    function drawBlackKey(key, offset, width, height, round) {
         const left = offset + STROKE_WIDTH;
         const right = left + width - (2*STROKE_WIDTH);
-        // Black keys
+
         const key_group = SvgTools.createGroup({ id: `key${key}`, class: "black-key" });
+
         const key_fill = SvgTools.makePolygon(
             [
                 {x:left, y:0}, 
@@ -205,8 +205,9 @@ function drawKeyboard(svg, options = {}) {
                 {x:left+round, y:height},
                 {x:left, y:height-round}
             ], 
-            { class: "key-base", fill: colors.black_key }
+            { class: "key-fill", fill: colors.black_key }
         );
+
         const inset = BLACK_KEY_HIGHLIGHT_INSET;
         const key_highlight = SvgTools.makePolygon(
             [
@@ -219,8 +220,25 @@ function drawKeyboard(svg, options = {}) {
             ], 
             { class: "key-highlight", fill: 'url("#pressed-black-key-highlight-gradient")'}
         );
+
+        const light_border = SvgTools.makePath([
+            'M', right, 0, 
+            'H', left,
+            'V', height-round-STROKE_WIDTH/2
+        ], { class: "key-light-border" });
+
+        const dark_border = SvgTools.makePath([
+            'M', right, 0, 
+            'V', height-round,
+            'L', right-round, height,
+            'H', left+round,
+            'L', left, height-round
+        ], { class: "key-dark-border" });
+
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
+        key_group.appendChild(dark_border);
+        key_group.appendChild(light_border);
         return key_group;
     }
 
@@ -229,7 +247,6 @@ function drawKeyboard(svg, options = {}) {
         const note = key % 12;
 
         if ( WHITE_NOTE[note] ) {
-
             const white_key = drawWhiteKey(key, note,
                 white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, KEY_ROUNDING
             );
@@ -237,22 +254,20 @@ function drawKeyboard(svg, options = {}) {
             keys[key] = white_key;
             width += WHITE_KEY_WIDTH;
             white_left += WHITE_KEY_WIDTH;
-
         } else {
-
             const black_left = white_left - BLACK_KEY_WIDTH_HALF + (BK_OFFSETS[note]*BLACK_KEY_WIDTH);
-            const black_key = drawBlackKey(key, note,
+            const black_key = drawBlackKey(key,
                 black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, KEY_ROUNDING
             );
             keys[key] = black_key;
             black_keys_g.appendChild(black_key);
-
         }
     }
     svg.appendChild(white_keys_g);
-    svg.appendChild(SvgTools.makeLine(0, 0, width, 0, { id: "top-rope" }));
+    if ( options.top_felt )
+        svg.appendChild(SvgTools.makeRect(width, 6, 0, -3, null, null, { id: "top-felt" }));
     svg.appendChild(black_keys_g);
-    svg.setAttribute("viewBox", `-2 -2 ${width+(2*STROKE_WIDTH)} ${(WHITE_KEY_HEIGHT)+(2*STROKE_WIDTH)}`);
+    svg.setAttribute("viewBox", `-2 -3 ${width+(2*STROKE_WIDTH)} ${(WHITE_KEY_HEIGHT)+(2*STROKE_WIDTH)}`);
 
     function makeGradient(id, stops, vertical=false, attrs={}) {
         const grad = SvgTools.createElement("linearGradient", 
@@ -267,16 +282,19 @@ function drawKeyboard(svg, options = {}) {
     const svg_defs = SvgTools.createElement("defs");
     svg_defs.appendChild(makeGradient("pressed-white-key-highlight-gradient", [
         { offset: "0%", "stop-color": colors.highlight, "stop-opacity": "50%" },
-        { offset: "60%", "stop-color": colors.highlight }
+        { offset: "40%", "stop-color": colors.highlight }
     ], true));
     svg_defs.appendChild(makeGradient("pressed-black-key-highlight-gradient", [
         { offset: "0%", "stop-color": colors.highlight, "stop-opacity": "50%" },
-        { offset: "80%", "stop-color": colors.highlight }
+        { offset: "50%", "stop-color": colors.highlight }
     ], true));
-    svg_defs.appendChild(makeGradient("key-border-gradient", [
-        { offset: "69%", "stop-color": "#aaa" },
-        { offset: "71%", "stop-color": "#555" }
-    ], false, { gradientTransform: "rotate(45)"} ));
+
+    if ( options.top_felt )
+        svg_defs.appendChild(makeGradient("top-felt-gradient", [
+            { offset: "50%", "stop-color": "#920" },
+            { offset: "100%", "stop-color": "#610", "stop-opacity": "60%" }
+        ], true));
+
     svg.appendChild(svg_defs);
 
 }
@@ -287,7 +305,8 @@ function createKeyboard() {
         height_factor: settings.height_factor,
         white_key_color: settings.color_white,
         black_key_color: settings.color_black,
-        highlight: settings.color_pressed
+        highlight: settings.color_pressed,
+        top_felt: settings.top_felt
     };
     switch ( settings.number_of_keys ) {
         case 88:
@@ -372,6 +391,7 @@ function updateColorsMenu() {
     document.getElementById("color-white").value = settings.color_white;
     document.getElementById("color-black").value = settings.color_black;
     document.getElementById("color-pressed").value = settings.color_pressed;
+    document.getElementById("menu-top-felt").checked = settings.top_felt;
 }
 
 
@@ -426,6 +446,20 @@ function updateNote(note) {
 }
 
 
+function toggleTopBar() {
+    settings.top_bar = !settings.top_bar;
+    document.getElementById("top-toolbar").style.display =
+        ( settings.top_bar ) ? "flex" : "none";
+}
+
+
+function midiPanic() {
+    Midi.reset();
+    createKeyboard();
+    updatePedalIcons();
+}
+
+
 function writeSettings() {
     settings_storage.writeString("color-white", settings.color_white);
     settings_storage.writeString("color-black", settings.color_black);
@@ -443,6 +477,7 @@ function writeSettings() {
         settings_storage.remove("device");
     session_storage.writeNumber("semitones", settings.semitones);
     session_storage.writeNumber("octaves", settings.octaves);
+    settings_storage.writeBool("top-felt", settings.top_felt);
 }
 
 
@@ -460,6 +495,7 @@ function loadSettings() {
     settings.device_name = settings_storage.readString("device", null);
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
+    settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
 }
 
 
@@ -580,6 +616,12 @@ document.getElementById("menu-size").addEventListener("sl-select", (e) => {
     writeSettings();
 });
 
+document.getElementById("menu-top-felt").addEventListener("click", (e) => {
+    settings.top_felt = !settings.top_felt;
+    createKeyboard();
+    writeSettings();
+});
+
 document.getElementById("color-white").addEventListener("sl-change", (e) => {
     settings.color_white = e.target.value;
     createKeyboard();
@@ -648,11 +690,9 @@ document.getElementById("reset-transpose").addEventListener("click", () => {
     writeSettings();
 });
 
-document.getElementById("btn-panic").addEventListener("click", () => {
-    Midi.reset();
-    createKeyboard();
-    updatePedalIcons();
-});
+document.getElementById("btn-panic").addEventListener("click", midiPanic);
+
+document.getElementById("btn-hide-toolbar").addEventListener("click", toggleTopBar);
 
 document.getElementById("toolbar-title").addEventListener("click", () => {
     document.getElementById("dialog-about").show();
@@ -734,6 +774,33 @@ Midi.onControlChange = (number) => {
 };
 
 
+// Keyboard events
+
+function handleKeyboardShortcut(ev) {
+    if ( ev.repeating ) return;
+    let comb = [];
+    if ( ev.ctrlKey  ) comb.push("ctrl");
+    if ( ev.altKey   ) comb.push("alt");
+    if ( ev.shiftKey ) comb.push("shift");
+    comb.push(ev.key.toLowerCase());
+    const k = comb.join("+");
+    switch ( k ) {
+        case "f9":
+            ev.preventDefault();
+            toggleTopBar();
+            break;
+        case "escape":
+            ev.preventDefault();
+            midiPanic();
+            break;
+    }
+}
+
+function enableKeyboardShortcuts() {
+    window.addEventListener("keydown", handleKeyboardShortcut);
+}
+
+
 // Auxiliary functions
 
 function clamp(value, min, max) {
@@ -756,6 +823,7 @@ await Promise.allSettled([
 
 updateToolbar();
 createKeyboard();
+enableKeyboardShortcuts();
 
 // Connect to stored device name
 if ( settings.device_name ) {
