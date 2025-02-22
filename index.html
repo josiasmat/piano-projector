@@ -61,25 +61,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     <sl-button slot="trigger" caret>Colors</sl-button>
                     <sl-menu>
                         <sl-menu-item>
-                            White keys
-                            <sl-menu slot="submenu">
-                                <sl-color-picker id="color-white" no-format-toggle inline value="#fff" 
-                                    swatches="#fff; #ddd; #bbb; #999; #666; #444; #222; #000;"
-                                    label="Unpressed white key color">
-                                </sl-color-picker>
-                            </sl-menu>
-                        </sl-menu-item>
-                        <sl-menu-item>
-                            Black keys
-                            <sl-menu slot="submenu">
-                                <sl-color-picker id="color-black" no-format-toggle inline value="#000" 
-                                    swatches="#fff; #ddd; #bbb; #999; #666; #444; #222; #000;"
-                                    label="Unpressed black key color">
-                                </sl-color-picker>
-                            </sl-menu>
-                        </sl-menu-item>
-                        <sl-menu-item>
-                            Pressed keys
+                            Highlight color
                             <sl-menu slot="submenu">
                                 <sl-color-picker id="color-pressed" no-format-toggle inline value="#f00" 
                                     swatches="#f00; #f70; #ff0; #0f0; #0ff; #00f; #70f; #f0f;
@@ -87,6 +69,28 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                                     label="Pressed key color">
                                 </sl-color-picker>
                             </sl-menu>
+                        </sl-menu-item>
+                        <sl-menu-item>
+                            White key color
+                            <sl-menu slot="submenu">
+                                <sl-color-picker id="color-white" no-format-toggle inline value="#fff" 
+                                    swatches="#fff; #eee; #ddd; #bbb; #444; #222; #111; #000;"
+                                    label="Unpressed white key color">
+                                </sl-color-picker>
+                            </sl-menu>
+                        </sl-menu-item>
+                        <sl-menu-item>
+                            Black key color
+                            <sl-menu slot="submenu">
+                                <sl-color-picker id="color-black" no-format-toggle inline value="#000" 
+                                    swatches="#fff; #eee; #ddd; #bbb; #444; #222; #111; #000;"
+                                    label="Unpressed black key color">
+                                </sl-color-picker>
+                            </sl-menu>
+                        </sl-menu-item>
+                        <sl-divider></sl-divider>
+                        <sl-menu-item id="menu-top-felt" type="checkbox" checked>
+                            Show red felt
                         </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
@@ -168,9 +172,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 </sl-dropdown>
             </div>
             <div id="top-toolbar-right">
-                <sl-tooltip content="Panic!">
+                <sl-tooltip content="Panic! (ESC)">
                     <sl-button id="btn-panic">
                         <sl-icon name="exclamation-diamond" label="Panic"></sl-icon>
+                    </sl-button>
+                </sl-tooltip>
+                <sl-tooltip content="Hide toolbar (F9)">
+                    <sl-button id="btn-hide-toolbar">
+                        <sl-icon name="chevron-up" label="Hide toolbar"></sl-icon>
                     </sl-button>
                 </sl-tooltip>
             </div>
