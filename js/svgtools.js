@@ -124,7 +124,7 @@ export const SvgTools = {
         let d = ['M', points[0].x, points[0].y];
         if ( count > 1 ) {
             for ( let i = 1; i < count; i++ )
-                d.push('L', points[i].x, points[i].y);
+                if ( points[i] ) d.push('L', points[i].x, points[i].y);
             if ( count > 2 ) d.push('Z');
             polygon.setAttribute("d", d.join(' '));
         }
