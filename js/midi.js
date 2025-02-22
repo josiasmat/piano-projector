@@ -60,7 +60,8 @@ export const Midi = {
      * @param {Function} callback_fail 
      */
     requestMidiAccess(callback_granted, callback_denied) {
-        navigator.requestMIDIAccess().then(callback_granted, callback_denied);
+        navigator.requestMIDIAccess({sysex: false})
+        .then(callback_granted, callback_denied);
     },
 
     /**
@@ -70,7 +71,8 @@ export const Midi = {
      * @param {Function} callback_fail 
      */
     requestInputPortList(callback_ok, callback_fail) {
-        navigator.requestMIDIAccess().then((access) => {
+        navigator.requestMIDIAccess({sysex: false})
+        .then((access) => {
             const ports = [];
             if ( access.inputs.size > 0 ) {
                 for ( const port of access.inputs.values() )
