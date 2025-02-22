@@ -301,4 +301,20 @@ function midiPanic() {
 }
 
 
+/**
+ * @param {string} note_str 
+ * @returns {number}
+ */
+export function noteToMidi(note_str) {
+    const NOTES = {
+        'c': 0, 'c#': 1, 'db': 1, 'd': 2, 'd#': 3, 'eb': 3, 'e': 4, 'fb': 4, 
+        'e#': 5, 'f': 5, 'f#': 6, 'gb': 6, 'g': 7, 'g#': 8, 'ab': 8, 'a': 9,
+        'a#': 10, 'bb': 10, 'b': 11, 'b#': 12, 'cb': -1
+    }
+    const pc = NOTES[note_str.slice(0, note_str.length-1).toLowerCase()];
+    const octave = parseInt(note_str.slice(note_str.length-1));
+    return pc + 12*(octave+1);
+}
+
+
 export default Midi;
