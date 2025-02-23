@@ -32,26 +32,35 @@ export const Midi = {
 
     onReset: null,
 
+    get browserHasMidiSupport() {
+        return !!navigator.requestMIDIAccess;
+    },
+
     /**
      * Queries access to MIDI instruments.
      * @param {Function} callback_granted 
      * @param {Function} callback_denied 
      * @param {Function} callback_prompt 
      */
-    queryMidiAccess(callback_granted, callback_denied, callback_prompt) {
+    queryMidiAccess(callback_granted, callback_denied, callback_prompt, callback_unavailable) {
+        if ( !this.browserHasMidiSupport ) {
+            if ( callback_unavailable ) callback_unavailable();
+            return false;
+        }
         navigator.permissions.query({ name: "midi", sysex: false })
         .then((perm) => {
             switch ( perm.state ) {
                 case "granted":
                     if ( callback_granted ) callback_granted();
                     break;
-                case "denied":
-                    if ( callback_denied ) callback_denied();
+                case "prompt":
+                    if ( callback_denied ) callback_prompt();
                     break;
                 default:
-                    if ( callback_prompt ) callback_prompt();
+                    if ( callback_prompt ) callback_denied();
             }
         });
+        return true;
     },
 
     /**

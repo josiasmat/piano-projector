@@ -33,9 +33,25 @@ const settings = {
     number_of_keys: 88,
     height: 500,
     height_factor: 1,
-    color_white: "#eee",
-    color_black: "#222",
-    color_pressed: "#f00",
+    get color_white() {
+        return getComputedStyle(document.documentElement, "root").getPropertyValue("--color-white-key");
+    },
+    set color_white(value) {
+        document.documentElement.style.setProperty('--color-white-key', value);
+    },
+    // color_white: "#eee",
+    get color_black() {
+        return getComputedStyle(document.documentElement, "root").getPropertyValue("--color-black-key");
+    },
+    set color_black(value) {
+        document.documentElement.style.setProperty('--color-black-key', value);
+    },
+    get color_pressed() {
+        return getComputedStyle(document.documentElement, "root").getPropertyValue("--color-highlight");
+    },
+    set color_pressed(value) {
+        document.documentElement.style.setProperty('--color-highlight', value);
+    },
     pedals: true,
     pedal_dim: true,
     pedal_icons: true,
@@ -75,11 +91,6 @@ function drawKeyboard(svg, options = {}) {
     const height_factor = options.height_factor ?? 1.0;
     const first_key = options.first_key ?? noteToMidi("a0");
     const last_key = options.last_key ?? noteToMidi("c8");
-    const colors = {
-        white_key: options.white_key_color ?? "#fff",
-        black_key: options.black_key_color ?? "#000",
-        highlight: options.highlight ?? "#f00",
-    };
 
     // } height, height_factor, first_key, last_key) {
     const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
@@ -132,7 +143,7 @@ function drawKeyboard(svg, options = {}) {
                 black_before ? {x:left_offset-round, y:cut_point} : null,
                 black_before ? {x:left_offset, y:cut_point-round} : null
             ], 
-            { class: "key-fill", fill: colors.white_key }
+            { class: "key-fill", fill: "var(--color-white-key)" }
         );
 
         const inset = WHITE_KEY_HIGHLIGHT_INSET;
@@ -205,7 +216,7 @@ function drawKeyboard(svg, options = {}) {
                 {x:left+round, y:height},
                 {x:left, y:height-round}
             ], 
-            { class: "key-fill", fill: colors.black_key }
+            { class: "key-fill", fill: "var(--color-black-key)" }
         );
 
         const inset = BLACK_KEY_HIGHLIGHT_INSET;
@@ -281,12 +292,12 @@ function drawKeyboard(svg, options = {}) {
 
     const svg_defs = SvgTools.createElement("defs");
     svg_defs.appendChild(makeGradient("pressed-white-key-highlight-gradient", [
-        { offset: "0%", "stop-color": colors.highlight, "stop-opacity": "50%" },
-        { offset: "40%", "stop-color": colors.highlight }
+        { offset: "0%", "stop-color": "var(--color-highlight)", "stop-opacity": "50%" },
+        { offset: "40%", "stop-color": "var(--color-highlight)" }
     ], true));
     svg_defs.appendChild(makeGradient("pressed-black-key-highlight-gradient", [
-        { offset: "0%", "stop-color": colors.highlight, "stop-opacity": "50%" },
-        { offset: "50%", "stop-color": colors.highlight }
+        { offset: "0%", "stop-color": "var(--color-highlight)", "stop-opacity": "50%" },
+        { offset: "50%", "stop-color": "var(--color-highlight)" }
     ], true));
 
     if ( options.top_felt )
@@ -303,9 +314,6 @@ function drawKeyboard(svg, options = {}) {
 function createKeyboard() {
     const options = {
         height_factor: settings.height_factor,
-        white_key_color: settings.color_white,
-        black_key_color: settings.color_black,
-        highlight: settings.color_pressed,
         top_felt: settings.top_felt
     };
     switch ( settings.number_of_keys ) {
@@ -448,8 +456,10 @@ function updateNote(note) {
 
 function toggleTopBar() {
     settings.top_bar = !settings.top_bar;
-    document.getElementById("top-toolbar").style.display =
-        ( settings.top_bar ) ? "flex" : "none";
+    document.getElementById("top-toolbar").toggleAttribute("hidden");
+    document.getElementById("btn-show-toolbar").toggleAttribute("hidden");
+    // document.getElementById("top-toolbar").style.display =
+    //     ( settings.top_bar ) ? "flex" : "none";
 }
 
 
@@ -457,6 +467,35 @@ function midiPanic() {
     Midi.reset();
     createKeyboard();
     updatePedalIcons();
+}
+
+/**
+ * Sets transposition parameters.
+ * @param {Object} params - An object accepting the following properties:
+ *     - _reset_ (boolean) - Reset transposition;
+ *     - _set_ (boolean) - Set values instead of adding/subtracting;
+ *     - _semitones_ - Number of semitones;
+ *     - _octaves_ - Number of octaves. 
+ */
+function transpose(params={}) {
+    if ( params.reset ) {
+        settings.semitones = 0;
+        settings.octaves = 0;
+    }
+    if ( params.set ) {
+        if ( Object.hasOwn(params, "semitones") )
+            settings.semitones = params.semitones;
+        if ( Object.hasOwn(params, "octaves") )
+            settings.octaves = params.octaves;
+    } else {
+        if ( Object.hasOwn(params, "semitones") )
+            settings.semitones += params.semitones;
+        if ( Object.hasOwn(params, "octaves") )
+            settings.octaves += params.octaves;
+    }
+    updateTransposeMenuAndButton();
+    updateKeyboardKeys();
+    writeSettings();
 }
 
 
@@ -516,6 +555,19 @@ function changeLed(id, state, color=null) {
 document.getElementById("midi-connect-button").addEventListener("click", () => {
     const menu = document.getElementById("midi-connection-menu");
     menu.innerHTML = "";
+
+    if ( !Midi.browserHasMidiSupport ) {
+        const msg = document.createElement("div");
+        msg.classList.add("menu-msg");
+        msg.innerHTML = 
+            "Your browser does not support the Web MIDI API.<br />" +
+            "Try updating your browser or switching<br />" +
+            "to <a href=\"https://www.mozilla.org/firefox/\" target=\"_blank\">Mozilla Firefox</a> " +
+            "or <a href=\"https://www.google.com/chrome/\" target=\"_blank\">Google Chrome</a>.";
+        menu.appendChild(msg);
+        changeLed("connection-power-icon", false);
+        return;
+    }
 
     function doOnAccessDenied() {
         const menu_item = document.createElement("sl-menu-item");
@@ -624,19 +676,16 @@ document.getElementById("menu-top-felt").addEventListener("click", (e) => {
 
 document.getElementById("color-white").addEventListener("sl-change", (e) => {
     settings.color_white = e.target.value;
-    createKeyboard();
     writeSettings();
 });
 
 document.getElementById("color-black").addEventListener("sl-change", (e) => {
     settings.color_black = e.target.value;
-    createKeyboard();
     writeSettings();
 });
 
 document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
     settings.color_pressed = e.target.value;
-    createKeyboard();
     writeSettings();
 });
 
@@ -655,44 +704,28 @@ document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
 });
 
 document.getElementById("btn-semitone-plus").addEventListener("click", () => {
-    settings.semitones += 1;
-    updateTransposeMenuAndButton();
-    updateKeyboardKeys();
-    writeSettings();
+    transpose({ semitones: +1 });
 });
 
 document.getElementById("btn-semitone-minus").addEventListener("click", () => {
-    settings.semitones -= 1;
-    updateTransposeMenuAndButton();
-    updateKeyboardKeys();
-    writeSettings();
+    transpose({ semitones: -1 });
 });
 
 document.getElementById("btn-octave-plus").addEventListener("click", () => {
-    settings.octaves += 1;
-    updateTransposeMenuAndButton();
-    updateKeyboardKeys();
-    writeSettings();
+    transpose({ octaves: +1 });
 });
 
 document.getElementById("btn-octave-minus").addEventListener("click", () => {
-    settings.octaves -= 1;
-    updateTransposeMenuAndButton();
-    updateKeyboardKeys();
-    writeSettings();
+    transpose({ octaves: -1 });
 });
 
 document.getElementById("reset-transpose").addEventListener("click", () => {
-    settings.semitones = 0;
-    settings.octaves = 0;
-    updateTransposeMenuAndButton();
-    updateKeyboardKeys();
-    writeSettings();
+    transpose({ reset: true });
 });
 
 document.getElementById("btn-panic").addEventListener("click", midiPanic);
-
 document.getElementById("btn-hide-toolbar").addEventListener("click", toggleTopBar);
+document.getElementById("btn-show-toolbar").addEventListener("click", toggleTopBar);
 
 document.getElementById("toolbar-title").addEventListener("click", () => {
     document.getElementById("dialog-about").show();
@@ -711,14 +744,14 @@ kbd.addEventListener("pointerdown", (e) => {
     drag_state.origin.y = e.screenY;
     drag_state.original.x = settings.offset.x;
     drag_state.original.y = settings.offset.y;
-    kbd.style.cursor = "grabbing";
+    kbd.toggleAttribute("grabbing", true);
     kbd.setPointerCapture(e.pointerId);
 }, { capture: true, passive: false });
 
 kbd.addEventListener("pointerup", (e) => {
     if ( drag_state.dragging ) {
         drag_state.dragging = false;
-        kbd.style.removeProperty("cursor");
+        kbd.toggleAttribute("grabbing", false);
         kbd.releasePointerCapture(e.pointerId);
         updateKeyboardPosition();
         writeSettings();
@@ -727,6 +760,8 @@ kbd.addEventListener("pointerup", (e) => {
 
 kbd.addEventListener("pointermove", (e) => {
     if ( drag_state.dragging ) {
+
+        const SNAP_THRESHOLD = 0.04;
 
         const kbd_rect = kbd.getBoundingClientRect();
         const cnt_rect = kbd_container.getBoundingClientRect();
@@ -741,9 +776,16 @@ kbd.addEventListener("pointermove", (e) => {
         const ratio_y = offset_y / (cnt_rect.height - kbd_rect.height);
         settings.offset.y = clamp(drag_state.original.y + ratio_y, 0.0, 1.0);
 
+        // Snap vertically
+        if ( !e.ctrlKey ) {
+            if ( settings.offset.y < SNAP_THRESHOLD ) settings.offset.y = 0.0;
+            if ( settings.offset.y > 1-SNAP_THRESHOLD ) settings.offset.y = 1.0;
+            if ( Math.abs(0.5-settings.offset.y) < SNAP_THRESHOLD ) settings.offset.y = 0.5;
+        }
+
         updateKeyboardPosition();
     }
-}, { capture: true, passive: true });
+}, { capture: false, passive: true });
 
 kbd.addEventListener("wheel", (e) => {
     if ( !drag_state.dragging && !e.ctrlKey ) {
@@ -758,7 +800,23 @@ kbd.addEventListener("wheel", (e) => {
             updateKeyboardPosition();
         }
     }
-}, { capture: true, passive: false });
+}, { capture: false, passive: false });
+
+var btn_show_toolbar_timeout = null;
+
+kbd_container.addEventListener("pointermove", () => {
+    if ( btn_show_toolbar_timeout ) clearTimeout(btn_show_toolbar_timeout);
+    const btn_show_toolbar = document.getElementById("btn-show-toolbar");
+    btn_show_toolbar.toggleAttribute("visible", true);
+    kbd_container.toggleAttribute("cursor-hidden", false);
+    kbd.toggleAttribute("cursor-hidden", false);
+    btn_show_toolbar_timeout = setTimeout(() => {
+        btn_show_toolbar.toggleAttribute("visible", false);
+        kbd_container.toggleAttribute("cursor-hidden", true);
+        kbd.toggleAttribute("cursor-hidden", true);
+        btn_show_toolbar_timeout = null;
+    }, 4000);
+}, { capture: false, passive: true });
 
 
 // MIDI events
@@ -776,22 +834,39 @@ Midi.onControlChange = (number) => {
 
 // Keyboard events
 
-function handleKeyboardShortcut(ev) {
-    if ( ev.repeating ) return;
+function handleKeyboardShortcut(e) {
+    if ( e.repeating ) return;
     let comb = [];
-    if ( ev.ctrlKey  ) comb.push("ctrl");
-    if ( ev.altKey   ) comb.push("alt");
-    if ( ev.shiftKey ) comb.push("shift");
-    comb.push(ev.key.toLowerCase());
+    if ( e.ctrlKey  ) comb.push("ctrl");
+    if ( e.altKey   ) comb.push("alt");
+    if ( e.shiftKey ) comb.push("shift");
+    comb.push(e.key.toLowerCase());
     const k = comb.join("+");
     switch ( k ) {
         case "f9":
-            ev.preventDefault();
+            e.preventDefault();
             toggleTopBar();
             break;
         case "escape":
-            ev.preventDefault();
+            e.preventDefault();
             midiPanic();
+            break;
+        case "+":
+        case "shift++":
+            e.preventDefault();
+            transpose({ semitones: +1 });
+            break;
+        case "-":
+            e.preventDefault();
+            transpose({ semitones: -1 });
+            break;
+        case "pageup":
+            e.preventDefault();
+            transpose({ octaves: +1 });
+            break;
+        case "pagedown":
+            e.preventDefault();
+            transpose({ octaves: -1 });
             break;
     }
 }

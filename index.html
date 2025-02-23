@@ -165,7 +165,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         <!-- </sl-menu-item> -->
                         <sl-divider style="margin-top: 8px;"></sl-divider>
                         <sl-menu-item id="reset-transpose" disabled>
-                            &nbsp;Reset transposition
+                            Reset transposition
                             <sl-icon slot="prefix" name="arrow-counterclockwise"></sl-icon>
                         </sl-menu-item>
                     </sl-menu>
@@ -187,6 +187,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         <div id="outer-main-area">
             <div id="main-area">
                 <svg id="kbd"></svg>
+                <sl-tooltip content="Show toolbar (F9)">
+                    <sl-button id="btn-show-toolbar" hidden>
+                        <sl-icon name="chevron-down" label="Show toolbar"></sl-icon>
+                    </sl-button>
+                </sl-tooltip>
             </div>
         </div>
         <sl-dialog label="About" id="dialog-about" class="sl-theme-dark" hidden>

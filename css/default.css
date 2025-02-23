@@ -1,13 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
 
+:root {
+    --color-highlight: #f00;
+    --color-white-key: #eee;
+    --color-black-key: #222;
+    --color-background: black;
+    --color-key-light-border: #999;
+    --color-key-dark-border: #444;
+}
+
 * {
-    margin: 0;
-    padding: 0;
     box-sizing: border-box;
+    &[cursor-hidden] {
+        cursor: none !important;
+    }
 }
 
 body {
-    background-color: black;
+    margin: 0;
+    background-color: var(--color-background);
     overflow: hidden;
     width: 100vw;
     height: 100vh;
@@ -16,13 +27,20 @@ body {
 }
 
 .title-text {
-    color: #777;
+    color: var(--sl-color-neutral-600);
+    opacity: 60%;
     font-family: "Orbitron", serif;
     font-size: 140%;
     font-weight: lighter;
     vertical-align: middle;
     margin-right: 10px;
     user-select: none;
+}
+
+div.menu-msg {
+    margin: 8px 16px;
+    color: var(--sl-color-neutral-700);
+    line-height: 1.2lh;
 }
 
 #top-toolbar {
@@ -33,36 +51,33 @@ body {
     display: flex;
     justify-content: space-between;
     user-select: none;
-    & :not(:defined) {
-        visibility: hidden;
-    }
+
+    & :not(:defined) { visibility: hidden; }
+
+    &[hidden] { display: none; }
 
     .strong-menu-label::part(base) {
         color: var(--sl-color-neutral-700);
     }
-    ::part(input) {
-        text-align: center; 
-    }
 
-    sl-color-picker {
-        margin: 20px 30px;
-    }
+    ::part(input) { text-align: center; }
+
+    sl-color-picker { margin: 20px 30px; }
 
     #transpose-controls {
         display: flex;
         align-items: center;
         height: auto;
-        margin: 12px;
+        margin-left: 12px;
+        margin-right: 12px;
         > div {
             text-align: center;
-        }
-        div:first-child {
-            margin-right: 10px;
-        }
-        span {
-            color: var(--sl-color-neutral-700);
-            margin-bottom: 5px;
-            display: inline-block;
+            &:first-child { margin-right: 10px; }
+            span {
+                color: var(--sl-color-neutral-700);
+                margin-bottom: 5px;
+                display: inline-block;
+            }
         }
     }
 
@@ -134,6 +149,27 @@ body {
     height: 100%;
     position: relative;
     overflow: hidden;
+    &:not(:hover) #btn-show-toolbar {
+        opacity: 0%;
+    }
+}
+
+#btn-show-toolbar {
+    position: absolute;
+    right: 10px;
+    top: 2px;
+    filter: drop-shadow(1px 1px 4px black);
+    &[hidden] {
+        display: none;
+    }
+    &[visible]:not(:hover) {
+        opacity: 80%;
+        transition: opacity 0.5s;
+    }
+    &:not([visible]) {
+        opacity: 0%;
+        transition: opacity 1s;
+    }
 }
 
 #kbd {
@@ -147,6 +183,10 @@ body {
         fill: url("#top-felt-gradient");
     }
 
+    &[grabbing] {
+        cursor: grabbing !important;
+    }
+
     .white-key, .black-key {
         transform-origin: center top 0px;
 
@@ -156,20 +196,11 @@ body {
             stroke-linecap: square;
         }
 
-        .key-light-border {
-            stroke: #888;
-        }        
-
-        .key-dark-border {
-            stroke: #555;
-        }
-
         .key-highlight {
             will-change: opacity;
         }
 
         &:not(.active) .key-highlight {
-            /* visibility: hidden; */
             opacity: 0%;
             transition-property: opacity;
             transition-duration: 0.05s;
@@ -178,7 +209,6 @@ body {
 
         &.active {
             .key-highlight {
-                /* visibility: visible; */
                 opacity: 100%;
             }
             &.dim .key-highlight {
@@ -188,14 +218,25 @@ body {
                 transition-timing-function: ease-out;
             }
         }
-
-        /* &.pressed {
-            &.white-key {
-                transform: scaleY(100.5%);
-            }
-        } */
     }
+}
 
+.white-key {
+    .key-light-border {
+        stroke: color-mix(in srgb, var(--color-key-light-border) 70%, var(--color-white-key));
+    }        
+    .key-dark-border {
+        stroke: color-mix(in srgb, var(--color-key-dark-border) 70%, var(--color-white-key));
+    }
+}
+
+.black-key {
+    .key-light-border {
+        stroke: color-mix(in srgb, var(--color-key-light-border) 70%, var(--color-black-key));
+    }        
+    .key-dark-border {
+        stroke: color-mix(in srgb, var(--color-key-dark-border) 70%, var(--color-black-key));
+    }
 }
 
 sl-dialog {
