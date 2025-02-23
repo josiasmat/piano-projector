@@ -155,10 +155,13 @@ div.menu-msg {
 }
 
 #btn-show-toolbar {
-    position: absolute;
-    right: 10px;
-    top: 2px;
+    position: fixed;
+    right: 12px;
+    top: 6px;
     filter: drop-shadow(1px 1px 4px black);
+    &:hover {
+        opacity: 100%;
+    }
     &[hidden] {
         display: none;
     }
@@ -166,7 +169,7 @@ div.menu-msg {
         opacity: 80%;
         transition: opacity 0.5s;
     }
-    &:not([visible]) {
+    &:not([visible]):not(:hover) {
         opacity: 0%;
         transition: opacity 1s;
     }
