@@ -762,16 +762,19 @@ kbd.addEventListener("pointermove", (e) => {
         const ratio_x = offset_x / (kbd_rect.width - cnt_rect.width);
         settings.offset.x = clamp(drag_state.previous_offset.x - ratio_x, 0.0, 1.0);
 
-        // Y-axis - move keyboard
-        const offset_y = e.screenY - drag_state.origin.y;
-        const ratio_y = offset_y / (cnt_rect.height - kbd_rect.height);
-        settings.offset.y = clamp(drag_state.previous_offset.y + ratio_y, 0.0, 1.0);
-
-        // Snap vertically
-        if ( !e.ctrlKey ) {
-            if ( settings.offset.y < SNAP_THRESHOLD ) settings.offset.y = 0.0;
-            if ( settings.offset.y > 1-SNAP_THRESHOLD ) settings.offset.y = 1.0;
-            if ( Math.abs(0.5-settings.offset.y) < SNAP_THRESHOLD ) settings.offset.y = 0.5;
+        // Y-axis - move keyboard (only if not almost maximally zoomed in)
+        const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
+        if ( settings.zoom < max_zoom - ((max_zoom - 1.0) / 10) ) {
+            const offset_y = e.screenY - drag_state.origin.y;
+            const ratio_y = offset_y / (cnt_rect.height - kbd_rect.height);
+            settings.offset.y = clamp(drag_state.previous_offset.y + ratio_y, 0.0, 1.0);
+    
+            // Snap vertically
+            if ( !e.ctrlKey ) {
+                if ( settings.offset.y < SNAP_THRESHOLD ) settings.offset.y = 0.0;
+                if ( settings.offset.y > 1-SNAP_THRESHOLD ) settings.offset.y = 1.0;
+                if ( Math.abs(0.5-settings.offset.y) < SNAP_THRESHOLD ) settings.offset.y = 0.5;
+            }
         }
 
         updateKeyboardPosition();
