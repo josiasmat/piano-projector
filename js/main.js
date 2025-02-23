@@ -787,7 +787,7 @@ kbd.addEventListener("pointermove", (e) => {
     }
 }, { capture: false, passive: true });
 
-kbd.addEventListener("wheel", (e) => {
+kbd_container.addEventListener("wheel", (e) => {
     if ( !drag_state.dragging && !e.ctrlKey ) {
         const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
         let new_zoom = Math.max(1.0, settings.zoom + (e.wheelDeltaY/1000));
