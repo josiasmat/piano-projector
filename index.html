@@ -32,8 +32,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         <div id="top-toolbar">
             <div id="top-toolbar-left">
                 <span id="toolbar-title" class="title-text" style="cursor:pointer;">Piano Projector</span>
-                <sl-dropdown>
-                    <sl-button id="midi-connect-button" slot="trigger" caret>
+                <sl-dropdown id="dropdown-connect">
+                    <sl-button id="btn-connect" slot="trigger" caret>
                         Connect
                         <sl-icon id="connection-power-icon" class="led-strong" slot="prefix" name="power"></sl-icon>
                     </sl-button>
@@ -41,7 +41,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         <sl-menu-item disabled>No MIDI input devices available</sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
-                <sl-dropdown stay-open-on-select>
+                <sl-dropdown id="dropdown-size" stay-open-on-select>
                     <sl-button id="btn-size" slot="trigger" caret>Size</sl-button>
                     <sl-menu id="menu-size">
                         <sl-menu-label>Number of keys:</sl-menu-label>
@@ -57,8 +57,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         <sl-menu-item class="menu-key-height" value="0.5"  type="checkbox">1/2</sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
-                <sl-dropdown id="btn-colors" stay-open-on-select>
-                    <sl-button slot="trigger" caret>Colors</sl-button>
+                <sl-dropdown id="dropdown-colors" stay-open-on-select>
+                    <sl-button id="btn-colors" slot="trigger" caret>Colors</sl-button>
                     <sl-menu>
                         <sl-menu-item>
                             Highlight color
@@ -94,7 +94,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
-                <!-- <sl-dropdown stay-open-on-select>
+                <!-- <sl-dropdown id="dropdown-labels" stay-open-on-select>
                     <sl-button id="btn-labels" slot="trigger" caret>Labels</sl-button>
                     <sl-menu>
                         <sl-menu-label>Which keys:</sl-menu-label>
@@ -113,7 +113,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         <sl-menu-item type="checkbox">MIDI value</sl-menu-item>
                     </sl-menu>
                 </sl-dropdown> -->
-                <sl-dropdown stay-open-on-select>
+                <sl-dropdown id="dropdown-pedals" stay-open-on-select>
                     <sl-button id="btn-pedals" slot="trigger" caret>
                         Pedals
                         <div id="pedal-icons" slot="prefix">
@@ -129,7 +129,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         <sl-menu-item id="menu-pedal-icons" type="checkbox" checked>Show pedal indicators</sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
-                <sl-dropdown stay-open-on-select>
+                <sl-dropdown id="dropdown-transpose" stay-open-on-select>
                     <sl-button id="btn-transpose" slot="trigger" caret>
                         Transpose
                         <sl-icon id="transpose-power-icon" class="led-strong" name="power" slot="prefix" label="Enable transpose"></sl-icon>

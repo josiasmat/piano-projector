@@ -367,7 +367,7 @@ function updatePedalIcons() {
 
 
 function updateToolbar() {
-    changeLed("connection-power-icon", ( Midi.getConnectedPort() ));
+    changeLed("connection-power-icon", ( settings.device_name && Midi.getConnectedPort() ));
     changeLed("transpose-power-icon", ( settings.transpose != 0 ));
     document.getElementById("top-toolbar").toggleAttribute("hidden", !settings.toolbar);
     document.getElementById("btn-show-toolbar").toggleAttribute("hidden", settings.toolbar);
@@ -542,7 +542,7 @@ function changeLed(id, state, color=null) {
 
 // Set event listeners
 
-document.getElementById("midi-connect-button").addEventListener("click", () => {
+document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
     const menu = document.getElementById("midi-connection-menu");
     menu.innerHTML = "";
 
@@ -571,33 +571,37 @@ document.getElementById("midi-connect-button").addEventListener("click", () => {
         Midi.requestInputPortList(
             (ports) => {
                 const connected_port = Midi.getConnectedPort();
+                let connected_port_found = false;
                 for ( const port of ports ) {
+                    // populate connection menu
                     const menu_item = document.createElement("sl-menu-item");
                     menu_item.innerText = port.name;
                     menu_item.setAttribute("type", "checkbox");
                     menu_item.value = port.id;
+                    // check if port is connected
                     if ( connected_port && connected_port.id == port.id ) {
                         menu_item.toggleAttribute("checked", true);
-                        changeLed("connection-power-icon", true);
+                        connected_port_found = true;
+                        updateToolbar();
                     }
+                    // menu item click event handler
                     menu_item.addEventListener("click", (e) => {
                         const cp = Midi.getConnectedPort();
                         if ( cp && cp.id == e.target.value ) {
                             Midi.disconnect();
-                            changeLed("connection-power-icon", false);
                             settings.device_name = null;
-                        } else {
-                            Midi.connect(port);
-                            changeLed("connection-power-icon", true);
-                            for ( const mi of Array.from(menu.children) )
-                                mi.removeAttribute("checked");
-                            settings.device_name = port.name;
-                        }
-                        updateKeyboard();
-                        writeSettings();
+                            writeSettings();
+                        } else
+                            Midi.connect(port, (conn_port) => {
+                                settings.device_name = conn_port.name;
+                                writeSettings();
+                            });
                     });
                     menu.appendChild(menu_item);
                 }
+                // if connected port disappeared, disconnect it
+                if ( !connected_port_found )
+                    Midi.disconnect();
                 if ( ports.length == 0 ) {
                     const menu_item = document.createElement("sl-menu-item");
                     menu_item.innerText = "No MIDI input devices available";
@@ -635,16 +639,17 @@ document.getElementById("midi-connect-button").addEventListener("click", () => {
     
 });
 
-document.getElementById("btn-size")
-    .addEventListener("click", updateSizeMenu);
-document.getElementById("btn-colors")
-    .addEventListener("click", updateColorsMenu);
-document.getElementById("btn-pedals")
-    .addEventListener("click", updatePedalsMenu);
-document.getElementById("btn-transpose")
-    .addEventListener("click", updateTransposeMenuAndButton);
+document.getElementById("dropdown-size")
+    .addEventListener("sl-show", updateSizeMenu);
+document.getElementById("dropdown-colors")
+    .addEventListener("sl-show", updateColorsMenu);
+document.getElementById("dropdown-pedals")
+    .addEventListener("sl-show", updatePedalsMenu);
+document.getElementById("dropdown-transpose")
+    .addEventListener("sl-show", updateTransposeMenuAndButton);
 
-// document.getElementById("btn-labels").addEventListener("click", () => {
+// document.getElementById("dropdown-labels")
+//    .addEventListener("sl-show", () => {
 //     //...
 // });
 
@@ -819,6 +824,12 @@ kbd_container.addEventListener("pointermove", () => {
 
 // MIDI events
 
+Midi.onConnectionChange = (connected, port) => {
+    //settings.device_name = (connected ? port.name : null);
+    updateKeyboard();
+    updateToolbar();
+}
+
 Midi.onKeyPress   = updateNote;
 Midi.onKeyRelease = updateNote;
 
@@ -905,12 +916,10 @@ if ( settings.device_name ) {
             for ( const port of ports ) {
                 if ( port.name == settings.device_name ) {
                     Midi.connect(port);
-                    updateKeyboard();
                     break;
                 }
             }
-            updateToolbar();
         },
-        () => { updateToolbar(); }
+        null
     );
 }
