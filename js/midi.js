@@ -32,6 +32,9 @@ export const Midi = {
 
     onReset: null,
 
+    /** @type {(Boolean, MIDIPort)} */
+    onConnectionChange: null,
+
     get browserHasMidiSupport() {
         return !!navigator.requestMIDIAccess;
     },
@@ -94,27 +97,37 @@ export const Midi = {
     /**
      * Connect to a MIDI input port.
      * @param {MIDIInput} port 
+     * @param {(MIDIPort)} callback_connected
      * @param {number[]} channels - Defaults to all channels.
      */
-    connect(port, channels=ALL_CHANNELS) {
+    connect(port, callback_connected=null, channels=ALL_CHANNELS) {
         this.disconnect();
+        port.open().then(() => {
+            midi_state.dev = port;
+            port.addEventListener("midimessage", handleMIDIEvent);
+            if ( callback_connected ) callback_connected(port);
+            if ( this.onConnectionChange ) this.onConnectionChange(true, port);
+        });
         midi_state.channels = Array.from(channels);
-        midi_state.dev = port;
-        port.addEventListener("midimessage", handleMIDIEvent);
     },
 
     disconnect() {
-        if ( midi_state.dev ) {
+        const port = midi_state.dev;
+        if ( port ) {
             midi_state.dev.removeEventListener("midimessage", handleMIDIEvent);
+            port.removeEventListener("statechange", onMidiPortStateChange);
+            midi_state.dev.close();
             midi_state.dev = null;
             midi_state.channels = [];
             midi_state.reset();
+            this.onConnectionChange(false, port);
         }
     },
 
     /** @returns {MIDIInput?} */
     getConnectedPort() {
-        return midi_state.dev;
+        return ( midi_state.dev && midi_state.dev.state == "connected" )
+            ? midi_state.dev : null;
     },
 
     isKeyPressed(key) {
@@ -175,7 +188,15 @@ export const Midi = {
 
 }
 
+function onMidiPortStateChange(e) {
+    if ( e.port.state == "disconnected" && midi_state.dev == e.port )
+        midi_state.dev = null;
+    if ( Midi.onConnectionChange ) 
+        Midi.onConnectionChange(e.port.state == "connected", e.port);
+}
+
 const midi_state = {
+    /** @type {MIDIInput} */
     dev: null,
     channels: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
 
