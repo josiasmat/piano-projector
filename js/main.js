@@ -1,6 +1,6 @@
 /*
 Piano Projector
-Copyright (C) 2024 Josias Matschulat
+Copyright (C) 2025 Josias Matschulat
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -24,93 +24,78 @@ const settings_storage = new LocalStorageHandler("piano-projector");
 const session_storage = new SessionStorageHandler("piano-projector-session");
 
 const settings = {
-    device_name: null,
-    offset: {
-        x: 0.5,
-        y: 0.5,
-    },
-    zoom: 1.0,
     number_of_keys: 88,
-    height: 500,
     height_factor: 1,
+    device_name: null,
+    offset: { x: 0.5, y: 0.5 },
+    zoom: 1.0,
+    pedals: true,
+    pedal_dim: true,
+    pedal_icons: true,
+    top_felt: true,
+    toolbar: true,
+    semitones: 0,
+    octaves: 0,
+    get transpose() { return this.semitones + (this.octaves*12); },
+    get color_highlight() {
+        return document.documentElement.style.getPropertyValue("--color-highlight");
+    },
+    set color_highlight(value) {
+        document.documentElement.style.setProperty('--color-highlight', value);
+    },
     get color_white() {
-        return getComputedStyle(document.documentElement, "root").getPropertyValue("--color-white-key");
+        return document.documentElement.style.getPropertyValue("--color-white-key");
     },
     set color_white(value) {
         document.documentElement.style.setProperty('--color-white-key', value);
     },
-    // color_white: "#eee",
     get color_black() {
-        return getComputedStyle(document.documentElement, "root").getPropertyValue("--color-black-key");
+        return document.documentElement.style.getPropertyValue("--color-black-key");
     },
     set color_black(value) {
         document.documentElement.style.setProperty('--color-black-key', value);
     },
-    get color_pressed() {
-        return getComputedStyle(document.documentElement, "root").getPropertyValue("--color-highlight");
-    },
-    set color_pressed(value) {
-        document.documentElement.style.setProperty('--color-highlight', value);
-    },
-    pedals: true,
-    pedal_dim: true,
-    pedal_icons: true,
-    semitones: 0,
-    octaves: 0,
-    get transpose() {
-        return this.semitones + (this.octaves*12);
-    },
-    top_felt: true,
-    top_bar: true,
 }
 
 const drag_state = {
     dragging: false,
-    origin: {
-        x: 0, y: 0
-    },
-    original: {
-        x: 0, y: 0
-    }
+    origin: { x: 0, y: 0 },
+    previous_offset: { x: 0, y: 0 }
 }
 
 const kbd_container = document.getElementById("main-area");
 const kbd = document.getElementById("kbd");
 const keys = Array(128).fill(null);
 
-
-/** 
+/**
  * @param {SVGElement} svg 
- * @param {number} first_key
- * @param {number} last_key
- * @param {number} height
+ * @param {Object} options
  */
 function drawKeyboard(svg, options = {}) {
+
+    const STROKE_WIDTH = 1.5;
+    const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
+    const BK_OFFSETS = [,-0.1,,+0.1,,,-0.1,,0,,+0.1,];
 
     const height = options.height ?? 500;
     const height_factor = options.height_factor ?? 1.0;
     const first_key = options.first_key ?? noteToMidi("a0");
     const last_key = options.last_key ?? noteToMidi("c8");
 
-    // } height, height_factor, first_key, last_key) {
-    const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
-    const BK_OFFSETS = [,-0.1,,+0.1,,,-0.1,,0,,+0.1,];
-    const WHITE_KEY_HEIGHT = height * height_factor;
-    const BLACK_KEY_HEIGHT = WHITE_KEY_HEIGHT * (0.2 * height_factor + 0.45);
-    const WHITE_KEY_WIDTH = height * 2.2 / 15.5;
-    const BLACK_KEY_WIDTH = height * 1.4 / 15.5;
-    const BLACK_KEY_WIDTH_HALF = BLACK_KEY_WIDTH / 2;
-    const KEY_ROUNDING = WHITE_KEY_WIDTH / 20;
-    const WHITE_KEY_HIGHLIGHT_INSET = 2;
-    const BLACK_KEY_HIGHLIGHT_INSET = 2;
-    const STROKE_WIDTH = 1.5;
-    let width = 0;
+    const white_key_height = height * height_factor;
+    const black_key_height = white_key_height * (0.2 * height_factor + 0.45);
+    const white_key_width = height * 2.2 / 15.5;
+    const black_key_width = height * 1.4 / 15.5;
+    const black_key_width_half = black_key_width / 2;
+    const key_rounding = white_key_width / 20;
+    const white_key_highlight_inset = 2;
+    const black_key_highlight_inset = 2;
+
+    svg.innerHTML = "";
 
     for ( let key = 0; key < 128; key++ )
         if ( key < first_key || key > last_key )
             keys[key] = null;
-
-    svg.innerHTML = "";
 
     const white_keys_g = SvgTools.createGroup();
     const black_keys_g = SvgTools.createGroup();
@@ -118,14 +103,14 @@ function drawKeyboard(svg, options = {}) {
     function drawWhiteKey(key, note, offset, width, height, round) {
         const left = offset + STROKE_WIDTH;
         const right = left + width - (2*STROKE_WIDTH);
-        const cut_point = BLACK_KEY_HEIGHT + (3*STROKE_WIDTH);
+        const cut_point = black_key_height + (3*STROKE_WIDTH);
 
         const black_before = key > first_key && [2,4,7,9,11].includes(note);
         const black_after = key < last_key && [0,2,5,7,9].includes(note);
         const left_offset = left + ( black_before 
-            ? BLACK_KEY_WIDTH_HALF + (BLACK_KEY_WIDTH * BK_OFFSETS[note-1]) + STROKE_WIDTH : 0);
+            ? black_key_width_half + (black_key_width * BK_OFFSETS[note-1]) + STROKE_WIDTH : 0);
         const right_offset = right - ( black_after 
-            ? BLACK_KEY_WIDTH_HALF - (BLACK_KEY_WIDTH * BK_OFFSETS[note+1]) + STROKE_WIDTH : 0);
+            ? black_key_width_half - (black_key_width * BK_OFFSETS[note+1]) + STROKE_WIDTH : 0);
 
         const key_group = SvgTools.createGroup({ id: `key${key}`, class: "white-key" });
 
@@ -146,7 +131,7 @@ function drawKeyboard(svg, options = {}) {
             { class: "key-fill", fill: "var(--color-white-key)" }
         );
 
-        const inset = WHITE_KEY_HIGHLIGHT_INSET;
+        const inset = white_key_highlight_inset;
         const key_highlight = SvgTools.makePolygon([
                 {x:left_offset+inset, y:inset}, 
                 {x:right_offset-inset, y:inset},
@@ -219,7 +204,7 @@ function drawKeyboard(svg, options = {}) {
             { class: "key-fill", fill: "var(--color-black-key)" }
         );
 
-        const inset = BLACK_KEY_HIGHLIGHT_INSET;
+        const inset = black_key_highlight_inset;
         const key_highlight = SvgTools.makePolygon(
             [
                 {x:left+inset, y:inset}, 
@@ -253,32 +238,35 @@ function drawKeyboard(svg, options = {}) {
         return key_group;
     }
 
+    let width = 0;
     let white_left = 0;
+
     for ( let key = first_key; key <= last_key; key++ ) {
         const note = key % 12;
 
         if ( WHITE_NOTE[note] ) {
             const white_key = drawWhiteKey(key, note,
-                white_left, WHITE_KEY_WIDTH, WHITE_KEY_HEIGHT, KEY_ROUNDING
+                white_left, white_key_width, white_key_height, key_rounding
             );
             white_keys_g.appendChild(white_key);
             keys[key] = white_key;
-            width += WHITE_KEY_WIDTH;
-            white_left += WHITE_KEY_WIDTH;
+            width += white_key_width;
+            white_left += white_key_width;
         } else {
-            const black_left = white_left - BLACK_KEY_WIDTH_HALF + (BK_OFFSETS[note]*BLACK_KEY_WIDTH);
+            const black_left = white_left - black_key_width_half + (BK_OFFSETS[note]*black_key_width);
             const black_key = drawBlackKey(key,
-                black_left, BLACK_KEY_WIDTH, BLACK_KEY_HEIGHT, KEY_ROUNDING
+                black_left, black_key_width, black_key_height, key_rounding
             );
             keys[key] = black_key;
             black_keys_g.appendChild(black_key);
         }
     }
+    
     svg.appendChild(white_keys_g);
     if ( options.top_felt )
-        svg.appendChild(SvgTools.makeRect(width, 6, 0, -3, null, null, { id: "top-felt" }));
+        svg.appendChild(SvgTools.makeRect(width, 7, 0, -4, null, null, { id: "top-felt" }));
     svg.appendChild(black_keys_g);
-    svg.setAttribute("viewBox", `-2 -3 ${width+(2*STROKE_WIDTH)} ${(WHITE_KEY_HEIGHT)+(2*STROKE_WIDTH)}`);
+    svg.setAttribute("viewBox", `-2 -4 ${width+(2*STROKE_WIDTH)} ${(white_key_height)+(2*STROKE_WIDTH)}`);
 
     function makeGradient(id, stops, vertical=false, attrs={}) {
         const grad = SvgTools.createElement("linearGradient", 
@@ -303,7 +291,7 @@ function drawKeyboard(svg, options = {}) {
     if ( options.top_felt )
         svg_defs.appendChild(makeGradient("top-felt-gradient", [
             { offset: "50%", "stop-color": "#920" },
-            { offset: "100%", "stop-color": "#610", "stop-opacity": "60%" }
+            { offset: "100%", "stop-color": "#400", "stop-opacity": "70%" }
         ], true));
 
     svg.appendChild(svg_defs);
@@ -368,9 +356,9 @@ function updatePedalIcons() {
     if ( settings.pedal_icons ) {
         btn_pedals_button.classList.add("button--has-prefix");
         btn_pedals_prefix.style.display = "flex";
-        changeLed("pedr", ( Midi.getLastControlValue(64) > 63 ));
-        changeLed("pedm", ( Midi.getLastControlValue(66) > 63 ));
-        changeLed("pedl", ( Midi.getLastControlValue(67) > 63 ));
+        changeLed("pedr", Midi.getLastControlValue(64) / 127);
+        changeLed("pedm", Midi.getLastControlValue(66) / 127);
+        changeLed("pedl", Midi.getLastControlValue(67) / 127);
     } else {
         btn_pedals_button.classList.remove("button--has-prefix");
         btn_pedals_prefix.style.display = "none";
@@ -381,6 +369,8 @@ function updatePedalIcons() {
 function updateToolbar() {
     changeLed("connection-power-icon", ( Midi.getConnectedPort() ));
     changeLed("transpose-power-icon", ( settings.transpose != 0 ));
+    document.getElementById("top-toolbar").toggleAttribute("hidden", !settings.toolbar);
+    document.getElementById("btn-show-toolbar").toggleAttribute("hidden", settings.toolbar);
     updatePedalIcons();
 }
 
@@ -398,7 +388,7 @@ function updateSizeMenu(excluded_elm = null) {
 function updateColorsMenu() {
     document.getElementById("color-white").value = settings.color_white;
     document.getElementById("color-black").value = settings.color_black;
-    document.getElementById("color-pressed").value = settings.color_pressed;
+    document.getElementById("color-pressed").value = settings.color_highlight;
     document.getElementById("menu-top-felt").checked = settings.top_felt;
 }
 
@@ -436,7 +426,7 @@ function updateKeyboardPosition() {
     kbd.style.top = `${py}px`;
 
     // compute horizontal position
-    const px = (kbd_rect.width - cnt_rect.width) * settings.offset.x;
+    const px = Math.round((kbd_rect.width - cnt_rect.width) * settings.offset.x);
     kbd_container.scroll(px, 0);
 }
 
@@ -454,12 +444,10 @@ function updateNote(note) {
 }
 
 
-function toggleTopBar() {
-    settings.top_bar = !settings.top_bar;
-    document.getElementById("top-toolbar").toggleAttribute("hidden");
-    document.getElementById("btn-show-toolbar").toggleAttribute("hidden");
-    // document.getElementById("top-toolbar").style.display =
-    //     ( settings.top_bar ) ? "flex" : "none";
+function toggleToolbarVisibility() {
+    settings.toolbar = !settings.toolbar;
+    updateToolbar();
+    writeSettings();
 }
 
 
@@ -467,6 +455,9 @@ function midiPanic() {
     Midi.reset();
     createKeyboard();
     updatePedalIcons();
+    const btn_panic = document.getElementById("btn-panic");
+    btn_panic.setAttribute("variant", "danger");
+    setTimeout(() => { btn_panic.removeAttribute("variant"); }, 500);
 }
 
 /**
@@ -500,15 +491,15 @@ function transpose(params={}) {
 
 
 function writeSettings() {
-    settings_storage.writeString("color-white", settings.color_white);
-    settings_storage.writeString("color-black", settings.color_black);
-    settings_storage.writeString("color-pressed", settings.color_pressed);
     settings_storage.writeNumber("height-factor", settings.height_factor);
     settings_storage.writeNumber("number-of-keys", settings.number_of_keys);
+    settings_storage.writeString("color-pressed", settings.color_highlight);
+    settings_storage.writeString("color-white", settings.color_white);
+    settings_storage.writeString("color-black", settings.color_black);
+    settings_storage.writeBool("top-felt", settings.top_felt);
     settings_storage.writeBool("pedals", settings.pedals);
     settings_storage.writeBool("pedal-dim", settings.pedal_dim);
     settings_storage.writeBool("pedal-icons", settings.pedal_icons);
-    settings_storage.writeNumber("offset-x", settings.offset.x);
     settings_storage.writeNumber("offset-y", settings.offset.y);
     if ( settings.device_name )
         settings_storage.writeString("device", settings.device_name);
@@ -516,37 +507,36 @@ function writeSettings() {
         settings_storage.remove("device");
     session_storage.writeNumber("semitones", settings.semitones);
     session_storage.writeNumber("octaves", settings.octaves);
-    settings_storage.writeBool("top-felt", settings.top_felt);
+    session_storage.writeBool("toolbar", settings.toolbar);
 }
 
 
 function loadSettings() {
-    settings.color_white = settings_storage.readString("color-white", settings.color_white);
-    settings.color_black = settings_storage.readString("color-black", settings.color_black);
-    settings.color_pressed = settings_storage.readString("color-pressed", settings.color_pressed);
     settings.height_factor = settings_storage.readNumber("height-factor", settings.height_factor);
     settings.number_of_keys = settings_storage.readNumber("number-of-keys", settings.number_of_keys);
+    settings.color_white = settings_storage.readString("color-white", settings.color_white);
+    settings.color_black = settings_storage.readString("color-black", settings.color_black);
+    settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight);
+    settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
     settings.pedals = settings_storage.readBool("pedals", settings.pedals);
     settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
     settings.pedal_icons = settings_storage.readBool("pedal-icons", settings.pedal_icons);
-    settings.offset.x = settings_storage.readNumber("offset-x", settings.offset.x);
     settings.offset.y = settings_storage.readNumber("offset-y", settings.offset.y);
     settings.device_name = settings_storage.readString("device", null);
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
-    settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
+    settings.toolbar = session_storage.readBool("toolbar", settings.toolbar);
 }
 
 
 function changeLed(id, state, color=null) {
     const elm = document.getElementById(id);
-    if ( state ) {
-        elm.classList.add(["active"]);
-        if ( color ) elm.style.color = color;
-    } else {
-        elm.classList.remove(["active"]);
+    elm.classList.toggle("active", state);
+    if ( state && color )
+        elm.style.color = color;
+    else 
         elm.style.removeProperty("color");
-    }
+    elm.style.setProperty("--led-intensity", `${state*100}%`);
 }
 
 
@@ -663,12 +653,13 @@ document.getElementById("menu-size").addEventListener("sl-select", (e) => {
         settings.number_of_keys = parseInt(e.detail.item.value);
     else if ( e.detail.item.classList.contains("menu-key-height") )
         settings.height_factor = parseFloat(e.detail.item.value);
+    settings.zoom = 1.0;
     updateSizeMenu();
     createKeyboard();
     writeSettings();
 });
 
-document.getElementById("menu-top-felt").addEventListener("click", (e) => {
+document.getElementById("menu-top-felt").addEventListener("click", () => {
     settings.top_felt = !settings.top_felt;
     createKeyboard();
     writeSettings();
@@ -685,7 +676,7 @@ document.getElementById("color-black").addEventListener("sl-change", (e) => {
 });
 
 document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
-    settings.color_pressed = e.target.value;
+    settings.color_highlight = e.target.value;
     writeSettings();
 });
 
@@ -724,8 +715,8 @@ document.getElementById("reset-transpose").addEventListener("click", () => {
 });
 
 document.getElementById("btn-panic").addEventListener("click", midiPanic);
-document.getElementById("btn-hide-toolbar").addEventListener("click", toggleTopBar);
-document.getElementById("btn-show-toolbar").addEventListener("click", toggleTopBar);
+document.getElementById("btn-hide-toolbar").addEventListener("click", toggleToolbarVisibility);
+document.getElementById("btn-show-toolbar").addEventListener("click", toggleToolbarVisibility);
 
 document.getElementById("toolbar-title").addEventListener("click", () => {
     document.getElementById("dialog-about").show();
@@ -742,8 +733,8 @@ kbd.addEventListener("pointerdown", (e) => {
     drag_state.dragging = true;
     drag_state.origin.x = e.screenX;
     drag_state.origin.y = e.screenY;
-    drag_state.original.x = settings.offset.x;
-    drag_state.original.y = settings.offset.y;
+    drag_state.previous_offset.x = settings.offset.x;
+    drag_state.previous_offset.y = settings.offset.y;
     kbd.toggleAttribute("grabbing", true);
     kbd.setPointerCapture(e.pointerId);
 }, { capture: true, passive: false });
@@ -766,15 +757,15 @@ kbd.addEventListener("pointermove", (e) => {
         const kbd_rect = kbd.getBoundingClientRect();
         const cnt_rect = kbd_container.getBoundingClientRect();
 
-        // X-axis - move container perspective
+        // X-axis - scroll container
         const offset_x = e.screenX - drag_state.origin.x;
         const ratio_x = offset_x / (kbd_rect.width - cnt_rect.width);
-        settings.offset.x = clamp(drag_state.original.x - ratio_x, 0.0, 1.0);
+        settings.offset.x = clamp(drag_state.previous_offset.x - ratio_x, 0.0, 1.0);
 
         // Y-axis - move keyboard
         const offset_y = e.screenY - drag_state.origin.y;
         const ratio_y = offset_y / (cnt_rect.height - kbd_rect.height);
-        settings.offset.y = clamp(drag_state.original.y + ratio_y, 0.0, 1.0);
+        settings.offset.y = clamp(drag_state.previous_offset.y + ratio_y, 0.0, 1.0);
 
         // Snap vertically
         if ( !e.ctrlKey ) {
@@ -789,14 +780,18 @@ kbd.addEventListener("pointermove", (e) => {
 
 kbd_container.addEventListener("wheel", (e) => {
     if ( !drag_state.dragging && !e.ctrlKey ) {
+        // make zoom out faster than zoom in
+        const amount = e.wheelDeltaY / (e.wheelDeltaY >= 0 ? 1000 : 500);
         const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
-        let new_zoom = Math.max(1.0, settings.zoom + (e.wheelDeltaY/1000));
-        if ( new_zoom > max_zoom ) new_zoom = max_zoom;
+        const new_zoom = clamp(settings.zoom + amount, 1.0, max_zoom);
         if ( settings.zoom != new_zoom ) {
+            const kbd_rect = kbd.getBoundingClientRect();
+            const cnt_rect = kbd_container.getBoundingClientRect();
+            const new_width = Math.round(cnt_rect.width * new_zoom);
+            settings.offset.x = 
+                (e.clientX - (e.clientX - kbd_rect.left) / kbd_rect.width * new_width - cnt_rect.left) 
+                    / (cnt_rect.width - new_width);
             settings.zoom = new_zoom;
-            const rect = kbd.getBoundingClientRect();
-            const relative_x = e.clientX - rect.left
-            settings.offset.x = relative_x / rect.width;
             updateKeyboardPosition();
         }
     }
@@ -845,7 +840,7 @@ function handleKeyboardShortcut(e) {
     switch ( k ) {
         case "f9":
             e.preventDefault();
-            toggleTopBar();
+            toggleToolbarVisibility();
             break;
         case "escape":
             e.preventDefault();
