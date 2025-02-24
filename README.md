@@ -4,7 +4,7 @@ A tool to display a music keyboard on screen and control it through a MIDI contr
 
 ## Online usage
 
-Visit: https://piano-projector.app
+Visit: https://pianoprojector.app
 
 ## More info
 
