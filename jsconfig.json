@@ -1,8 +1,11 @@
 {
     "compilerOptions": {
-      "module": "CommonJS",
-      "target": "ES6"
+        "module": "ESNext", // should be ES2025, not regognized by VS Code yet
+        "target": "ESNext", // should be ES2025, not regognized by VS Code yet
+        "paths": {
+            "https://unpkg.com/smplr/*": ["./node_modules/smplr/*"],
+            "https://cdn.jsdelivr.net/npm/@shoelace-style/*": ["./node_modules/@shoelace-style/*"]
+        }
     },
-    "exclude": ["node_modules"]
-  }
-  
+    "include": ["./js", "./node_modules"]
+}
