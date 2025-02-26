@@ -50,6 +50,7 @@ div.menu-msg {
     padding: 6px 12px;
     display: flex;
     justify-content: space-between;
+    flex-wrap: nowrap;
     user-select: none;
 
     & :not(:defined) { visibility: hidden; }
@@ -66,6 +67,8 @@ div.menu-msg {
     }
 
     sl-color-picker { margin: 20px 30px; }
+
+    #dropdown-sound { margin-right: 12px; }
 
     #transpose-controls {
         display: flex;
@@ -134,10 +137,69 @@ div.menu-msg {
             &#pedm { color: color-mix(in srgb, #7d4 var(--led-intensity, 100%), var(--sl-color-neutral-400)); }
             &#pedr { color: color-mix(in srgb, #fa4 var(--led-intensity, 100%), var(--sl-color-neutral-400)); }
             &#connection-power-icon { color: #4f4; }
+            &#sound-power-icon { color: #4af; }
             &#transpose-power-icon { color: #ff0; }
         }
     }
 
+    @media (max-width: 1070px) {
+        #toolbar-title {
+            display: none;
+        }
+    }
+
+    @media (max-width: 870px) {
+        #btn-sound::part(label) {
+            content-visibility: hidden;
+            padding: 0px 5px;
+        }
+    }
+
+    @media (max-width: 818px) {
+        #btn-connect::part(label) {
+            content-visibility: hidden;
+            padding: 0px 5px;
+        }
+    }
+
+    @media (max-width: 754px) {
+        #btn-pedals::part(label) {
+            content-visibility: hidden;
+            padding: 0px 5px;
+        }
+    }
+
+    @media (max-width: 700px) {
+        #btn-transpose::part(label) {
+            content-visibility: hidden;
+            padding: 0px 5px;
+        }
+    }
+
+    @media (max-width: 624px) {
+        #dropdown-colors { display: none; }
+    }
+
+    @media (max-width: 523px) {
+        #dropdown-size { display: none; }
+    }
+
+    @media (max-width: 441px) {
+        #dropdown-sound { display: none; }
+    }
+
+    @media (max-width: 360px) {
+        #dropdown-pedals { display: none; }
+    }
+
+    @media (max-width: 265px) {
+        #btn-panic { display: none; }
+    }
+    
+}
+
+@media (max-width: 210px) {
+    #top-toolbar { display: none; }
 }
 
 #outer-main-area {

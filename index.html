@@ -18,14 +18,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 <!DOCTYPE html>
 <html class="sl-theme-dark">
     <head>
+        <meta http-equiv="Cache-Control" content="public">
         <title i18n="main-title">Piano Projector</title>
         <link rel="stylesheet" href="css/default.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/dark.css" />
         <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace-autoloader.js"></script>
         <script type="module" src="js/main.js"></script>
-        <script type="module" src="js/svgtools.js"></script>
-        <script type="module" src="js/midi.js"></script>
-        <script type="module" src="js/storage-handler.js"></script>
         <link rel="icon" type="image/png" href="favicon.png">
     </head>
     <body>
@@ -39,6 +37,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     </sl-button>
                     <sl-menu id="midi-connection-menu">
                         <sl-menu-item disabled>No MIDI input devices available</sl-menu-item>
+                    </sl-menu>
+                </sl-dropdown>
+                <sl-dropdown id="dropdown-sound">
+                    <sl-button id="btn-sound" slot="trigger" caret>
+                        Sound
+                        <sl-icon id="sound-power-icon" class="led-weak" slot="prefix" name="music-note-beamed"></sl-icon>
+                    </sl-button>
+                    <sl-menu id="menu-sound">
+                        <sl-menu-item class="menu-sound-item" collection_index="" value="" type="checkbox" checked>Disabled</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" collection_index="0" value="apiano" volume="90" type="checkbox">Acoustic Piano</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" collection_index="1" value="TX81Z" volume="127" type="checkbox">Electric Piano 1</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" collection_index="1" value="WurlitzerEP200" volume="70" type="checkbox">Electric Piano 2</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" collection_index="1" value="CP80" volume="70" type="checkbox">Electric Piano 3</sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
                 <sl-dropdown id="dropdown-size" stay-open-on-select>
@@ -132,7 +143,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 <sl-dropdown id="dropdown-transpose" stay-open-on-select>
                     <sl-button id="btn-transpose" slot="trigger" caret>
                         Transpose
-                        <sl-icon id="transpose-power-icon" class="led-strong" name="power" slot="prefix" label="Enable transpose"></sl-icon>
+                        <sl-icon id="transpose-power-icon" class="led-strong" name="arrow-down-up" slot="prefix" label="Enable transpose"></sl-icon>
                     </sl-button>
                     <sl-menu>
                         <!-- <sl-menu-item> -->

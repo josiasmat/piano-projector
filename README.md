@@ -17,3 +17,4 @@ This software is licensed under the terms of the [GNU Affero General Public Lice
 ### 3rd-party libraries used:
 
 - [Shoelace](https://github.com/shoelace-style/shoelace)
+- [smplr](https://github.com/danigb/smplr)

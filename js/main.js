@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import SvgTools from "./svgtools.js";
 import { Midi, noteToMidi } from "./midi.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
+import { SplendidGrandPiano, ElectricPiano } from "https://unpkg.com/smplr/dist/index.mjs";
 
 const settings_storage = new LocalStorageHandler("piano-projector");
 const session_storage = new SessionStorageHandler("piano-projector-session");
@@ -55,6 +56,39 @@ const settings = {
     set color_black(value) {
         document.documentElement.style.setProperty('--color-black-key', value);
     },
+    get computer_keyboard() {
+        return this.device_name === "pckbd";
+    },
+    set computer_keyboard(value) {
+        if ( value ) this.device_name = "pckbd";
+        else if ( this.computer_keyboard ) this.device_name = "";
+    }
+}
+
+const sound = {
+    type: "",
+    loaded: false,
+    led: null,
+    audio_ctx: new AudioContext(),
+    player: null,
+    play(note, vel=100) {
+        this.player?.start({ note: note+settings.transpose, velocity: vel });
+    },
+    stop(note, force) {
+        if ( force || !Midi.isNoteOn(note, settings.pedals ? "both" : "none") )
+            this.player?.stop(note+settings.transpose);
+    },
+    stopAll(force) {
+        if ( force )
+            this.player?.stop();
+        else
+            for ( let key = 0; key < 128; key++ )
+                this.stop(key, false);
+    },
+    collections: [
+        { class: SplendidGrandPiano, options: { decayTime: 0.4 } },
+        { class: ElectricPiano },
+    ]
 }
 
 const drag_state = {
@@ -63,9 +97,12 @@ const drag_state = {
     previous_offset: { x: 0, y: 0 }
 }
 
+
+
 const kbd_container = document.getElementById("main-area");
 const kbd = document.getElementById("kbd");
 const keys = Array(128).fill(null);
+
 
 /**
  * @param {SVGElement} svg 
@@ -356,7 +393,7 @@ function updatePedalIcons() {
     if ( settings.pedal_icons ) {
         btn_pedals_button.classList.add("button--has-prefix");
         btn_pedals_prefix.style.display = "flex";
-        changeLed("pedr", Midi.getLastControlValue(64) / 127);
+        changeLed("pedr", Midi.sustain); // Midi.getLastControlValue(64) / 127);
         changeLed("pedm", Midi.getLastControlValue(66) / 127);
         changeLed("pedl", Midi.getLastControlValue(67) / 127);
     } else {
@@ -367,12 +404,47 @@ function updatePedalIcons() {
 
 
 function updateToolbar() {
-    changeLed("connection-power-icon", ( settings.device_name && Midi.getConnectedPort() ));
+    changeLed("connection-power-icon", 
+        ( settings.computer_keyboard || ( settings.device_name && Midi.getConnectedPort() )));
     changeLed("transpose-power-icon", ( settings.transpose != 0 ));
+    changeLed("sound-power-icon", sound.led, (sound.led == 1 ? "red" : null));
     document.getElementById("top-toolbar").toggleAttribute("hidden", !settings.toolbar);
     document.getElementById("btn-show-toolbar").toggleAttribute("hidden", settings.toolbar);
     updatePedalIcons();
 }
+
+
+function updateSoundMenu() {
+    if ( sound.type && !sound.loaded ) {
+        for ( const item of document.querySelectorAll(".menu-sound-item") ) {
+            item.toggleAttribute("disabled", !item.hasAttribute("loading"));
+            item.checked = false;
+        }
+    } else {
+        for ( const item of document.querySelectorAll(".menu-sound-item") ) {
+            item.toggleAttribute("disabled", false);
+            item.checked = ( item.value == sound.type && !item.hasAttribute("loading") );
+        }
+    }
+}
+
+
+// function populateSoundMenu() {
+//     for ( let i = 0; i < sound.collections.length; i++ ) {
+//         const collection = sound.collections[i];
+//         if ( collection.retriever ) {
+//             for ( const name of collection.retriever() ) {
+//                 const item = document.createElement("sl-menu-item");
+//                 item.setAttribute("type", "checkbox");
+//                 item.setAttribute("value", name);
+//                 item.setAttribute("collection_index", i);
+//                 item.classList.add("menu-sound-item");
+//                 item.innerText = name;
+//                 document.getElementById("menu-sound").appendChild(item);
+//             }
+//         }
+//     }
+// }
 
 
 function updateSizeMenu(excluded_elm = null) {
@@ -452,6 +524,7 @@ function toggleToolbarVisibility() {
 
 
 function midiPanic() {
+    sound.stopAll(true);
     Midi.reset();
     createKeyboard();
     updatePedalIcons();
@@ -469,6 +542,7 @@ function midiPanic() {
  *     - _octaves_ - Number of octaves. 
  */
 function transpose(params={}) {
+    const previous_transpose = settings.transpose;
     if ( params.reset ) {
         settings.semitones = 0;
         settings.octaves = 0;
@@ -484,6 +558,8 @@ function transpose(params={}) {
         if ( Object.hasOwn(params, "octaves") )
             settings.octaves += params.octaves;
     }
+    if ( previous_transpose != settings.transpose ) 
+        sound.stopAll(true);
     updateTransposeMenuAndButton();
     updateKeyboardKeys();
     writeSettings();
@@ -540,21 +616,48 @@ function changeLed(id, state, color=null) {
 }
 
 
+function togglePcKeyboardConnection(value=null) {
+    settings.computer_keyboard = value ?? !settings.computer_keyboard;
+    if ( settings.computer_keyboard ) Midi.disconnect();
+    Midi.pc_keyboard_enabled = settings.computer_keyboard;
+    updateToolbar();
+    updateKeyboardKeys();
+    writeSettings();
+}
+
+
 // Set event listeners
 
 document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
     const menu = document.getElementById("midi-connection-menu");
     menu.innerHTML = "";
 
+    function addComputerKeyboardMenuItem() {
+        if ( /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ) return;
+        const ck_item = document.createElement("sl-menu-item");
+        ck_item.setAttribute("type", "checkbox");
+        ck_item.toggleAttribute("checked", settings.computer_keyboard);
+        ck_item.innerText = "Computer keyboard";
+        ck_item.addEventListener("click", () => { togglePcKeyboardConnection(); });
+        if ( menu.childElementCount ) {
+            menu.appendChild(document.createElement("sl-divider"));
+            menu.appendChild(ck_item);
+        } else {
+            menu.appendChild(ck_item);
+            menu.appendChild(document.createElement("sl-divider"));
+        }
+    }
+
     if ( !Midi.browserHasMidiSupport ) {
-        const msg = document.createElement("div");
-        msg.classList.add("menu-msg");
-        msg.innerHTML = 
+        addComputerKeyboardMenuItem();
+        const item = document.createElement("div");
+        item.classList.add("menu-msg");
+        item.innerHTML = 
             "Your browser does not support the Web MIDI API.<br />" +
             "Try updating your browser or switching<br />" +
             "to <a href=\"https://www.mozilla.org/firefox/\" target=\"_blank\">Mozilla Firefox</a> " +
             "or <a href=\"https://www.google.com/chrome/\" target=\"_blank\">Google Chrome</a>.";
-        menu.appendChild(msg);
+        menu.appendChild(item);
         changeLed("connection-power-icon", false);
         return;
     }
@@ -564,6 +667,7 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
         menu_item.innerText = "MIDI access denied.";
         menu_item.toggleAttribute("disabled", true);
         menu.appendChild(menu_item);
+        addComputerKeyboardMenuItem();
         changeLed("connection-power-icon", false);
     }
 
@@ -586,16 +690,17 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
                     }
                     // menu item click event handler
                     menu_item.addEventListener("click", (e) => {
-                        const cp = Midi.getConnectedPort();
-                        if ( cp && cp.id == e.target.value ) {
+                        if ( e.target.checked ) {
                             Midi.disconnect();
                             settings.device_name = null;
                             writeSettings();
-                        } else
-                            Midi.connect(port, (conn_port) => {
+                        } else {
+                            Midi.connectByPortId(e.target.value, (conn_port) => {
+                                togglePcKeyboardConnection(false);
                                 settings.device_name = conn_port.name;
                                 writeSettings();
                             });
+                        }
                     });
                     menu.appendChild(menu_item);
                 }
@@ -609,6 +714,7 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
                     menu.appendChild(menu_item);
                     changeLed("connection-power-icon", false);
                 }
+                addComputerKeyboardMenuItem();
             },
             () => {
                 doOnAccessDenied();
@@ -639,6 +745,8 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
     
 });
 
+document.getElementById("dropdown-sound")
+    .addEventListener("sl-show", updateSoundMenu);
 document.getElementById("dropdown-size")
     .addEventListener("sl-show", updateSizeMenu);
 document.getElementById("dropdown-colors")
@@ -652,6 +760,44 @@ document.getElementById("dropdown-transpose")
 //    .addEventListener("sl-show", () => {
 //     //...
 // });
+
+document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
+    sound.stopAll(true);
+    const new_sound = e.detail.item.value;
+    if ( !new_sound ) {
+        if ( sound.player ) sound.player = null;
+        sound.loaded = false;
+        sound.led = 0;
+        updateToolbar();
+    } else if ( sound.type != new_sound ) {
+        sound.audio_ctx.resume();
+        const collection_index = e.detail.item.getAttribute("collection_index");
+        const options = sound.collections[collection_index].options ?? {};
+        options.instrument = new_sound;
+        options.volume = parseInt(e.detail.item.getAttribute("volume") ?? "100");
+        sound.player = new sound.collections[collection_index].class(sound.audio_ctx, options);
+        sound.loaded = false;
+        e.detail.item.toggleAttribute("loading", true);
+        sound.led = 1;
+        const interval = setInterval(() => {
+            sound.led = ( sound.led == 0 ? 1 : 0 );
+            updateToolbar();
+        }, 500);
+        sound.player.load.then(() => { 
+            clearInterval(interval);
+            sound.loaded = true;
+            sound.led = 2;
+            e.detail.item.toggleAttribute("loading", false);
+            updateToolbar(); 
+            updateSoundMenu();
+        });
+        updateToolbar();
+    }
+    sound.type = new_sound;
+    for ( const item of document.querySelectorAll(".menu-sound-item") ) {
+        item.checked = ( item.value == new_sound );
+    }
+});
 
 document.getElementById("menu-size").addEventListener("sl-select", (e) => {
     if ( e.detail.item.classList.contains("menu-number-of-keys") )
@@ -830,21 +976,35 @@ Midi.onConnectionChange = (connected, port) => {
     updateToolbar();
 }
 
-Midi.onKeyPress   = updateNote;
-Midi.onKeyRelease = updateNote;
+Midi.onKeyPress   = (key, velocity) => {
+    updateNote(key);
+    sound.play(key, velocity);
+};
+Midi.onKeyRelease = (key) => {
+    updateNote(key);
+    const note = key;
+    sound.stop(note, false);
+}
 
 Midi.onControlChange = (number) => {
     if ( number > 63 && number < 68 ) {
         updateKeyboardKeys();
+        sound.stop(false);
         updatePedalIcons();
     }
 };
 
+Midi.onSustainPedal = () => {
+    updateKeyboardKeys();
+    sound.stopAll(false);
+    updatePedalIcons();
+}
+
 
 // Keyboard events
 
-function handleKeyboardShortcut(e) {
-    if ( e.repeating ) return;
+function handleKeyDown(e) {
+    if ( e.repeat ) return;
     let comb = [];
     if ( e.ctrlKey  ) comb.push("ctrl");
     if ( e.altKey   ) comb.push("alt");
@@ -860,28 +1020,23 @@ function handleKeyboardShortcut(e) {
             e.preventDefault();
             midiPanic();
             break;
-        case "+":
-        case "shift++":
+        case "pageup":
             e.preventDefault();
             transpose({ semitones: +1 });
             break;
-        case "-":
+        case "pagedown":
             e.preventDefault();
             transpose({ semitones: -1 });
             break;
-        case "pageup":
+        case "shift+pageup":
             e.preventDefault();
             transpose({ octaves: +1 });
             break;
-        case "pagedown":
+        case "shift+pagedown":
             e.preventDefault();
             transpose({ octaves: -1 });
             break;
     }
-}
-
-function enableKeyboardShortcuts() {
-    window.addEventListener("keydown", handleKeyboardShortcut);
 }
 
 
@@ -907,19 +1062,23 @@ await Promise.allSettled([
 
 updateToolbar();
 createKeyboard();
-enableKeyboardShortcuts();
+
+window.addEventListener("keydown", handleKeyDown);
 
 // Connect to stored device name
 if ( settings.device_name ) {
-    Midi.requestInputPortList(
-        (ports) => {
-            for ( const port of ports ) {
-                if ( port.name == settings.device_name ) {
-                    Midi.connect(port);
-                    break;
+    if ( settings.device_name == "pckbd" )
+        togglePcKeyboardConnection(true);
+    else
+        Midi.requestInputPortList(
+            (ports) => {
+                for ( const port of ports ) {
+                    if ( port.name == settings.device_name ) {
+                        Midi.connect(port);
+                        break;
+                    }
                 }
-            }
-        },
-        null
-    );
+            },
+            null
+        );
 }
