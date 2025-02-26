@@ -658,7 +658,7 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
             "to <a href=\"https://www.mozilla.org/firefox/\" target=\"_blank\">Mozilla Firefox</a> " +
             "or <a href=\"https://www.google.com/chrome/\" target=\"_blank\">Google Chrome</a>.";
         menu.appendChild(item);
-        changeLed("connection-power-icon", false);
+        updateToolbar();
         return;
     }
 
@@ -668,7 +668,7 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
         menu_item.toggleAttribute("disabled", true);
         menu.appendChild(menu_item);
         addComputerKeyboardMenuItem();
-        changeLed("connection-power-icon", false);
+        updateToolbar();
     }
 
     function doOnAccessGranted() {
@@ -712,7 +712,7 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
                     menu_item.innerText = "No MIDI input devices available";
                     menu_item.toggleAttribute("disabled", true);
                     menu.appendChild(menu_item);
-                    changeLed("connection-power-icon", false);
+                    updateToolbar();
                 }
                 addComputerKeyboardMenuItem();
             },
