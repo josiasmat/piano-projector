@@ -69,7 +69,7 @@ const sound = {
     type: "",
     loaded: false,
     led: null,
-    audio_ctx: new AudioContext(),
+    audio_ctx: null,
     player: null,
     play(note, vel=100) {
         this.player?.start({ note: note+settings.transpose, velocity: vel });
@@ -617,12 +617,30 @@ function changeLed(id, state, color=null) {
 
 
 function togglePcKeyboardConnection(value=null) {
-    settings.computer_keyboard = value ?? !settings.computer_keyboard;
-    if ( settings.computer_keyboard ) Midi.disconnect();
-    Midi.pc_keyboard_enabled = settings.computer_keyboard;
+    if ( value === null ) value = !settings.computer_keyboard;
+    if ( value ) Midi.disconnect();
+    settings.computer_keyboard = value;
+    Midi.pc_keyboard_enabled = value;
     updateToolbar();
     updateKeyboardKeys();
-    writeSettings();
+}
+
+
+function connectMidi(name) {
+    settings.device_name = name;
+    Midi.connectByPortName(name, () => {
+        togglePcKeyboardConnection(false);
+        updateToolbar();
+        updateKeyboardKeys();
+    });
+}
+
+
+function disconnectMidi() {
+    settings.device_name = null;
+    Midi.disconnect();
+    updateToolbar();
+    updateKeyboardKeys();
 }
 
 
@@ -634,27 +652,31 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
 
     function addComputerKeyboardMenuItem() {
         if ( /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ) return;
-        const ck_item = document.createElement("sl-menu-item");
-        ck_item.setAttribute("type", "checkbox");
-        ck_item.toggleAttribute("checked", settings.computer_keyboard);
-        ck_item.innerText = "Computer keyboard";
-        ck_item.addEventListener("click", () => { togglePcKeyboardConnection(); });
+        const kbd_item = newElement("sl-menu-item", {
+            type: "checkbox", "checked": settings.computer_keyboard
+        }, "Computer keyboard");
+        kbd_item.appendChild(newElement("sl-icon", {
+            name: "keyboard", slot: "prefix"
+        }));
+        kbd_item.addEventListener("click", () => { 
+            togglePcKeyboardConnection();
+            writeSettings();
+        });
         if ( menu.childElementCount ) {
-            menu.appendChild(document.createElement("sl-divider"));
-            menu.appendChild(ck_item);
+            menu.appendChild(newElement("sl-divider"));
+            menu.appendChild(kbd_item);
         } else {
-            menu.appendChild(ck_item);
-            menu.appendChild(document.createElement("sl-divider"));
+            menu.appendChild(kbd_item);
+            menu.appendChild(newElement("sl-divider"));
         }
     }
 
     if ( !Midi.browserHasMidiSupport ) {
         addComputerKeyboardMenuItem();
-        const item = document.createElement("div");
-        item.classList.add("menu-msg");
+        const item = newElement("div", { class: "menu-msg" });
         item.innerHTML = 
             "Your browser does not support the Web MIDI API.<br />" +
-            "Try updating your browser or switching<br />" +
+            "To use MIDI, try updating your browser or switching<br />" +
             "to <a href=\"https://www.mozilla.org/firefox/\" target=\"_blank\">Mozilla Firefox</a> " +
             "or <a href=\"https://www.google.com/chrome/\" target=\"_blank\">Google Chrome</a>.";
         menu.appendChild(item);
@@ -663,10 +685,8 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
     }
 
     function doOnAccessDenied() {
-        const menu_item = document.createElement("sl-menu-item");
-        menu_item.innerText = "MIDI access denied.";
-        menu_item.toggleAttribute("disabled", true);
-        menu.appendChild(menu_item);
+        const item = newElement("sl-menu-item", { disabled: true }, "MIDI access denied");
+        menu.appendChild(item);
         addComputerKeyboardMenuItem();
         updateToolbar();
     }
@@ -678,43 +698,38 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
                 let connected_port_found = false;
                 for ( const port of ports ) {
                     // populate connection menu
-                    const menu_item = document.createElement("sl-menu-item");
-                    menu_item.innerText = port.name;
-                    menu_item.setAttribute("type", "checkbox");
-                    menu_item.value = port.id;
+                    const menu_item = newElement("sl-menu-item", {
+                        type: "checkbox", value: port.name
+                    }, port.name);
+                    menu_item.appendChild(newElement("sl-icon", {
+                        src: "svg/midikbd.svg", slot: "prefix"
+                    }));
                     // check if port is connected
-                    if ( connected_port && connected_port.id == port.id ) {
-                        menu_item.toggleAttribute("checked", true);
+                    if ( connected_port && connected_port.name == port.name ) {
+                        menu_item.checked = true;
                         connected_port_found = true;
-                        updateToolbar();
                     }
                     // menu item click event handler
                     menu_item.addEventListener("click", (e) => {
-                        if ( e.target.checked ) {
-                            Midi.disconnect();
-                            settings.device_name = null;
-                            writeSettings();
-                        } else {
-                            Midi.connectByPortId(e.target.value, (conn_port) => {
-                                togglePcKeyboardConnection(false);
-                                settings.device_name = conn_port.name;
-                                writeSettings();
-                            });
-                        }
+                        if ( e.target.checked )
+                            disconnectMidi();
+                        else
+                            connectMidi(e.target.value);
+                        writeSettings();
                     });
                     menu.appendChild(menu_item);
                 }
                 // if connected port disappeared, disconnect it
-                if ( !connected_port_found )
-                    Midi.disconnect();
+                if ( !settings.computer_keyboard && !connected_port_found )
+                    disconnectMidi();
                 if ( ports.length == 0 ) {
-                    const menu_item = document.createElement("sl-menu-item");
-                    menu_item.innerText = "No MIDI input devices available";
-                    menu_item.toggleAttribute("disabled", true);
-                    menu.appendChild(menu_item);
-                    updateToolbar();
+                    menu.appendChild(newElement(
+                        "sl-menu-item", { disabled: true},
+                        "No MIDI input devices available"
+                    ));
                 }
                 addComputerKeyboardMenuItem();
+                updateToolbar();
             },
             () => {
                 doOnAccessDenied();
@@ -726,17 +741,18 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
         doOnAccessGranted,
         doOnAccessDenied,
         () => {
-            const temp_menu_item = document.createElement("sl-menu-item");
-            temp_menu_item.innerText = "Requesting MIDI access...";
-            temp_menu_item.toggleAttribute("loading", true);
-            menu.appendChild(temp_menu_item);
+            const temp_item = newElement(
+                "sl-menu-item", { loading: true },
+                "Requesting MIDI acces…"
+            );
+            menu.appendChild(temp_item);
             Midi.requestMidiAccess(
                 () => {
-                    menu.removeChild(temp_menu_item);
+                    menu.removeChild(temp_item);
                     doOnAccessGranted();
                 },
                 () => {
-                    menu.removeChild(temp_menu_item);
+                    menu.removeChild(temp_item);
                     doOnAccessDenied();
                 }
             );
@@ -770,7 +786,7 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
         sound.led = 0;
         updateToolbar();
     } else if ( sound.type != new_sound ) {
-        sound.audio_ctx.resume();
+        if ( !sound.audio_ctx ) sound.audio_ctx = new AudioContext();
         const collection_index = e.detail.item.getAttribute("collection_index");
         const options = sound.collections[collection_index].options ?? {};
         options.instrument = new_sound;
@@ -1044,6 +1060,25 @@ function handleKeyDown(e) {
 
 function clamp(value, min, max) {
     return (value < min) ? min : ( (value > max) ? max : value );
+}
+
+/**
+ * Creates a new HTML element.
+ * @param {string} type - Tag name
+ * @param {object} attrs 
+ * @returns {HTMLElement}
+ */
+function newElement(type, attrs={}, inner_text=null) {
+    const elm = document.createElement(type);
+    for ( const [key,val] of Object.entries(attrs) ) {
+        if ( typeof(val) === "boolean" )
+            elm.toggleAttribute(key, val);
+        else
+            elm.setAttribute(key, val);
+    }
+    if ( inner_text )
+        elm.innerText = inner_text;
+    return elm;
 }
 
 
