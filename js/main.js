@@ -39,19 +39,19 @@ const settings = {
     octaves: 0,
     get transpose() { return this.semitones + (this.octaves*12); },
     get color_highlight() {
-        return document.documentElement.style.getPropertyValue("--color-highlight");
+        return getComputedStyle(document.documentElement).getPropertyValue("--color-highlight");
     },
     set color_highlight(value) {
         document.documentElement.style.setProperty('--color-highlight', value);
     },
     get color_white() {
-        return document.documentElement.style.getPropertyValue("--color-white-key");
+        return getComputedStyle(document.documentElement).getPropertyValue("--color-white-key");
     },
     set color_white(value) {
         document.documentElement.style.setProperty('--color-white-key', value);
     },
     get color_black() {
-        return document.documentElement.style.getPropertyValue("--color-black-key");
+        return getComputedStyle(document.documentElement).getPropertyValue("--color-black-key");
     },
     set color_black(value) {
         document.documentElement.style.setProperty('--color-black-key', value);
