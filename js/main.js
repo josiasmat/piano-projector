@@ -90,8 +90,8 @@ const sound = {
                 this.stop(key, false);
     },
     collections: [
-        { class: SplendidGrandPiano, options: { decayTime: 0.4 } },
-        { class: ElectricPiano },
+        { loader: (...args) => new SplendidGrandPiano(...args), options: { decayTime: 0.4 } },
+        { loader: (...args) => new ElectricPiano(...args) },
     ],
     fail_alert: document.getElementById("alert-sound-connection-fail")
 }
@@ -798,7 +798,7 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
         const options = sound.collections[collection_index].options ?? {};
         options.instrument = new_sound;
         options.volume = parseInt(e.detail.item.getAttribute("volume") ?? "100");
-        sound.player = new sound.collections[collection_index].class(sound.audio_ctx, options);
+        sound.player = sound.collections[collection_index].loader(sound.audio_ctx, options);
         sound.loaded = false;
         sound.led = 1;
         e.detail.item.toggleAttribute("loading", true);
