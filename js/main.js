@@ -705,47 +705,58 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
         updateToolbar();
     }
 
+    function populateConnectionMenu(ports) {
+        menu.innerHTML = "";
+        const connected_port = Midi.getConnectedPort();
+        let connected_port_found = false;
+        const template = document
+            .getElementById("menu-connect-item-midi-port-template");
+        for ( const port of ports ) {
+            const menu_item = cloneTemplate(template, 
+                { value: port.name }, port.name
+            );
+            // check if port is connected
+            if ( connected_port?.name === port.name ) {
+                menu_item.checked = true;
+                connected_port_found = true;
+            }
+            // menu item click event handler
+            menu_item.addEventListener("click", (e) => {
+                if ( settings.device_name === e.currentTarget.value )
+                    disconnectInput(true);
+                else
+                    connectInput(e.currentTarget.value, true);
+            });
+            menu.appendChild(menu_item);
+        }
+        // if connected port disappeared, disconnect it
+        if ( !settings.pc_keyboard_connected && !connected_port_found )
+            disconnectInput();
+        if ( ports.length == 0 ) {
+            menu.appendChild(newElement(
+                "sl-menu-item", { disabled: true},
+                "No MIDI input devices available"
+            ));
+        }
+        addComputerKeyboardMenuItem();
+        updateToolbar();
+    }
+
     function doOnAccessGranted() {
         Midi.requestInputPortList(
             (ports) => {
-                const connected_port = Midi.getConnectedPort();
-                let connected_port_found = false;
-                const template = document
-                    .getElementById("menu-connect-item-midi-port-template");
-                // populate connection menu
-                for ( const port of ports ) {
-                    const menu_item = cloneTemplate(template, 
-                        { value: port.name }, port.name
-                    );
-                    // check if port is connected
-                    if ( connected_port?.name === port.name ) {
-                        menu_item.checked = true;
-                        connected_port_found = true;
-                    }
-                    // menu item click event handler
-                    menu_item.addEventListener("click", (e) => {
-                        if ( settings.device_name === e.currentTarget.value )
-                            disconnectInput(true);
-                        else
-                            connectInput(e.currentTarget.value, true);
-                    });
-                    menu.appendChild(menu_item);
+                const dropdown_connect = document.getElementById("dropdown-connect");
+                populateConnectionMenu(ports);
+                const timer = setInterval(() => {
+                    Midi.requestInputPortList(populateConnectionMenu);
+                }, 500);
+                function onConnectMenuClose() {
+                    clearInterval(timer);
+                    dropdown_connect.removeEventListener("sl-hide", onConnectMenuClose);
                 }
-                // if connected port disappeared, disconnect it
-                if ( !settings.pc_keyboard_connected && !connected_port_found )
-                    disconnectInput();
-                if ( ports.length == 0 ) {
-                    menu.appendChild(newElement(
-                        "sl-menu-item", { disabled: true},
-                        "No MIDI input devices available"
-                    ));
-                }
-                addComputerKeyboardMenuItem();
-                updateToolbar();
+                dropdown_connect.addEventListener("sl-hide", onConnectMenuClose);
             },
-            () => {
-                doOnAccessDenied();
-            }
+            doOnAccessDenied
         );
     }
 
@@ -1050,6 +1061,26 @@ KbdNotes.onKeyPress = handleKeyPress;
 KbdNotes.onKeyRelease = handleKeyRelease;
 KbdNotes.onSustain = handleSustainChange;
 KbdNotes.onReset = handleResetMsg;
+
+
+// Connection watchdog
+
+setInterval( () => {
+    if ( !settings.device_name || settings.pc_keyboard_connected ) return;
+    Midi.queryMidiAccess(() => {
+        Midi.requestInputPortList((ports) => {
+            const port = ports.find((p) => p.name === settings.device_name);
+            const no_connection = !Midi.getConnectedPort();
+            if ( !port && !no_connection )
+                Midi.disconnect();
+            else if ( port && no_connection )
+                Midi.connect(port);
+            updateToolbar();
+        });
+    }, 
+    () => { Midi.disconnect(); },
+    () => { Midi.disconnect(); })
+}, 2000);
 
 
 // Keyboard events
