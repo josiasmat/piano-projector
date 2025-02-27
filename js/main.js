@@ -799,6 +799,10 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
         }, 400);
         function onLoadFinished(result) {
             clearInterval(interval);
+            if ( !result ) {
+                sound.player = null;
+                sound.type = null;
+            }
             sound.loaded = result;
             sound.led = result ? 2 : 0;
             e.detail.item.toggleAttribute("loading", false);
@@ -808,9 +812,9 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
         sound.player.load.then(() => { 
             onLoadFinished(true);
         }, (reason) => {
+            onLoadFinished(false);
             sound.fail_alert.children[1].innerText = `Reason: ${reason}`;
             sound.fail_alert.toast();
-            onLoadFinished(false);
         });
         updateToolbar();
     }
