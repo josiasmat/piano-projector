@@ -19,8 +19,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 <html class="sl-theme-dark">
     <head>
         <meta http-equiv="Cache-Control" content="public">
-        <meta name="description" content="Easy to use on-screen piano keyboard. Control it with a MIDI device or with your computer keyboard."/>
+        <meta name="description" content="An easy to use on-screen piano keyboard. Control it with a MIDI device or with your computer keyboard." />
         <title i18n="main-title">Piano Projector</title>
+        <link rel="manifest" href="manifest.json" />
         <link rel="stylesheet" href="css/default.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/dark.css" />
         <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace-autoloader.js"></script>
@@ -30,7 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <body>
         <div id="top-toolbar">
             <div id="top-toolbar-left">
-                <span id="toolbar-title" class="title-text" style="cursor:pointer;">Piano Projector</span>
+                <span id="toolbar-title" class="title-text">Piano Projector</span>
                 <sl-dropdown id="dropdown-connect">
                     <sl-button id="btn-connect" slot="trigger" caret>
                         Connect
