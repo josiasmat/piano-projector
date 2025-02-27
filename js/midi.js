@@ -19,6 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 const ALL_CHANNELS = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
 
+const CC_SUSTAIN_PED = 64;
+const CC_SOSTENUTO_PED = 66;
+const CC_SOFT_PED = 67;
+const CC_ALL_NOTES_OFF = 123;
+
 export const Midi = {
 
     onKeyPress: null,
@@ -179,8 +184,7 @@ export const Midi = {
 
     isKeyPressed(key) {
         if ( key < 0 || key > 127 ) return false;
-        return midi_state.keys[key]
-               || (midi_state.pckbd.enabled && midi_state.pckbd.keys.has(key) );
+        return midi_state.keys[key];
     },
 
     /**
@@ -235,29 +239,16 @@ export const Midi = {
         midi_state.pedals.threshold = value;
     },
 
-    get sustain() {
-        return (midi_state.pckbd.enabled && midi_state.pckbd.sustain)
-               || midi_state.cc[64];
+    get sustain_pressed() {
+        return midi_state.pedals.sustain;
     },
 
-    get pc_keyboard_enabled() {
-        return midi_state.pckbd.enabled;
+    get sostenuto_pressed() {
+        return midi_state.pedals.sostenuto;
     },
 
-    set pc_keyboard_enabled(value) {
-        midi_state.pckbd.enabled = value;
-        if ( value ) {
-            window.addEventListener("keydown", handlePcKeyDown);
-            window.addEventListener("keyup", handlePcKeyUp);
-        } else {
-            window.removeEventListener("keydown", handlePcKeyDown);
-            window.removeEventListener("keyup", handlePcKeyUp);
-            midi_state.pckbd.sustain = false;
-            this.onSustainPedal?.(false);
-            for ( const key of midi_state.pckbd.keys )
-                this.onKeyRelease?.(key);
-            midi_state.pckbd.keys.clear();
-        }
+    get soft_pressed() {
+        return midi_state.pedals.soft;
     },
 
 }
@@ -273,24 +264,6 @@ const midi_state = {
     dev: null,
     channels: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
 
-    pckbd: {
-        enabled: false,
-        keys: new Set([]),
-        sustain: false,
-        velocity: 88,
-        map: new Map([
-            ['KeyZ',48], ['KeyS',49], ['KeyX',50], ['KeyD',51], ['KeyC',52], ['KeyV',53], 
-            ['KeyG',54], ['KeyB',55], ['KeyH',56], ['KeyN',57], ['KeyJ',58], ['KeyM',59],
-            ['KeyW',60], ['Digit3',61], ['KeyE',62], ['Digit4',63], ['KeyR',64], ['KeyT',65],
-            ['Digit6',66], ['KeyY',67], ['Digit7',68], ['KeyU',69], ['Digit8',70], ['KeyI',71],
-            ['KeyO',72], ['Digit0',73], ['KeyP',74], ['KeyQ',59], ['Digit1',58], ['Comma',60], 
-            ['KeyL',61], ['Period',62], ['Semicolon',63], ['Slash',64], ['IntlRo',65],
-            ['Backslash',66], ['Minus',75], ['BracketLeft',76], ['BracketRight',77],
-            ['IntlBackslash',47]
-        
-        ]),
-    },
-
     cc: Array(128).fill(0),
     keys: Array(128).fill(false),
     pcs: Array(12).fill(0),
@@ -300,11 +273,10 @@ const midi_state = {
     pedals: {
         threshold: 64,
         get sustain() { 
-            return ( midi_state.pckbd.enabled && midi_state.pckbd.sustain )
-                     || ( midi_state.cc[64] >= this.threshold ); 
+            return ( midi_state.cc[CC_SUSTAIN_PED] >= this.threshold ); 
         },
-        get sostenuto() { return midi_state.cc[66] >= this.threshold; },
-        get soft() { return midi_state.cc[67] >= this.threshold; }
+        get sostenuto() { return midi_state.cc[CC_SOSTENUTO_PED] >= this.threshold; },
+        get soft() { return midi_state.cc[CC_SOFT_PED] >= this.threshold; }
     },
 
     last_event_timestamp : 0,
@@ -370,99 +342,53 @@ function setNoteOff(key, velocity) {
 }
 
 
-function setSustain(value, continuous=false) {
-    const sustain_state = ( typeof(value) === "boolean" ) 
-        ? value : value >= midi_state.pedals.threshold;
-    if ( midi_state.pedals.sustain != sustain_state ) {
-        if ( sustain_state ) {
+function setSustain(value) {
+    const new_state = (value >= midi_state.pedals.threshold);
+    if ( midi_state.pedals.sustain != new_state ) {
+        if ( new_state ) {
             for ( let key = 0; key < 128; key++ )
                 midi_state.sustain[key] = 
-                    midi_state.keys[key] 
-                    || ( midi_state.pckbd.enabled && midi_state.pckbd.keys.has(key) )
-                    || midi_state.sostenuto[key];
-            Midi.onSustainPedal?.(sustain_state, value);
+                    midi_state.keys[key] || midi_state.sostenuto[key];
+            Midi.onSustainPedal?.(new_state, value);
         } else {
             for ( let key = 0; key < 128; key++ )
                 midi_state.sustain[key] = false;
-            Midi.onSustainPedal?.(sustain_state, value);
+            Midi.onSustainPedal?.(new_state, value);
         }
-    } else if ( continuous ) {
-        Midi.onSustainPedal?.(sustain_state, value);
     }
 }
 
 
-function setSostenuto(value, continuous=false) {
+function setSostenuto(value) {
     if ( !midi_state.pedals.sostenuto && value >= midi_state.pedals.threshold ) {
         for ( let key = 0; key < 128; key++ )
-            midi_state.sostenuto[key] = midi_state.keys[key] || midi_state.pckbd.keys.has(key);
+            midi_state.sostenuto[key] = midi_state.keys[key];
         Midi.onSostenutoPedal?.(midi_state.pedals.sostenuto, value);
     } else if ( midi_state.pedals.sostenuto && value < midi_state.pedals.threshold ) {
         for ( let key = 0; key < 128; key++ )
             midi_state.sostenuto[key] = false;
-        Midi.onSostenutoPedal?.(midi_state.pedals.sostenuto, value);
-    } else if ( continuous ) {
         Midi.onSostenutoPedal?.(midi_state.pedals.sostenuto, value);
     }
 }
 
 
 function setCC(number, value) {
+    if ( number == CC_SOSTENUTO_PED ) setSostenuto(value);
+    if ( number == CC_SUSTAIN_PED   ) setSustain(value);
+    if ( number == CC_ALL_NOTES_OFF ) setAllNotesOff();
     midi_state.cc[number] = value;
-
-    if ( number == 66 ) setSostenuto(value);
-    if ( number == 64 ) setSustain(value);
-
-    if ( number == 123 )
-        for ( let key = 0; key < 128; key++ )
-            setNoteOff(key);
-        
     Midi.onControlChange?.(number, value);
 }
 
 
-function handlePcKeyDown(e) {
-    if ( e.ctrlKey || e.altKey ) return;
-    if ( e.code.startsWith("Shift") ) {
-        e.preventDefault();
-        setSustain(true);
-        midi_state.pckbd.sustain = true;
-        Midi.onSustainPedal?.(true);
-    }
-    if ( midi_state.pckbd.map.has(e.code) ) {
-        e.preventDefault();
-        if ( e.repeat ) return;
-        const key = midi_state.pckbd.map.get(e.code);
-        midi_state.pckbd.keys.add(key);
-        if ( midi_state.pedals.sustain )
-            midi_state.sustain[key] = true;
-        Midi.onKeyPress?.(key, midi_state.pckbd.velocity);
-    }
-}
-
-function handlePcKeyUp(e) {
-    if ( e.code.startsWith("Shift") && !e.shiftKey ) {
-        e.preventDefault();
-        setSustain(false);
-        midi_state.pckbd.sustain = false;
-        Midi.onSustainPedal?.(false);
-    }
-    if ( midi_state.pckbd.map.has(e.code) ) {
-        e.preventDefault();
-        if ( e.repeat ) return;
-        const key = midi_state.pckbd.map.get(e.code);
-        midi_state.pckbd.keys.delete(key);
-        Midi.onKeyRelease?.(key);
-    }
-}
-
-
 function setAllNotesOff() {
-    midi_state.reset();
+    for ( let key = 0; key < 128; key++ )
+        setNoteOff(key);
 }
 
 
 function midiPanic() {
+    setAllNotesOff();
     midi_state.reset();
 }
 

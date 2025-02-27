@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import SvgTools from "./svgtools.js";
 import { Midi, noteToMidi } from "./midi.js";
+import { KbdNotes} from "./kbdnotes.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
 
 // Dynamically import smplr module
@@ -79,7 +80,9 @@ const sound = {
         this.player?.start({ note: note+settings.transpose, velocity: vel });
     },
     stop(note, force) {
-        if ( force || !Midi.isNoteOn(note, settings.pedals ? "both" : "none") )
+        if ( force 
+             || !( Midi.isNoteOn(note, settings.pedals ? "both" : "none") 
+                   || KbdNotes.isNoteSustained(note) ) )
             this.player?.stop(note+settings.transpose);
     },
     stopAll(force) {
@@ -381,8 +384,9 @@ function updateKeyboardKeys(first_key=0, last_key=127) {
         const key = keys[i];
         if ( key ) {
             const j = i-settings.transpose;
-            const note_on = Midi.isNoteOn(j, (settings.pedals ? "both" : "none"));
-            const key_pressed = Midi.isKeyPressed(j);
+            const note_on = Midi.isNoteOn(j, (settings.pedals ? "both" : "none"))
+                            || KbdNotes.isNoteSustained(j);
+            const key_pressed = Midi.isKeyPressed(j) || KbdNotes.isNotePressed(j);
             key.classList.toggle("active", note_on);
             key.classList.toggle("pressed", key_pressed);
             key.classList.toggle("dim", settings.pedal_dim && note_on && (!key_pressed));
@@ -398,7 +402,8 @@ function updatePedalIcons() {
     if ( settings.pedal_icons ) {
         btn_pedals_button.classList.add("button--has-prefix");
         btn_pedals_prefix.style.display = "flex";
-        changeLed("pedr", Midi.sustain); // Midi.getLastControlValue(64) / 127);
+        changeLed("pedr", KbdNotes.isSustainActive() 
+                          || Midi.getLastControlValue(64) / 127);
         changeLed("pedm", Midi.getLastControlValue(66) / 127);
         changeLed("pedl", Midi.getLastControlValue(67) / 127);
     } else {
@@ -625,13 +630,13 @@ function connectInput(name, save=false) {
     Midi.disconnect();
     sound.stopAll();
     if ( name === "pckbd" ) {
-        Midi.pc_keyboard_enabled = true;
+        KbdNotes.enable();
         settings.device_name = "pckbd";
         updateToolbar();
         updateKeyboardKeys();
         if ( save ) writeSettings();
     } else {
-        Midi.pc_keyboard_enabled = false;
+        KbdNotes.disable();
         settings.device_name = null;
         updateToolbar();
         updateKeyboardKeys();
@@ -646,6 +651,7 @@ function connectInput(name, save=false) {
 
 function disconnectInput(save=false) {
     Midi.disconnect();
+    KbdNotes.disable();
     settings.device_name = null;
     updateToolbar();
     updateKeyboardKeys();
@@ -1001,35 +1007,49 @@ kbd_container.addEventListener("pointermove", () => {
 
 // MIDI events
 
-Midi.onConnectionChange = (connected, port) => {
-    //settings.device_name = (connected ? port.name : null);
-    updateKeyboard();
-    updateToolbar();
+function handleKeyPress(key, vel) {
+    updateNote(key);
+    sound.play(key, vel);
 }
 
-Midi.onKeyPress   = (key, velocity) => {
+function handleKeyRelease(key) {
     updateNote(key);
-    sound.play(key, velocity);
-};
-Midi.onKeyRelease = (key) => {
-    updateNote(key);
-    const note = key;
-    sound.stop(note, false);
+    sound.stop(key, false);
 }
 
-Midi.onControlChange = (number) => {
-    if ( number > 63 && number < 68 ) {
-        updateKeyboardKeys();
-        sound.stop(false);
-        updatePedalIcons();
-    }
-};
-
-Midi.onSustainPedal = () => {
+function handleSustainChange() {
     updateKeyboardKeys();
     sound.stopAll(false);
     updatePedalIcons();
 }
+
+function handleControlChange(num) {
+    if ( num > 63 && num < 68 ) {
+        updateKeyboardKeys();
+        sound.stopAll(false);
+        updatePedalIcons();
+    }
+}
+
+function handleResetMsg() {
+    updateKeyboardKeys();
+    sound.stopAll(true);
+    updatePedalIcons();
+}
+
+Midi.onConnectionChange = () => {
+    updateKeyboard();
+    updateToolbar();
+}
+
+Midi.onKeyPress = handleKeyPress;
+Midi.onKeyRelease = handleKeyRelease;
+Midi.onControlChange = handleControlChange;
+
+KbdNotes.onKeyPress = handleKeyPress;
+KbdNotes.onKeyRelease = handleKeyRelease;
+KbdNotes.onSustain = handleSustainChange;
+KbdNotes.onReset = handleResetMsg;
 
 
 // Keyboard events
