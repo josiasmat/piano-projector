@@ -801,7 +801,7 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
             clearInterval(interval);
             if ( !result ) {
                 sound.player = null;
-                sound.type = null;
+                sound.type = "";
             }
             sound.loaded = result;
             sound.led = result ? 2 : 0;
