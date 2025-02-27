@@ -57,6 +57,8 @@ div.menu-msg {
 
     &[hidden] { display: none; }
 
+    #toolbar-title { cursor: pointer; }
+
     .strong-menu-label::part(base) {
         color: var(--sl-color-neutral-700);
     }
