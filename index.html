@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 <html class="sl-theme-dark">
     <head>
         <meta http-equiv="Cache-Control" content="public">
+        <meta name="description" content="Easy to use on-screen piano keyboard. Control it with a MIDI device or with your computer keyboard."/>
         <title i18n="main-title">Piano Projector</title>
         <link rel="stylesheet" href="css/default.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/dark.css" />
@@ -205,6 +206,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 </sl-tooltip>
             </div>
         </div>
+
+        <!-- Initially invisible elements -->
         <sl-dialog label="About" id="dialog-about" class="sl-theme-dark" hidden>
             <span slot="label" class="title-text">Piano Projector</span>
             © 2025 Josias Matschulat.
@@ -212,5 +215,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             Licensed under the <br /><a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank">GNU Affero General Public License version 3</a>.
             <span slot="footer">Get the <a href="https://github.com/josiasmat/piano-projector" target="_blank">source code at GitHub</a>.</span>
         </sl-dialog>
+        <sl-alert id="alert-sound-connection-fail" variant="danger" duration="10000" countdown="rtl" closable>
+            <strong>The sound you selected could not be loaded.<br /></strong>
+            <span></span>
+            <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
+        </sl-alert>
+
+        <!-- Element templates -->
+        <template id="menu-connect-item-midi-port-template">
+            <sl-menu-item type="checkbox">
+                <span></span>
+                <sl-icon src="svg/midikbd.svg" slot="prefix"></sl-icon>
+            </sl-menu-item>
+        </template>
+        <template id="menu-connect-item-computer-keyboard-template">
+            <sl-menu-item type="checkbox">
+                <span>Computer keyboard</span>
+                <sl-icon name="keyboard" slot="prefix"></sl-icon>
+            </sl-menu-item>
+        </template>
     </body>
 </html>

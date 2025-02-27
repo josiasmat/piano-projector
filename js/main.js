@@ -56,13 +56,9 @@ const settings = {
     set color_black(value) {
         document.documentElement.style.setProperty('--color-black-key', value);
     },
-    get computer_keyboard() {
+    get pc_keyboard_connected() {
         return this.device_name === "pckbd";
     },
-    set computer_keyboard(value) {
-        if ( value ) this.device_name = "pckbd";
-        else if ( this.computer_keyboard ) this.device_name = "";
-    }
 }
 
 const sound = {
@@ -88,7 +84,8 @@ const sound = {
     collections: [
         { class: SplendidGrandPiano, options: { decayTime: 0.4 } },
         { class: ElectricPiano },
-    ]
+    ],
+    fail_alert: document.getElementById("alert-sound-connection-fail")
 }
 
 const drag_state = {
@@ -405,7 +402,7 @@ function updatePedalIcons() {
 
 function updateToolbar() {
     changeLed("connection-power-icon", 
-        ( settings.computer_keyboard || ( settings.device_name && Midi.getConnectedPort() )));
+        ( settings.pc_keyboard_connected || ( settings.device_name && Midi.getConnectedPort() )));
     changeLed("transpose-power-icon", ( settings.transpose != 0 ));
     changeLed("sound-power-icon", sound.led, (sound.led == 1 ? "red" : null));
     document.getElementById("top-toolbar").toggleAttribute("hidden", !settings.toolbar);
@@ -427,24 +424,6 @@ function updateSoundMenu() {
         }
     }
 }
-
-
-// function populateSoundMenu() {
-//     for ( let i = 0; i < sound.collections.length; i++ ) {
-//         const collection = sound.collections[i];
-//         if ( collection.retriever ) {
-//             for ( const name of collection.retriever() ) {
-//                 const item = document.createElement("sl-menu-item");
-//                 item.setAttribute("type", "checkbox");
-//                 item.setAttribute("value", name);
-//                 item.setAttribute("collection_index", i);
-//                 item.classList.add("menu-sound-item");
-//                 item.innerText = name;
-//                 document.getElementById("menu-sound").appendChild(item);
-//             }
-//         }
-//     }
-// }
 
 
 function updateSizeMenu(excluded_elm = null) {
@@ -531,6 +510,7 @@ function midiPanic() {
     const btn_panic = document.getElementById("btn-panic");
     btn_panic.setAttribute("variant", "danger");
     setTimeout(() => { btn_panic.removeAttribute("variant"); }, 500);
+    
 }
 
 /**
@@ -617,30 +597,51 @@ function changeLed(id, state, color=null) {
 
 
 function togglePcKeyboardConnection(value=null) {
-    if ( value === null ) value = !settings.computer_keyboard;
-    if ( value ) Midi.disconnect();
-    settings.computer_keyboard = value;
-    Midi.pc_keyboard_enabled = value;
-    updateToolbar();
-    updateKeyboardKeys();
+    if ( value === null ) 
+        value = !settings.pc_keyboard_connected;
+    if ( value )
+        connectInput("pckbd");
+    else
+        disconnectInput();
 }
 
 
-function connectMidi(name) {
-    settings.device_name = name;
-    Midi.connectByPortName(name, () => {
-        togglePcKeyboardConnection(false);
+/** 
+ * Connects an input device.
+ * @param {string} name - Name of the input device, which can be:
+ *      - "pckbd", the computer keyboard,
+ *      - name of a MIDI input port.
+ * @param {boolean} save - _true_ to call writeSettings() after connection.
+ */
+function connectInput(name, save=false) {
+    Midi.disconnect();
+    sound.stopAll();
+    if ( name === "pckbd" ) {
+        Midi.pc_keyboard_enabled = true;
+        settings.device_name = "pckbd";
         updateToolbar();
         updateKeyboardKeys();
-    });
+        if ( save ) writeSettings();
+    } else {
+        Midi.pc_keyboard_enabled = false;
+        settings.device_name = null;
+        updateToolbar();
+        updateKeyboardKeys();
+        Midi.connectByPortName(name, () => {
+            settings.device_name = name;
+            updateToolbar();
+            if ( save ) writeSettings();
+        });
+    }
 }
 
 
-function disconnectMidi() {
-    settings.device_name = null;
+function disconnectInput(save=false) {
     Midi.disconnect();
+    settings.device_name = null;
     updateToolbar();
     updateKeyboardKeys();
+    if ( save ) writeSettings();
 }
 
 
@@ -652,12 +653,11 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
 
     function addComputerKeyboardMenuItem() {
         if ( /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ) return;
-        const kbd_item = newElement("sl-menu-item", {
-            type: "checkbox", "checked": settings.computer_keyboard
-        }, "Computer keyboard");
-        kbd_item.appendChild(newElement("sl-icon", {
-            name: "keyboard", slot: "prefix"
-        }));
+        const template = document
+            .getElementById("menu-connect-item-computer-keyboard-template");
+        const kbd_item = cloneTemplate(template,
+            { checked: settings.pc_keyboard_connected }
+        );
         kbd_item.addEventListener("click", () => { 
             togglePcKeyboardConnection();
             writeSettings();
@@ -696,32 +696,30 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
             (ports) => {
                 const connected_port = Midi.getConnectedPort();
                 let connected_port_found = false;
+                const template = document
+                    .getElementById("menu-connect-item-midi-port-template");
+                // populate connection menu
                 for ( const port of ports ) {
-                    // populate connection menu
-                    const menu_item = newElement("sl-menu-item", {
-                        type: "checkbox", value: port.name
-                    }, port.name);
-                    menu_item.appendChild(newElement("sl-icon", {
-                        src: "svg/midikbd.svg", slot: "prefix"
-                    }));
+                    const menu_item = cloneTemplate(template, 
+                        { value: port.name }, port.name
+                    );
                     // check if port is connected
-                    if ( connected_port && connected_port.name == port.name ) {
+                    if ( connected_port?.name === port.name ) {
                         menu_item.checked = true;
                         connected_port_found = true;
                     }
                     // menu item click event handler
                     menu_item.addEventListener("click", (e) => {
-                        if ( e.target.checked )
-                            disconnectMidi();
+                        if ( settings.device_name === e.currentTarget.value )
+                            disconnectInput(true);
                         else
-                            connectMidi(e.target.value);
-                        writeSettings();
+                            connectInput(e.currentTarget.value, true);
                     });
                     menu.appendChild(menu_item);
                 }
                 // if connected port disappeared, disconnect it
-                if ( !settings.computer_keyboard && !connected_port_found )
-                    disconnectMidi();
+                if ( !settings.pc_keyboard_connected && !connected_port_found )
+                    disconnectInput();
                 if ( ports.length == 0 ) {
                     menu.appendChild(newElement(
                         "sl-menu-item", { disabled: true},
@@ -793,26 +791,32 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
         options.volume = parseInt(e.detail.item.getAttribute("volume") ?? "100");
         sound.player = new sound.collections[collection_index].class(sound.audio_ctx, options);
         sound.loaded = false;
-        e.detail.item.toggleAttribute("loading", true);
         sound.led = 1;
+        e.detail.item.toggleAttribute("loading", true);
         const interval = setInterval(() => {
             sound.led = ( sound.led == 0 ? 1 : 0 );
             updateToolbar();
-        }, 500);
-        sound.player.load.then(() => { 
+        }, 400);
+        function onLoadFinished(result) {
             clearInterval(interval);
-            sound.loaded = true;
-            sound.led = 2;
+            sound.loaded = result;
+            sound.led = result ? 2 : 0;
             e.detail.item.toggleAttribute("loading", false);
             updateToolbar(); 
             updateSoundMenu();
+        }
+        sound.player.load.then(() => { 
+            onLoadFinished(true);
+        }, (reason) => {
+            sound.fail_alert.children[1].innerText = `Reason: ${reason}`;
+            sound.fail_alert.toast();
+            onLoadFinished(false);
         });
         updateToolbar();
     }
     sound.type = new_sound;
-    for ( const item of document.querySelectorAll(".menu-sound-item") ) {
+    for ( const item of document.querySelectorAll(".menu-sound-item") )
         item.checked = ( item.value == new_sound );
-    }
 });
 
 document.getElementById("menu-size").addEventListener("sl-select", (e) => {
@@ -1082,6 +1086,26 @@ function newElement(type, attrs={}, inner_text=null) {
 }
 
 
+/**
+ * Clones an HTML element.
+ * @param {HTMLElement} template
+ * @param {object} attrs 
+ * @returns {HTMLElement}
+ */
+function cloneTemplate(template, attrs={}, inner_text=null) {
+    const cloned = template.cloneNode(true).content.children[0];
+    for ( const [key,val] of Object.entries(attrs) ) {
+        if ( typeof(val) === "boolean" )
+            cloned.toggleAttribute(key, val);
+        else
+            cloned.setAttribute(key, val);
+    }
+    if ( inner_text !== null )
+        cloned.children[0].innerText = inner_text;
+    return cloned;
+}
+
+
 // Initialize
 
 loadSettings();
@@ -1102,18 +1126,5 @@ window.addEventListener("keydown", handleKeyDown);
 
 // Connect to stored device name
 if ( settings.device_name ) {
-    if ( settings.device_name == "pckbd" )
-        togglePcKeyboardConnection(true);
-    else
-        Midi.requestInputPortList(
-            (ports) => {
-                for ( const port of ports ) {
-                    if ( port.name == settings.device_name ) {
-                        Midi.connect(port);
-                        break;
-                    }
-                }
-            },
-            null
-        );
+    connectInput(settings.device_name);
 }
