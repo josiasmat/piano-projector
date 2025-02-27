@@ -68,7 +68,10 @@ div.menu-msg {
 
     sl-color-picker { margin: 20px 30px; }
 
-    #dropdown-sound { margin-right: 12px; }
+    #dropdown-sound { 
+        margin-right: 12px;
+        &[hidden] { display: none; }
+    }
 
     #transpose-controls {
         display: flex;

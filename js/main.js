@@ -19,7 +19,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import SvgTools from "./svgtools.js";
 import { Midi, noteToMidi } from "./midi.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
-import { SplendidGrandPiano, ElectricPiano } from "https://unpkg.com/smplr/dist/index.mjs";
+
+// Dynamically import smplr module
+let SplendidGrandPiano, ElectricPiano;
+import("https://unpkg.com/smplr/dist/index.mjs")
+    .then( (result) => {
+        SplendidGrandPiano = result.SplendidGrandPiano;
+        ElectricPiano = result.ElectricPiano;
+        document.getElementById("dropdown-sound").hidden = false;
+    });
 
 const settings_storage = new LocalStorageHandler("piano-projector");
 const session_storage = new SessionStorageHandler("piano-projector-session");
@@ -782,6 +790,7 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
         if ( sound.player ) sound.player = null;
         sound.loaded = false;
         sound.led = 0;
+        sound.type = "";
         updateToolbar();
     } else if ( sound.type != new_sound ) {
         if ( !sound.audio_ctx ) sound.audio_ctx = new AudioContext();
@@ -793,6 +802,8 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
         sound.loaded = false;
         sound.led = 1;
         e.detail.item.toggleAttribute("loading", true);
+        sound.type = new_sound;
+        updateToolbar();
         const interval = setInterval(() => {
             sound.led = ( sound.led == 0 ? 1 : 0 );
             updateToolbar();
@@ -816,11 +827,7 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
             sound.fail_alert.children[1].innerText = `Reason: ${reason}`;
             sound.fail_alert.toast();
         });
-        updateToolbar();
     }
-    sound.type = new_sound;
-    for ( const item of document.querySelectorAll(".menu-sound-item") )
-        item.checked = ( item.value == new_sound );
 });
 
 document.getElementById("menu-size").addEventListener("sl-select", (e) => {
