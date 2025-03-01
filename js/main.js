@@ -1260,22 +1260,23 @@ kbd_container.addEventListener("wheel", (e) => {
     }
 }, { capture: false, passive: false });
 
-var btn_show_toolbar_timeout = null;
-
-kbd_container.addEventListener("pointermove", (e) => {
-    if ( e.pointerType == "touch" ) return;
-    if ( btn_show_toolbar_timeout ) clearTimeout(btn_show_toolbar_timeout);
-    const btn_show_toolbar = document.getElementById("btn-show-toolbar");
-    btn_show_toolbar.toggleAttribute("visible", true);
-    kbd_container.toggleAttribute("cursor-hidden", false);
-    kbd.toggleAttribute("cursor-hidden", false);
-    btn_show_toolbar_timeout = setTimeout(() => {
-        btn_show_toolbar.toggleAttribute("visible", false);
-        kbd_container.toggleAttribute("cursor-hidden", true);
-        kbd.toggleAttribute("cursor-hidden", true);
-        btn_show_toolbar_timeout = null;
-    }, 4000);
-}, { capture: false, passive: true });
+if ( !isMobile() ) {
+    var btn_show_toolbar_timeout = null;
+    kbd_container.addEventListener("pointermove", (e) => {
+        if ( e.pointerType == "touch" ) return;
+        if ( btn_show_toolbar_timeout ) clearTimeout(btn_show_toolbar_timeout);
+        const btn_show_toolbar = document.getElementById("btn-show-toolbar");
+        btn_show_toolbar.toggleAttribute("visible", true);
+        kbd_container.toggleAttribute("cursor-hidden", false);
+        kbd.toggleAttribute("cursor-hidden", false);
+        btn_show_toolbar_timeout = setTimeout(() => {
+            btn_show_toolbar.toggleAttribute("visible", false);
+            kbd_container.toggleAttribute("cursor-hidden", true);
+            kbd.toggleAttribute("cursor-hidden", true);
+            btn_show_toolbar_timeout = null;
+        }, 4000);
+    }, { capture: false, passive: true });
+}
 
 
 // Pointer & touch control events
@@ -1545,6 +1546,10 @@ if ( !settings.device_name ) {
         connect_tooltip.open = false;
         window.onclick = null;
     }
+}
+
+if ( isMobile() ) {
+    document.getElementById("btn-show-toolbar").classList.add("mobile");
 }
 
 if ( settings.device_name ) {
