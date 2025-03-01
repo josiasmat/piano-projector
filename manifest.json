@@ -1,8 +1,8 @@
 {
     "short_name": "Piano Projector",
     "name": "Piano Projector",
-    "description": "An easy to use on-screen piano keyboard. Control it with a MIDI device or with your computer keyboard.",
-    "display": "minimal",
+    "description": "An easy to use on-screen virtual piano keyboard. Control it with a MIDI device or with your computer keyboard.",
+    "display": "standalone",
     "icons": [
         {
             "src": "/favicon.png",
@@ -20,8 +20,9 @@
             "type": "image/png"
         }
     ],
-    "id": "https://pianoprojector.app",
+    "id": ".",
     "orientation": "landscape",
-    "start_url": ".",
+    "scope": "/",
+    "start_url": "/",
     "background_color": "#000"
 }
