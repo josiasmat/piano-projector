@@ -169,50 +169,52 @@ div.menu-msg {
         }
     }
 
-    @media (max-width: 1070px) {
-        #toolbar-title {
-            display: none;
-        }
+    @media (max-width: 1167px) {
+        #toolbar-title { display: none; }
     }
 
-    @media (max-width: 870px) {
+    @media (max-width: 963px) {
         #btn-sound::part(label) {
             content-visibility: hidden;
             padding: 0px 5px;
         }
     }
 
-    @media (max-width: 818px) {
+    @media (max-width: 909px) {
         #btn-connect::part(label) {
             content-visibility: hidden;
             padding: 0px 5px;
         }
     }
 
-    @media (max-width: 754px) {
+    @media (max-width: 850px) {
         #btn-pedals::part(label) {
             content-visibility: hidden;
             padding: 0px 5px;
         }
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 798px) {
         #btn-transpose::part(label) {
             content-visibility: hidden;
             padding: 0px 5px;
         }
     }
 
-    @media (max-width: 624px) {
+    @media (max-width: 721px) {
         #dropdown-colors { display: none; }
     }
 
-    @media (max-width: 523px) {
+    @media (max-width: 625px) {
         #dropdown-size { display: none; }
     }
 
-    @media (max-width: 441px) {
+    @media (max-width: 525px) {
         #dropdown-sound { display: none; }
+    }
+
+    @media (max-width: 458px) {
+        #dropdown-labels { display: none; }
     }
 
     @media (max-width: 360px) {
@@ -242,7 +244,7 @@ div.menu-msg {
     position: relative;
     overflow: hidden;
     &:not(:hover) #btn-show-toolbar {
-        opacity: 0%;
+        &:not(.mobile) { opacity: 0%; }
     }
 }
 
@@ -261,7 +263,7 @@ div.menu-msg {
         opacity: 80%;
         transition: opacity 0.5s;
     }
-    &:not([visible]):not(:hover) {
+    &:not([visible]):not(:hover):not(.mobile) {
         opacity: 0%;
         transition: opacity 1s;
     }
@@ -291,9 +293,9 @@ div.menu-msg {
             stroke-linecap: square;
         }
 
-        /* .key-highlight {
+        .key-highlight {
             will-change: opacity;
-        } */
+        }
 
         &:not(.active) .key-highlight {
             opacity: 0%;
