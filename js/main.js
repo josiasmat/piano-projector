@@ -1181,7 +1181,6 @@ kbd.oncontextmenu = (e) => {
 
 kbd.addEventListener("pointerdown", (e) => {
     if ( e.pointerType != "touch" && e.button != 0 || !touch.enabled ) {
-        e.preventDefault();
         drag.state = 1;
         drag.origin.x = e.screenX;
         drag.origin.y = e.screenY;
@@ -1194,7 +1193,6 @@ kbd.addEventListener("pointerdown", (e) => {
 
 kbd.addEventListener("pointerup", (e) => {
     if ( e.pointerType != "touch" && drag.state ) {
-        e.preventDefault();
         drag.state = ( drag.state == 2 && e.button == 2 ) ? 3 : 0;
         kbd.toggleAttribute("grabbing", false);
         kbd.releasePointerCapture(e.pointerId);
@@ -1238,9 +1236,9 @@ kbd.addEventListener("pointermove", (e) => {
 }, { capture: false, passive: true });
 
 kbd_container.addEventListener("wheel", (e) => {
-    if ( !drag.state && !touch.started && !e.ctrlKey ) {
+    if ( !drag.state && !touch.started() && !e.ctrlKey ) {
         // make zoom out faster than zoom in
-        const amount = -e.deltaY / (e.deltaY >= 0 ? 1000 : 500);
+        const amount = -e.deltaY / (e.deltaY <= 0 ? 1000 : 500);
         const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
         const new_zoom = clamp(settings.zoom + amount, 1.0, max_zoom);
         if ( settings.zoom != new_zoom ) {
@@ -1293,7 +1291,6 @@ function findKeyUnderPoint(x, y) {
 
 kbd.addEventListener("pointerdown", (e) => {
     if ( e.pointerType != "touch" && touch.enabled && e.button === 0 && !touch.started(e.pointerId)) {
-        e.preventDefault();
         const note = findKeyUnderPoint(e.clientX, e.clientY);
         if ( note ) touch.add(e.pointerId, note);
     }
@@ -1301,14 +1298,12 @@ kbd.addEventListener("pointerdown", (e) => {
 
 kbd_container.addEventListener("pointerup", (e) => {
     if ( e.pointerType != "touch" && touch.started(e.pointerId) && e.button === 0 ) {
-        e.preventDefault();
         touch.remove(e.pointerId);
     }
 }, { capture: false, passive: false });
 
 kbd_container.addEventListener("pointermove", (e) => {
     if ( e.pointerType != "touch" && touch.started(e.pointerId) ) {
-        e.preventDefault();
         const note = findKeyUnderPoint(e.clientX, e.clientY);
         touch.change(e.pointerId, note);
     }
@@ -1316,7 +1311,6 @@ kbd_container.addEventListener("pointermove", (e) => {
 
 kbd.addEventListener("touchstart", (e) => {
     if ( touch.enabled ) {
-        e.preventDefault();
         for ( const t of e.changedTouches ) {
             if ( !touch.started(t.identifier) ) {
                 const note = findKeyUnderPoint(t.clientX, t.clientY);
@@ -1329,7 +1323,6 @@ kbd.addEventListener("touchstart", (e) => {
 kbd_container.addEventListener("touchend", (e) => {
     for ( const t of e.changedTouches ) {
         if ( touch.started(t.identifier) ) {
-            e.preventDefault();
             touch.remove(t.identifier);
         }
     }
@@ -1338,7 +1331,6 @@ kbd_container.addEventListener("touchend", (e) => {
 kbd_container.addEventListener("touchcancel", (e) => {
     for ( const t of e.changedTouches ) {
         if ( touch.started(t.identifier) ) {
-            e.preventDefault();
             touch.remove(t.identifier);
         }
     }
