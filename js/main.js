@@ -492,7 +492,7 @@ function updateKeyboardKeys(first_key=0, last_key=127) {
         const key = keys[i];
         if ( key ) {
             const j = i-settings.transpose;
-            const touched = touch.has_note(j);
+            const touched = touch.has_note(i);
             const key_pressed = touched || Midi.isKeyPressed(j) || KbdNotes.isNotePressed(j);
             const note_on = key_pressed 
                             || Midi.isNoteOn(j, (settings.pedals ? "both" : "none"))
