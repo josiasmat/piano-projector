@@ -18,8 +18,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 <!DOCTYPE html>
 <html class="sl-theme-dark">
     <head>
-        <meta http-equiv="Cache-Control" content="public">
-        <meta name="description" content="An easy to use on-screen piano keyboard. Control it with a MIDI device or with your computer keyboard." />
+        <meta http-equiv="Cache-Control" content="public" />
+        <meta name="description" 
+            content="An easy to use on-screen piano keyboard. Control it with a MIDI device or with your computer keyboard." 
+        />
         <title i18n="main-title">Piano Projector</title>
         <link rel="manifest" href="manifest.json" />
         <link rel="stylesheet" href="css/default.css">
@@ -32,43 +34,97 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         <div id="top-toolbar">
             <div id="top-toolbar-left">
                 <span id="toolbar-title" class="title-text">Piano Projector</span>
-                <sl-dropdown id="dropdown-connect">
-                    <sl-button id="btn-connect" slot="trigger" caret>
-                        Connect
-                        <sl-icon id="connection-power-icon" class="led-strong" slot="prefix" name="power"></sl-icon>
-                    </sl-button>
-                    <sl-menu id="midi-connection-menu">
-                        <sl-menu-item disabled>No MIDI input devices available</sl-menu-item>
-                    </sl-menu>
-                </sl-dropdown>
-                <sl-dropdown id="dropdown-sound" hidden>
+                <sl-tooltip id="dropdown-connect-tooltip" content="" trigger="manual">
+                    <sl-dropdown id="dropdown-connect">
+                        <sl-button id="btn-connect" slot="trigger" caret>
+                            Control
+                            <sl-icon id="connection-power-icon" class="led-strong" slot="prefix" name="power"></sl-icon>
+                        </sl-button>
+                        <sl-menu id="midi-connection-menu">
+                            <sl-menu-item disabled>No MIDI input devices available</sl-menu-item>
+                        </sl-menu>
+                    </sl-dropdown>
+                </sl-tooltip>
+                <sl-dropdown id="dropdown-sound">
                     <sl-button id="btn-sound" slot="trigger" caret>
                         Sound
                         <sl-icon id="sound-power-icon" class="led-weak" slot="prefix" name="music-note-beamed"></sl-icon>
                     </sl-button>
                     <sl-menu id="menu-sound">
-                        <sl-menu-item class="menu-sound-item" collection_index="" value="" type="checkbox" checked>Disabled</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" collection_index="0" value="apiano" volume="90" type="checkbox">Acoustic Piano</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" collection_index="1" value="TX81Z" volume="127" type="checkbox">Electric Piano 1</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" collection_index="1" value="WurlitzerEP200" volume="70" type="checkbox">Electric Piano 2</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" collection_index="1" value="CP80" volume="70" type="checkbox">Electric Piano 3</sl-menu-item>
+                        <sl-menu-item id="menu-sound-item-unavailable" disabled>
+                            Sound not available.
+                            <sl-icon name="ban" slot="prefix"></sl-icon>
+                        </sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" collection_index="" value="" type="checkbox" checked hidden>Disabled</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" collection_index="0" value="apiano" volume="90" type="checkbox" hidden>Acoustic Piano</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" collection_index="1" value="TX81Z" volume="127" type="checkbox" hidden>Electric Piano 1</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" collection_index="1" value="WurlitzerEP200" volume="70" type="checkbox" hidden>Electric Piano 2</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" collection_index="1" value="CP80" volume="70" type="checkbox" hidden>Electric Piano 3</sl-menu-item>
+                    </sl-menu>
+                </sl-dropdown>
+                <sl-dropdown id="dropdown-transpose" stay-open-on-select>
+                    <sl-button id="btn-transpose" slot="trigger" caret>
+                        Transpose
+                        <sl-icon id="transpose-power-icon" class="led-strong" name="arrow-down-up" slot="prefix" label="Enable transpose"></sl-icon>
+                    </sl-button>
+                    <sl-menu>
+                        <!-- <sl-menu-item> -->
+                            <div id="transpose-controls" class="custom-menu-item">
+                                <div>
+                                    <span class="custom-menu-item-label">Semitones</span><br />
+                                    <sl-button-group label="Transpose semitones">
+                                        <sl-button id="btn-semitone-minus" pill>
+                                            <sl-icon name="dash" label="Settings"></sl-icon>
+                                        </sl-button>
+                                        <sl-input id="input-semitones" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
+                                        <sl-button id="btn-semitone-plus" pill>
+                                            <sl-icon name="plus" label="Settings"></sl-icon>
+                                        </sl-button>
+                                    </sl-button-group>
+                                </div>
+                                <div>
+                                    <span class="custom-menu-item-label">Octaves</span><br />
+                                    <sl-button-group label="Transpose octaves">
+                                        <sl-button id="btn-octave-minus" pill>
+                                            <sl-icon name="dash" label="Settings"></sl-icon>
+                                        </sl-button>
+                                        <sl-input id="input-octaves" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
+                                        <sl-button id="btn-octave-plus" pill>
+                                            <sl-icon name="plus" label="Settings"></sl-icon>
+                                        </sl-button>
+                                    </sl-button-group>
+                                </div>
+                            </div>
+                        <!-- </sl-menu-item> -->
+                        <sl-divider style="margin-top: 8px;"></sl-divider>
+                        <sl-menu-item id="reset-transpose" disabled>
+                            Reset transposition
+                            <sl-icon slot="prefix" name="arrow-counterclockwise"></sl-icon>
+                        </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
                 <sl-dropdown id="dropdown-size" stay-open-on-select>
                     <sl-button id="btn-size" slot="trigger" caret>Size</sl-button>
-                    <sl-menu id="menu-size">
-                        <sl-menu-label>Number of keys:</sl-menu-label>
-                        <sl-menu-item class="menu-number-of-keys" value="88" type="checkbox" checked>88 keys</sl-menu-item>
-                        <sl-menu-item class="menu-number-of-keys" value="61" type="checkbox">61 keys</sl-menu-item>
-                        <sl-menu-item class="menu-number-of-keys" value="49" type="checkbox">49 keys</sl-menu-item>
-                        <sl-menu-item class="menu-number-of-keys" value="37" type="checkbox">37 keys</sl-menu-item>
-                        <sl-menu-item class="menu-number-of-keys" value="25" type="checkbox">25 keys</sl-menu-item>
-                        <sl-divider></sl-divider>
-                        <sl-menu-label>Key depth:</sl-menu-label>
-                        <sl-menu-item class="menu-key-height" value="1.0"  type="checkbox" checked>Full</sl-menu-item>
-                        <sl-menu-item class="menu-key-height" value="0.75" type="checkbox">3/4</sl-menu-item>
-                        <sl-menu-item class="menu-key-height" value="0.5"  type="checkbox">1/2</sl-menu-item>
-                    </sl-menu>
+                    <div id="menu-size" class="custom-dropdown-panel">
+                        <div id="menu-group-number-of-keys" class="custom-menu-item">
+                            <span class="custom-menu-item-label">Number of keys:</span><br />
+                            <sl-button-group>
+                                <sl-button class="btn-number-of-keys" value="88" variant="neutral">88</sl-button>
+                                <sl-button class="btn-number-of-keys" value="61">61</sl-button>
+                                <sl-button class="btn-number-of-keys" value="49">49</sl-button>
+                                <sl-button class="btn-number-of-keys" value="37">37</sl-button>
+                                <sl-button class="btn-number-of-keys" value="25">25</sl-button>
+                            </sl-button-group>
+                        </div>
+                        <div id="menu-group-key-depth" class="custom-menu-item">
+                            <span class="custom-menu-item-label">Key depth:</span><br />
+                            <sl-button-group>
+                                <sl-button class="btn-key-depth" value="1.0" variant="neutral">Full</sl-button>
+                                <sl-button class="btn-key-depth" value="0.75">3/4</sl-button>
+                                <sl-button class="btn-key-depth" value="0.5" >1/2</sl-button>
+                            </sl-button-group>
+                        </div>
+                    </div>
                 </sl-dropdown>
                 <sl-dropdown id="dropdown-colors" stay-open-on-select>
                     <sl-button id="btn-colors" slot="trigger" caret>Colors</sl-button>
@@ -107,25 +163,37 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
-                <!-- <sl-dropdown id="dropdown-labels" stay-open-on-select>
+                <sl-dropdown id="dropdown-labels" stay-open-on-select>
                     <sl-button id="btn-labels" slot="trigger" caret>Labels</sl-button>
-                    <sl-menu>
-                        <sl-menu-label>Which keys:</sl-menu-label>
-                        <sl-menu-item type="checkbox" checked>Disabled</sl-menu-item>
-                        <sl-menu-item type="checkbox">All keys</sl-menu-item>
-                        <sl-menu-item type="checkbox">White keys</sl-menu-item>
-                        <sl-menu-item type="checkbox">C-keys</sl-menu-item>
-                        <sl-menu-item type="checkbox">Played keys</sl-menu-item>
+                    <sl-menu id="menu-labels-top">
+                        <sl-menu-item>
+                            Which keys
+                            <sl-menu id="menu-labels-where" slot="submenu">
+                                <sl-menu-item type="checkbox" value="none" checked>None</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="played">Played keys</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="cs">C-keys</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="white">White keys</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="all">All keys</sl-menu-item>
+                            </sl-menu>
+                            <sl-badge slot="suffix" variant="neutral" pill>None</sl-badge>
+                        </sl-menu-item>
+                        <sl-menu-item>
+                            Label type
+                            <sl-menu id="menu-labels-type" slot="submenu">
+                                <sl-menu-item type="checkbox" value="english" checked>English</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="german">German</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="italian">Italian</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="pc">Pitch class</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="midi">MIDI value</sl-menu-item>
+                            </sl-menu>
+                            <sl-badge slot="suffix" variant="neutral" pill>English</sl-badge>
+                        </sl-menu-item>
                         <sl-divider></sl-divider>
-                        <sl-menu-label>Type:</sl-menu-label>
-                        <sl-menu-item type="checkbox" checked>English (C1 C2 … C4 C5)</sl-menu-item>
-                        <sl-menu-item type="checkbox">German (C,, C, … c' c'')</sl-menu-item>
-                        <sl-menu-item type="checkbox">Italian (Do-1 Do1 … Do3 Do4)</sl-menu-item>
-                        <sl-menu-item type="checkbox">French (Ut-1 Ut1 … Ut3 Ut4)</sl-menu-item>
-                        <sl-menu-item type="checkbox">Pitch class</sl-menu-item>
-                        <sl-menu-item type="checkbox">MIDI value</sl-menu-item>
+                        <sl-menu-item id="menu-item-labels-octave" type="checkbox" value="octave" checked>
+                            Show octave
+                        </sl-menu-item>
                     </sl-menu>
-                </sl-dropdown> -->
+                </sl-dropdown>
                 <sl-dropdown id="dropdown-pedals" stay-open-on-select>
                     <sl-button id="btn-pedals" slot="trigger" caret>
                         Pedals
@@ -138,49 +206,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     <sl-menu id="pedal-menu">
                         <sl-menu-item id="menu-pedal-follow" type="checkbox" checked>Follow pedals</sl-menu-item>
                         <sl-menu-item id="menu-pedal-dim" type="checkbox" checked>Dim pedalized notes</sl-menu-item>
-                        <sl-divider></sl-divider>
-                        <sl-menu-item id="menu-pedal-icons" type="checkbox" checked>Show pedal indicators</sl-menu-item>
-                    </sl-menu>
-                </sl-dropdown>
-                <sl-dropdown id="dropdown-transpose" stay-open-on-select>
-                    <sl-button id="btn-transpose" slot="trigger" caret>
-                        Transpose
-                        <sl-icon id="transpose-power-icon" class="led-strong" name="arrow-down-up" slot="prefix" label="Enable transpose"></sl-icon>
-                    </sl-button>
-                    <sl-menu>
-                        <!-- <sl-menu-item> -->
-                            <div id="transpose-controls">
-                                <div>
-                                    <span>Semitones</span><br />
-                                    <sl-button-group label="Transpose semitones">
-                                        <sl-button id="btn-semitone-minus" pill>
-                                            <sl-icon name="dash" label="Settings"></sl-icon>
-                                        </sl-button>
-                                        <sl-input id="input-semitones" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
-                                        <sl-button id="btn-semitone-plus" pill>
-                                            <sl-icon name="plus" label="Settings"></sl-icon>
-                                        </sl-button>
-                                    </sl-button-group>
-                                </div>
-                                <div>
-                                    <span>Octaves</span><br />
-                                    <sl-button-group label="Transpose octaves">
-                                        <sl-button id="btn-octave-minus" pill>
-                                            <sl-icon name="dash" label="Settings"></sl-icon>
-                                        </sl-button>
-                                        <sl-input id="input-octaves" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
-                                        <sl-button id="btn-octave-plus" pill>
-                                            <sl-icon name="plus" label="Settings"></sl-icon>
-                                        </sl-button>
-                                    </sl-button-group>
-                                </div>
-                            </div>
-                        <!-- </sl-menu-item> -->
-                        <sl-divider style="margin-top: 8px;"></sl-divider>
-                        <sl-menu-item id="reset-transpose" disabled>
-                            Reset transposition
-                            <sl-icon slot="prefix" name="arrow-counterclockwise"></sl-icon>
-                        </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
             </div>
@@ -233,6 +258,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             <sl-menu-item type="checkbox">
                 <span>Computer keyboard</span>
                 <sl-icon name="keyboard" slot="prefix"></sl-icon>
+            </sl-menu-item>
+        </template>
+        <template id="menu-connect-item-touch-template">
+            <sl-menu-item type="checkbox">
+                <span>Touch or mouse</span>
+                <sl-icon name="hand-index" slot="prefix"></sl-icon>
             </sl-menu-item>
         </template>
     </body>

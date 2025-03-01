@@ -16,6 +16,8 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+const KBD_HEIGHT = 500;
+
 import SvgTools from "./svgtools.js";
 import { Midi, noteToMidi } from "./midi.js";
 import { KbdNotes} from "./kbdnotes.js";
@@ -27,21 +29,38 @@ import("https://unpkg.com/smplr/dist/index.mjs")
     .then( (result) => {
         SplendidGrandPiano = result.SplendidGrandPiano;
         ElectricPiano = result.ElectricPiano;
-        document.getElementById("dropdown-sound").hidden = false;
+        document.getElementById("menu-sound-item-unavailable").hidden = true;
+        document.querySelectorAll(".menu-sound-item").forEach((item) => { item.hidden = false });
     });
 
 const settings_storage = new LocalStorageHandler("piano-projector");
 const session_storage = new SessionStorageHandler("piano-projector-session");
 
 const settings = {
+    first_time: true,
     number_of_keys: 88,
     height_factor: 1,
     device_name: null,
     offset: { x: 0.5, y: 0.5 },
+    labels: {
+        where: "none",
+        type: "english",
+        octave: true,
+        get where_badge() {
+            return {
+                none: "None", played: "Played", cs: "C's", white: "White", all: "All"
+            }[this.where];
+        },
+        get type_badge() {
+            return {
+                english: "English", german: "German", italian: "Italian",
+                pc: "Pitch-class", midi: "MIDI"
+            }[this.type];
+        }
+    },
     zoom: 1.0,
     pedals: true,
     pedal_dim: true,
-    pedal_icons: true,
     top_felt: true,
     toolbar: true,
     semitones: 0,
@@ -99,17 +118,77 @@ const sound = {
     fail_alert: document.getElementById("alert-sound-connection-fail")
 }
 
-const drag_state = {
-    dragging: false,
+const drag = {
+    /** @type {number} 0=off, 1=clicked, 2=started moving.*/
+    state: 0,
     origin: { x: 0, y: 0 },
     previous_offset: { x: 0, y: 0 }
 }
 
+const touch = {
+    enabled: false,
+    /** @type {Map<number,number>} */
+    points: new Map(),
+    /** @param {number?} pointer_id @returns {boolean} */
+    started(pointer_id=null) {
+        if ( pointer_id !== null )
+            return this.points.has(pointer_id);
+        else
+            return ( this.points.size > 0 );
+    },
+    /** @param {number} note @returns {boolean} */
+    has_note(note) {
+        for ( const entry of this.points )
+            if ( entry[1] == note ) return true;
+        return false;
+    },
+    /** @param {number} pointer_id @param {number} note */
+    add(pointer_id, note) {
+        this.points.set(pointer_id, note);
+        sound.play(note);
+        updateKeyboardKeys(note, note);
+    },
+    /** @param {number} pointer_id @param {number} note */
+    change(pointer_id, note) {
+        const previous_note = this.points.get(pointer_id);
+        if ( note != previous_note ) {
+            this.points.set(pointer_id, note);
+            if ( previous_note ) sound.stop(previous_note);
+            if ( note ) sound.play(note);
+        }
+        updateKeyboardKeys(previous_note, previous_note);
+        updateKeyboardKeys(note, note);
+    },
+    /** @param {number} pointer_id @param {number} key */
+    remove(pointer_id) {
+        const note = this.points.get(pointer_id);
+        this.points.delete(pointer_id);
+        if ( !this.has_note(note) ) sound.stop(note);
+        updateKeyboardKeys(note, note);
+    },
+    reset() {
+        this.points.clear();
+        sound.stopAll();
+        updateKeyboardKeys();
+    },
+    enable() {
+        this.enabled = true;
+        kbd.style.cursor = "pointer";
+    },
+    disable() {
+        this.reset();
+        this.enabled = false;
+        kbd.style.removeProperty("cursor");
+    },
+}
 
 
 const kbd_container = document.getElementById("main-area");
 const kbd = document.getElementById("kbd");
+/** @type {[SVGElement?]} */
 const keys = Array(128).fill(null);
+/** @type {[SVGElement?]} */
+const key_labels = Array(128).fill(null);
 
 
 /**
@@ -122,7 +201,7 @@ function drawKeyboard(svg, options = {}) {
     const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
     const BK_OFFSETS = [,-0.1,,+0.1,,,-0.1,,0,,+0.1,];
 
-    const height = options.height ?? 500;
+    const height = KBD_HEIGHT;
     const height_factor = options.height_factor ?? 1.0;
     const first_key = options.first_key ?? noteToMidi("a0");
     const last_key = options.last_key ?? noteToMidi("c8");
@@ -131,10 +210,11 @@ function drawKeyboard(svg, options = {}) {
     const black_key_height = white_key_height * (0.2 * height_factor + 0.45);
     const white_key_width = height * 2.2 / 15.5;
     const black_key_width = height * 1.4 / 15.5;
+    const white_key_width_half = white_key_width / 2;
     const black_key_width_half = black_key_width / 2;
     const key_rounding = white_key_width / 20;
     const white_key_highlight_inset = 2;
-    const black_key_highlight_inset = 2;
+    const black_key_highlight_inset = 1;
 
     svg.innerHTML = "";
 
@@ -157,7 +237,7 @@ function drawKeyboard(svg, options = {}) {
         const right_offset = right - ( black_after 
             ? black_key_width_half - (black_key_width * BK_OFFSETS[note+1]) + STROKE_WIDTH : 0);
 
-        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "white-key" });
+        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key white-key", value: key });
 
         const key_fill = SvgTools.makePolygon([
                 {x:left_offset, y:0}, 
@@ -235,7 +315,7 @@ function drawKeyboard(svg, options = {}) {
         const left = offset + STROKE_WIDTH;
         const right = left + width - (2*STROKE_WIDTH);
 
-        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "black-key" });
+        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key black-key", value: key });
 
         const key_fill = SvgTools.makePolygon(
             [
@@ -283,6 +363,28 @@ function drawKeyboard(svg, options = {}) {
         return key_group;
     }
 
+    function createWhiteKeyLabel(keynum, left) {
+        const center = left + white_key_width_half;
+        const elm = SvgTools.createElement("text", {
+            x: center, y: white_key_height - white_key_width_half,
+            id: `keylabel${keynum}`, class: "white-key-label"
+        });
+        elm.appendChild(SvgTools.createElement("tspan", { x: center }));
+        return elm;
+    }
+
+    function createBlackKeyLabel(keynum, left) {
+        const center = left + black_key_width_half;
+        const elm = SvgTools.createElement("text", {
+            x: center, y: black_key_height - white_key_width_half,
+            id: `keylabel${keynum}`, class: "black-key-label"
+        });
+        elm.appendChild(SvgTools.createElement("tspan", { x: center }));
+        elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-0.9lh" }));
+        elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-1.0lh" }));
+        return elm;
+    }
+
     let width = 0;
     let white_left = 0;
 
@@ -293,8 +395,11 @@ function drawKeyboard(svg, options = {}) {
             const white_key = drawWhiteKey(key, note,
                 white_left, white_key_width, white_key_height, key_rounding
             );
+            const white_key_label = createWhiteKeyLabel(key, white_left);
             white_keys_g.appendChild(white_key);
+            white_key.appendChild(white_key_label);
             keys[key] = white_key;
+            key_labels[key] = white_key_label;
             width += white_key_width;
             white_left += white_key_width;
         } else {
@@ -302,8 +407,11 @@ function drawKeyboard(svg, options = {}) {
             const black_key = drawBlackKey(key,
                 black_left, black_key_width, black_key_height, key_rounding
             );
-            keys[key] = black_key;
+            const black_key_label = createBlackKeyLabel(key, black_left);
             black_keys_g.appendChild(black_key);
+            black_key.appendChild(black_key_label);
+            keys[key] = black_key;
+            key_labels[key] = black_key_label;
         }
     }
     
@@ -384,38 +492,101 @@ function updateKeyboardKeys(first_key=0, last_key=127) {
         const key = keys[i];
         if ( key ) {
             const j = i-settings.transpose;
-            const note_on = Midi.isNoteOn(j, (settings.pedals ? "both" : "none"))
+            const touched = touch.has_note(j);
+            const key_pressed = touched || Midi.isKeyPressed(j) || KbdNotes.isNotePressed(j);
+            const note_on = key_pressed 
+                            || Midi.isNoteOn(j, (settings.pedals ? "both" : "none"))
                             || KbdNotes.isNoteSustained(j);
-            const key_pressed = Midi.isKeyPressed(j) || KbdNotes.isNotePressed(j);
             key.classList.toggle("active", note_on);
             key.classList.toggle("pressed", key_pressed);
             key.classList.toggle("dim", settings.pedal_dim && note_on && (!key_pressed));
+            updateKeyboardLabel(i, note_on);
         }
     }
 }
 
 
-function updatePedalIcons() {
-    const btn_pedals = document.getElementById("btn-pedals");
-    const btn_pedals_button = btn_pedals.shadowRoot.querySelector("button");
-    const btn_pedals_prefix = btn_pedals_button.querySelector(".button__prefix");
-    if ( settings.pedal_icons ) {
-        btn_pedals_button.classList.add("button--has-prefix");
-        btn_pedals_prefix.style.display = "flex";
-        changeLed("pedr", KbdNotes.isSustainActive() 
-                          || Midi.getLastControlValue(64) / 127);
-        changeLed("pedm", Midi.getLastControlValue(66) / 127);
-        changeLed("pedl", Midi.getLastControlValue(67) / 127);
-    } else {
-        btn_pedals_button.classList.remove("button--has-prefix");
-        btn_pedals_prefix.style.display = "none";
+function updateKeyboardLabel(key, is_on) {
+    // const OCTAVES_SUP_EN = ['⁻¹','⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
+    const OCTAVES_SUB_EN = ['₋₁','₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'];
+    const OCTAVES_SUB_IT = ['₋₂','₋₁','₁','₂','₃','₄','₅','₆','₇','₈','₉','₉','₁₀'];
+    const ENGLISH_NAMES_1 = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+    const ENGLISH_NAMES_2 = [   ,'D♭',   ,'E♭',   ,   ,'G♭',    ,'A♭',   ,'B♭',   ];
+    const GERMAN_NAMES_1 = ['C','Ces','D','Des','E','F','Fes','G','Ges','A','Aes','H'];
+    const GERMAN_NAMES_2 = [   ,'Dis',   ,'Eis',   ,   ,'Gis',    ,'Ais',   ,'B',   ];
+    const ITALIAN_NAMES_1 = ['do','do♯','re','re♯','mi','fa','fa♯','sol','sol♯','la','la♯','si'];
+    const ITALIAN_NAMES_2 = [    ,'re♭',    ,'mi♭',    ,    ,'sol♭',     ,'la♭',    ,'si♭',    ];
+    const label = key_labels[key];
+
+    if ( label ) {
+        const pc = key%12;
+        const octave = Math.trunc(key/12);
+        const is_white_key = ![0,1,0,1,0,0,1,0,1,0,1,0][pc];
+        
+        let text = "";
+        switch ( settings.labels.type ) {
+            case "pc" : 
+                text = `${pc}`;
+                break;
+            case "english": 
+                const eng_oct = settings.labels.octave ? OCTAVES_SUB_EN[octave] : '';
+                text = ( is_white_key )
+                    ? `${ENGLISH_NAMES_1[pc]}${eng_oct}`
+                    : `${ENGLISH_NAMES_2[pc]}\n${ENGLISH_NAMES_1[pc]}\n${eng_oct}`;
+                break;
+            case "german": 
+                if ( octave >= 4 ) {
+                    const octave_marks = settings.labels.octave ? "’".repeat(octave-4) : '';
+                    text = ( is_white_key )
+                        ? `${GERMAN_NAMES_1[pc].toLowerCase()}${octave_marks}`
+                        : `${GERMAN_NAMES_2[pc].toLowerCase()}\n${GERMAN_NAMES_1[pc].toLowerCase()}`;
+                } else {
+                    const octave_marks = settings.labels.octave ? ",".repeat(Math.abs(octave-3)) : '';
+                    text = ( is_white_key )
+                        ? `${GERMAN_NAMES_1[pc]}${octave_marks}`
+                        : `${GERMAN_NAMES_2[pc]}\n${GERMAN_NAMES_1[pc]}`;
+                }
+                break;
+            case "italian": 
+                const it_oct = settings.labels.octave 
+                    ? ( is_white_key ? OCTAVES_SUB_IT[octave-1] : OCTAVES_SUB_IT[octave-1] )
+                    : '';
+                text = ( is_white_key )
+                    ? `${ITALIAN_NAMES_1[pc]}${it_oct}`
+                    : `${ITALIAN_NAMES_2[pc]}\n${ITALIAN_NAMES_1[pc]}\n${it_oct}`;
+                break;
+            default: 
+                text = `${key}`;
+        }
+        const lines = text.split('\n');
+        for ( const [i,tspan] of Array.from(label.children).entries() )
+            tspan.textContent = lines[i] ?? '';
+
+        let visible;
+        switch ( settings.labels.where ) {
+            case "all": visible = true; break;
+            case "played": visible = is_on; break;
+            case "cs": visible = ( pc == 0 ); break;
+            case "white": visible = is_white_key; break;
+            default: visible = false;
+        }
+        label.style.setProperty("opacity", visible ? "100%" : "0%");
     }
+}
+
+
+function updatePedalIcons() {
+    changeLed("pedr", KbdNotes.isSustainActive() 
+                        || Midi.getLastControlValue(64) / 127);
+    changeLed("pedm", Midi.getLastControlValue(66) / 127);
+    changeLed("pedl", Midi.getLastControlValue(67) / 127);
 }
 
 
 function updateToolbar() {
     changeLed("connection-power-icon", 
-        ( settings.pc_keyboard_connected || ( settings.device_name && Midi.getConnectedPort() )));
+        ( settings.pc_keyboard_connected || touch.enabled 
+          || ( settings.device_name && Midi.getConnectedPort() )));
     changeLed("transpose-power-icon", ( settings.transpose != 0 ));
     changeLed("sound-power-icon", sound.led, (sound.led == 1 ? "red" : null));
     document.getElementById("top-toolbar").toggleAttribute("hidden", !settings.toolbar);
@@ -439,13 +610,15 @@ function updateSoundMenu() {
 }
 
 
-function updateSizeMenu(excluded_elm = null) {
-    for ( const elm of document.querySelectorAll(".menu-number-of-keys") )
-        if ( elm != excluded_elm )
-            elm.checked = ( parseInt(elm.value) == settings.number_of_keys );
-    for ( const elm of document.querySelectorAll(".menu-key-height") )
-        if ( elm != excluded_elm )
-            elm.checked = ( parseFloat(elm.value) == settings.height_factor );
+function updateSizeMenu() {
+    for ( const elm of document.querySelectorAll(".btn-number-of-keys") ) {
+        const checked = ( parseInt(elm.value) == settings.number_of_keys );
+        elm.variant = checked ? "neutral" : null;
+    }
+    for ( const elm of document.querySelectorAll(".btn-key-depth") ) {
+        const checked = ( parseFloat(elm.value) == settings.height_factor );
+        elm.variant = checked ? "neutral" : null;
+    }
 }
 
 
@@ -459,10 +632,24 @@ function updateColorsMenu() {
 
 function updatePedalsMenu() {
     document.getElementById("menu-pedal-follow").checked = settings.pedals;
-    document.getElementById("menu-pedal-icons").checked = settings.pedal_icons;
     const menu_pedal_dim = document.getElementById("menu-pedal-dim");
     menu_pedal_dim.checked = settings.pedal_dim;
     menu_pedal_dim.toggleAttribute("disabled", !settings.pedals);
+}
+
+
+function updateLabelsMenu() {
+    const menu_labels_where = document.getElementById("menu-labels-where");
+    for ( const item of menu_labels_where.children ) 
+        item.checked = ( item.value === settings.labels.where );
+    menu_labels_where.nextElementSibling.innerText = settings.labels.where_badge;
+    const menu_labels_type = document.getElementById("menu-labels-type");
+    for ( const item of menu_labels_type.children )
+        item.checked = ( item.value === settings.labels.type );
+    menu_labels_type.nextElementSibling.innerText = settings.labels.type_badge;
+    const menu_labels_octave = document.getElementById("menu-item-labels-octave");
+    menu_labels_octave.disabled = ["pc","midi"].includes(settings.labels.type);
+    menu_labels_octave.checked = settings.labels.octave;
 }
 
 
@@ -560,15 +747,17 @@ function transpose(params={}) {
 
 
 function writeSettings() {
+    settings_storage.writeBool("first-time", false);
     settings_storage.writeNumber("height-factor", settings.height_factor);
     settings_storage.writeNumber("number-of-keys", settings.number_of_keys);
     settings_storage.writeString("color-pressed", settings.color_highlight);
     settings_storage.writeString("color-white", settings.color_white);
     settings_storage.writeString("color-black", settings.color_black);
+    settings_storage.writeString("labels-where", settings.labels.where);
+    settings_storage.writeString("labels-type", settings.labels.type);
     settings_storage.writeBool("top-felt", settings.top_felt);
     settings_storage.writeBool("pedals", settings.pedals);
     settings_storage.writeBool("pedal-dim", settings.pedal_dim);
-    settings_storage.writeBool("pedal-icons", settings.pedal_icons);
     settings_storage.writeNumber("offset-y", settings.offset.y);
     if ( settings.device_name )
         settings_storage.writeString("device", settings.device_name);
@@ -581,15 +770,17 @@ function writeSettings() {
 
 
 function loadSettings() {
+    settings.first_time = settings_storage.readBool("first-time", true);
     settings.height_factor = settings_storage.readNumber("height-factor", settings.height_factor);
     settings.number_of_keys = settings_storage.readNumber("number-of-keys", settings.number_of_keys);
     settings.color_white = settings_storage.readString("color-white", settings.color_white);
     settings.color_black = settings_storage.readString("color-black", settings.color_black);
     settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight);
+    settings.labels.where = settings_storage.readString("labels-where", settings.labels.where);
+    settings.labels.type = settings_storage.readString("labels-type", settings.labels.type);
     settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
     settings.pedals = settings_storage.readBool("pedals", settings.pedals);
     settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
-    settings.pedal_icons = settings_storage.readBool("pedal-icons", settings.pedal_icons);
     settings.offset.y = settings_storage.readNumber("offset-y", settings.offset.y);
     settings.device_name = settings_storage.readString("device", null);
     settings.semitones = session_storage.readNumber("semitones", 0);
@@ -619,6 +810,16 @@ function togglePcKeyboardConnection(value=null) {
 }
 
 
+function toggleTouchConnection(value=null) {
+    if ( value === null ) 
+        value = !touch.enabled;
+    if ( value )
+        connectInput("touch");
+    else
+        disconnectInput();
+}
+
+
 /** 
  * Connects an input device.
  * @param {string} name - Name of the input device, which can be:
@@ -629,22 +830,34 @@ function togglePcKeyboardConnection(value=null) {
 function connectInput(name, save=false) {
     Midi.disconnect();
     sound.stopAll();
-    if ( name === "pckbd" ) {
-        KbdNotes.enable();
-        settings.device_name = "pckbd";
-        updateToolbar();
-        updateKeyboardKeys();
-        if ( save ) writeSettings();
-    } else {
-        KbdNotes.disable();
-        settings.device_name = null;
-        updateToolbar();
-        updateKeyboardKeys();
-        Midi.connectByPortName(name, () => {
-            settings.device_name = name;
+    switch ( name ) {
+        case "pckbd":
+            KbdNotes.enable();
+            touch.disable();
+            settings.device_name = "pckbd";
             updateToolbar();
+            updateKeyboardKeys();
             if ( save ) writeSettings();
-        });
+            break;
+        case "touch":
+            KbdNotes.disable();
+            touch.enable();
+            settings.device_name = "touch";
+            updateToolbar();
+            updateKeyboardKeys();
+            if ( save ) writeSettings();
+            break;
+        default:
+            KbdNotes.disable();
+            touch.disable();
+            settings.device_name = null;
+            updateToolbar();
+            updateKeyboardKeys();
+            Midi.connectByPortName(name, () => {
+                settings.device_name = name;
+                updateToolbar();
+                if ( save ) writeSettings();
+            });
     }
 }
 
@@ -652,6 +865,7 @@ function connectInput(name, save=false) {
 function disconnectInput(save=false) {
     Midi.disconnect();
     KbdNotes.disable();
+    touch.disable();
     settings.device_name = null;
     updateToolbar();
     updateKeyboardKeys();
@@ -665,28 +879,38 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
     const menu = document.getElementById("midi-connection-menu");
     menu.innerHTML = "";
 
-    function addComputerKeyboardMenuItem() {
-        if ( /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ) return;
-        const template = document
+    function addComputerAndTouchMenuItems() {
+        const kbd_template = document
             .getElementById("menu-connect-item-computer-keyboard-template");
-        const kbd_item = cloneTemplate(template,
+        const kbd_item = cloneTemplate(kbd_template,
             { checked: settings.pc_keyboard_connected }
         );
         kbd_item.addEventListener("click", () => { 
             togglePcKeyboardConnection();
             writeSettings();
         });
+        const touch_template = document
+            .getElementById("menu-connect-item-touch-template");
+        const touch_item = cloneTemplate(touch_template,
+            { checked: touch.enabled }
+        );
+        touch_item.addEventListener("click", () => { 
+            toggleTouchConnection();
+            writeSettings();
+        });
         if ( menu.childElementCount ) {
             menu.appendChild(newElement("sl-divider"));
-            menu.appendChild(kbd_item);
+            if ( !isMobile() ) menu.appendChild(kbd_item);
+            menu.appendChild(touch_item);
         } else {
-            menu.appendChild(kbd_item);
+            if ( !isMobile() ) menu.appendChild(kbd_item);
+            menu.appendChild(touch_item);
             menu.appendChild(newElement("sl-divider"));
         }
     }
 
     if ( !Midi.browserHasMidiSupport ) {
-        addComputerKeyboardMenuItem();
+        addComputerAndTouchMenuItems();
         const item = newElement("div", { class: "menu-msg" });
         item.innerHTML = 
             "Your browser does not support the Web MIDI API.<br />" +
@@ -701,7 +925,7 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
     function doOnAccessDenied() {
         const item = newElement("sl-menu-item", { disabled: true }, "MIDI access denied");
         menu.appendChild(item);
-        addComputerKeyboardMenuItem();
+        addComputerAndTouchMenuItems();
         updateToolbar();
     }
 
@@ -730,7 +954,7 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
             menu.appendChild(menu_item);
         }
         // if connected port disappeared, disconnect it
-        if ( !settings.pc_keyboard_connected && !connected_port_found )
+        if ( !settings.pc_keyboard_connected && !touch.enabled && !connected_port_found )
             disconnectInput();
         if ( ports.length == 0 ) {
             menu.appendChild(newElement(
@@ -738,7 +962,7 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
                 "No MIDI input devices available"
             ));
         }
-        addComputerKeyboardMenuItem();
+        addComputerAndTouchMenuItems();
         updateToolbar();
     }
 
@@ -792,13 +1016,11 @@ document.getElementById("dropdown-colors")
     .addEventListener("sl-show", updateColorsMenu);
 document.getElementById("dropdown-pedals")
     .addEventListener("sl-show", updatePedalsMenu);
-document.getElementById("dropdown-transpose")
+    document.getElementById("dropdown-labels")
+    .addEventListener("sl-show", updateLabelsMenu);
+ document.getElementById("dropdown-transpose")
     .addEventListener("sl-show", updateTransposeMenuAndButton);
 
-// document.getElementById("dropdown-labels")
-//    .addEventListener("sl-show", () => {
-//     //...
-// });
 
 document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
     sound.stopAll(true);
@@ -847,15 +1069,23 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
     }
 });
 
-document.getElementById("menu-size").addEventListener("sl-select", (e) => {
-    if ( e.detail.item.classList.contains("menu-number-of-keys") )
-        settings.number_of_keys = parseInt(e.detail.item.value);
-    else if ( e.detail.item.classList.contains("menu-key-height") )
-        settings.height_factor = parseFloat(e.detail.item.value);
-    settings.zoom = 1.0;
-    updateSizeMenu();
-    createKeyboard();
-    writeSettings();
+document.querySelectorAll(".btn-number-of-keys").forEach((item) => {
+    item.addEventListener("click", (e) => {
+        settings.number_of_keys = parseInt(e.currentTarget.value);
+        settings.zoom = 1.0;
+        updateSizeMenu();
+        createKeyboard();
+        writeSettings();
+    });
+});
+document.querySelectorAll(".btn-key-depth").forEach((item) => {
+    item.addEventListener("click", (e) => {
+        settings.height_factor = parseFloat(e.currentTarget.value);
+        // settings.zoom = 1.0;
+        updateSizeMenu();
+        createKeyboard();
+        writeSettings();
+    });
 });
 
 document.getElementById("menu-top-felt").addEventListener("click", () => {
@@ -879,12 +1109,32 @@ document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
     writeSettings();
 });
 
+document.getElementById("menu-labels-where").addEventListener("sl-select", (e) => {
+    settings.labels.where = e.detail.item.value;
+    updateLabelsMenu();
+    updateKeyboardKeys();
+    writeSettings();
+});
+
+document.getElementById("menu-labels-type").addEventListener("sl-select", (e) => {
+    settings.labels.type = e.detail.item.value;
+    updateLabelsMenu();
+    updateKeyboardKeys();
+    writeSettings();
+});
+
+document.getElementById("menu-labels-top").addEventListener("sl-select", (e) => {
+    if ( e.detail.item.id === "menu-item-labels-octave" )
+        settings.labels.octave = e.detail.item.checked;
+    updateKeyboardKeys();
+    writeSettings();
+});
+
 document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
     const item = e.detail.item;
     switch ( item.id ) {
         case "menu-pedal-follow": settings.pedals = item.checked; break;
         case "menu-pedal-dim": settings.pedal_dim = item.checked; break;
-        case "menu-pedal-icons": settings.pedal_icons = item.checked; break;
     }
     document.getElementById("menu-pedal-dim").toggleAttribute(
         "disabled", !settings.pedals);
@@ -893,54 +1143,59 @@ document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
     writeSettings();
 });
 
-document.getElementById("btn-semitone-plus").addEventListener("click", () => {
-    transpose({ semitones: +1 });
-});
+document.getElementById("btn-semitone-plus").onclick = 
+    () => { transpose({ semitones: +1 }) };
 
-document.getElementById("btn-semitone-minus").addEventListener("click", () => {
-    transpose({ semitones: -1 });
-});
+document.getElementById("btn-semitone-minus").onclick =
+    () => { transpose({ semitones: -1 }) };
 
-document.getElementById("btn-octave-plus").addEventListener("click", () => {
-    transpose({ octaves: +1 });
-});
+document.getElementById("btn-octave-plus").onclick =
+    () => { transpose({ octaves: +1 }) };
 
-document.getElementById("btn-octave-minus").addEventListener("click", () => {
-    transpose({ octaves: -1 });
-});
+document.getElementById("btn-octave-minus").onclick =
+    () => { transpose({ octaves: -1 }) };
 
-document.getElementById("reset-transpose").addEventListener("click", () => {
-    transpose({ reset: true });
-});
+document.getElementById("reset-transpose").onclick =
+    () => { transpose({ reset: true }) };
 
-document.getElementById("btn-panic").addEventListener("click", midiPanic);
-document.getElementById("btn-hide-toolbar").addEventListener("click", toggleToolbarVisibility);
-document.getElementById("btn-show-toolbar").addEventListener("click", toggleToolbarVisibility);
+document.getElementById("btn-panic").onclick = midiPanic;
+document.getElementById("btn-hide-toolbar").onclick = toggleToolbarVisibility;
+document.getElementById("btn-show-toolbar").onclick = toggleToolbarVisibility;
 
-document.getElementById("toolbar-title").addEventListener("click", () => {
-    document.getElementById("dialog-about").show();
-});
+document.getElementById("toolbar-title").onclick = 
+    () => { document.getElementById("dialog-about").show() };
 
-window.addEventListener("resize", () => {
-    updateKeyboardPosition();
-});
+window.onresize = updateKeyboardPosition;
+window.onkeydown = handleKeyDown;
+
+// Needed to correctly position the keyboard after page loading.
+window.onload = updateKeyboardPosition;
 
 
-// Mouse events
+// Pointer move events
+
+kbd.oncontextmenu = (e) => {
+    if ( drag.state > 0 ) e.preventDefault();
+    drag.state = 0;
+};
 
 kbd.addEventListener("pointerdown", (e) => {
-    drag_state.dragging = true;
-    drag_state.origin.x = e.screenX;
-    drag_state.origin.y = e.screenY;
-    drag_state.previous_offset.x = settings.offset.x;
-    drag_state.previous_offset.y = settings.offset.y;
-    kbd.toggleAttribute("grabbing", true);
-    kbd.setPointerCapture(e.pointerId);
+    if ( e.pointerType != "touch" && e.button != 0 || !touch.enabled ) {
+        e.preventDefault();
+        drag.state = 1;
+        drag.origin.x = e.screenX;
+        drag.origin.y = e.screenY;
+        drag.previous_offset.x = settings.offset.x;
+        drag.previous_offset.y = settings.offset.y;
+        kbd.toggleAttribute("grabbing", true);
+        kbd.setPointerCapture(e.pointerId);
+    }
 }, { capture: true, passive: false });
 
 kbd.addEventListener("pointerup", (e) => {
-    if ( drag_state.dragging ) {
-        drag_state.dragging = false;
+    if ( e.pointerType != "touch" && drag.state ) {
+        e.preventDefault();
+        drag.state = ( drag.state == 2 && e.button == 2 ) ? 3 : 0;
         kbd.toggleAttribute("grabbing", false);
         kbd.releasePointerCapture(e.pointerId);
         updateKeyboardPosition();
@@ -949,24 +1204,26 @@ kbd.addEventListener("pointerup", (e) => {
 }, { capture: true, passive: false });
 
 kbd.addEventListener("pointermove", (e) => {
-    if ( drag_state.dragging ) {
+    if ( e.pointerType != "touch" && drag.state ) {
 
         const SNAP_THRESHOLD = 0.04;
 
         const kbd_rect = kbd.getBoundingClientRect();
         const cnt_rect = kbd_container.getBoundingClientRect();
 
+        drag.state = 2;
+
         // X-axis - scroll container
-        const offset_x = e.screenX - drag_state.origin.x;
+        const offset_x = e.screenX - drag.origin.x;
         const ratio_x = offset_x / (kbd_rect.width - cnt_rect.width);
-        settings.offset.x = clamp(drag_state.previous_offset.x - ratio_x, 0.0, 1.0);
+        settings.offset.x = clamp(drag.previous_offset.x - ratio_x, 0.0, 1.0);
 
         // Y-axis - move keyboard (only if not almost maximally zoomed in)
         const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
         if ( settings.zoom < max_zoom - ((max_zoom - 1.0) / 10) ) {
-            const offset_y = e.screenY - drag_state.origin.y;
+            const offset_y = e.screenY - drag.origin.y;
             const ratio_y = offset_y / (cnt_rect.height - kbd_rect.height);
-            settings.offset.y = clamp(drag_state.previous_offset.y + ratio_y, 0.0, 1.0);
+            settings.offset.y = clamp(drag.previous_offset.y + ratio_y, 0.0, 1.0);
     
             // Snap vertically
             if ( !e.ctrlKey ) {
@@ -981,9 +1238,9 @@ kbd.addEventListener("pointermove", (e) => {
 }, { capture: false, passive: true });
 
 kbd_container.addEventListener("wheel", (e) => {
-    if ( !drag_state.dragging && !e.ctrlKey ) {
+    if ( !drag.state && !touch.started && !e.ctrlKey ) {
         // make zoom out faster than zoom in
-        const amount = e.wheelDeltaY / (e.wheelDeltaY >= 0 ? 1000 : 500);
+        const amount = -e.deltaY / (e.deltaY >= 0 ? 1000 : 500);
         const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
         const new_zoom = clamp(settings.zoom + amount, 1.0, max_zoom);
         if ( settings.zoom != new_zoom ) {
@@ -994,14 +1251,19 @@ kbd_container.addEventListener("wheel", (e) => {
                 (e.clientX - (e.clientX - kbd_rect.left) / kbd_rect.width * new_width - cnt_rect.left) 
                     / (cnt_rect.width - new_width);
             settings.zoom = new_zoom;
-            updateKeyboardPosition();
         }
+        const scroll_amount = e.deltaX / 1000;
+        if ( scroll_amount ) {
+            settings.offset.x = clamp(settings.offset.x - scroll_amount, 0.0, 1.0);
+        }
+        updateKeyboardPosition();
     }
 }, { capture: false, passive: false });
 
 var btn_show_toolbar_timeout = null;
 
-kbd_container.addEventListener("pointermove", () => {
+kbd_container.addEventListener("pointermove", (e) => {
+    if ( e.pointerType == "touch" ) return;
     if ( btn_show_toolbar_timeout ) clearTimeout(btn_show_toolbar_timeout);
     const btn_show_toolbar = document.getElementById("btn-show-toolbar");
     btn_show_toolbar.toggleAttribute("visible", true);
@@ -1014,6 +1276,82 @@ kbd_container.addEventListener("pointermove", () => {
         btn_show_toolbar_timeout = null;
     }, 4000);
 }, { capture: false, passive: true });
+
+
+// Pointer & touch control events
+
+function findKeyUnderPoint(x, y) {
+    const elements = document.elementsFromPoint(x, y);
+    for ( const elm of elements ) {
+        const parent = elm.parentElement;
+        if ( parent && ( parent.classList.contains("white-key") || parent.classList.contains("black-key") ) )
+            return parseInt(parent.getAttribute("value"));
+    }
+    return null;
+}
+
+kbd.addEventListener("pointerdown", (e) => {
+    if ( e.pointerType != "touch" && touch.enabled && e.button === 0 && !touch.started(e.pointerId)) {
+        e.preventDefault();
+        const note = findKeyUnderPoint(e.clientX, e.clientY);
+        if ( note ) touch.add(e.pointerId, note);
+    }
+}, { capture: false, passive: false });
+
+kbd_container.addEventListener("pointerup", (e) => {
+    if ( e.pointerType != "touch" && touch.started(e.pointerId) && e.button === 0 ) {
+        e.preventDefault();
+        touch.remove(e.pointerId);
+    }
+}, { capture: false, passive: false });
+
+kbd_container.addEventListener("pointermove", (e) => {
+    if ( e.pointerType != "touch" && touch.started(e.pointerId) ) {
+        e.preventDefault();
+        const note = findKeyUnderPoint(e.clientX, e.clientY);
+        touch.change(e.pointerId, note);
+    }
+}, { capture: false, passive: false });
+
+kbd.addEventListener("touchstart", (e) => {
+    if ( touch.enabled ) {
+        e.preventDefault();
+        for ( const t of e.changedTouches ) {
+            if ( !touch.started(t.identifier) ) {
+                const note = findKeyUnderPoint(t.clientX, t.clientY);
+                if ( note ) touch.change(t.identifier, note);
+            }
+        }
+    }
+}, { capture: false, passive: false });
+
+kbd_container.addEventListener("touchend", (e) => {
+    for ( const t of e.changedTouches ) {
+        if ( touch.started(t.identifier) ) {
+            e.preventDefault();
+            touch.remove(t.identifier);
+        }
+    }
+}, { capture: false, passive: false });
+
+kbd_container.addEventListener("touchcancel", (e) => {
+    for ( const t of e.changedTouches ) {
+        if ( touch.started(t.identifier) ) {
+            e.preventDefault();
+            touch.remove(t.identifier);
+        }
+    }
+}, { capture: false, passive: false });
+
+kbd_container.addEventListener("touchmove", (e) => {
+    for ( const t of e.changedTouches ) {
+        if ( touch.started(t.identifier) ) {
+            e.preventDefault();
+            const note = findKeyUnderPoint(t.clientX, t.clientY);
+            touch.change(t.identifier, note);
+        }
+    }
+}, { capture: false, passive: false });
 
 
 // MIDI events
@@ -1168,6 +1506,11 @@ function cloneTemplate(template, attrs={}, inner_text=null) {
 }
 
 
+function isMobile() {
+    return ( /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) );
+}
+
+
 // Initialize
 
 loadSettings();
@@ -1184,9 +1527,26 @@ await Promise.allSettled([
 updateToolbar();
 createKeyboard();
 
-window.addEventListener("keydown", handleKeyDown);
+if ( !settings.device_name ) {
+    const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
+    if ( isMobile() ) {
+        connectInput("touch");
+        connect_tooltip.setAttribute("content", 
+            "Play your keyboard using your fingers! " +
+            "Or change the input device by tapping this button."
+        );
+    } else {
+        connect_tooltip.setAttribute("content", 
+            "Select your input device by clicking this button."
+        );
+    }
+    connect_tooltip.open = true;
+    window.onclick = () => {
+        connect_tooltip.open = false;
+        window.onclick = null;
+    }
+}
 
-// Connect to stored device name
 if ( settings.device_name ) {
     connectInput(settings.device_name);
 }
