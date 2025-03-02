@@ -771,8 +771,8 @@ function writeSettings() {
 
 function loadSettings() {
     settings.first_time = settings_storage.readBool("first-time", true);
-    settings.height_factor = settings_storage.readNumber("height-factor", settings.height_factor);
-    settings.number_of_keys = settings_storage.readNumber("number-of-keys", settings.number_of_keys);
+    settings.height_factor = settings_storage.readNumber("height-factor", isMobile() ? 0.75 : settings.height_factor);
+    settings.number_of_keys = settings_storage.readNumber("number-of-keys", isMobile() ? 25 : settings.number_of_keys);
     settings.color_white = settings_storage.readString("color-white", settings.color_white);
     settings.color_black = settings_storage.readString("color-black", settings.color_black);
     settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight);
@@ -782,7 +782,7 @@ function loadSettings() {
     settings.pedals = settings_storage.readBool("pedals", settings.pedals);
     settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
     settings.offset.y = settings_storage.readNumber("offset-y", settings.offset.y);
-    settings.device_name = settings_storage.readString("device", null);
+    settings.device_name = settings_storage.readString("device", isMobile() ? "touch" : null);
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
     settings.toolbar = session_storage.readBool("toolbar", settings.toolbar);
