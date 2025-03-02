@@ -8,6 +8,8 @@
     --color-background: black;
     --color-key-light-border: #999;
     --color-key-dark-border: #444;
+
+    touch-action: none;
 }
 
 * {
@@ -15,7 +17,8 @@
     &[cursor-hidden] {
         cursor: none !important;
     }
-    &[hidden] { display: none; }
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
 body {
@@ -36,7 +39,6 @@ body {
     font-weight: lighter;
     vertical-align: middle;
     margin-right: 10px;
-    user-select: none;
 }
 
 div.menu-msg {
@@ -53,7 +55,6 @@ div.menu-msg {
     display: flex;
     justify-content: space-between;
     flex-wrap: nowrap;
-    user-select: none;
 
     & :not(:defined) { visibility: hidden; }
 
@@ -92,6 +93,8 @@ div.menu-msg {
             display: inline-block;
         }
     }
+
+    sl-radio-group
 
     #menu-group-number-of-keys {
         .btn-number-of-keys {
@@ -325,7 +328,6 @@ div.menu-msg {
         font-weight: 100;
         text-anchor: middle;
         white-space: wrap;
-        user-select: none;
     }
 
     .white-key-label {
@@ -363,9 +365,14 @@ sl-dialog {
     font-family: var(--sl-font-sans);
     color: var(--sl-color-neutral-700);
     --width: 45ch;
+    &::part(panel) {
+        box-shadow: var(--sl-shadow-large);
+    }
 }
 
 sl-menu > sl-divider {
     margin-top: 2px;
     margin-bottom: 2px;
 }
+
+sl-menu-item[hidden] { display: none; }

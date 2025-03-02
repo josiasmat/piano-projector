@@ -1236,6 +1236,7 @@ kbd.addEventListener("pointermove", (e) => {
 }, { capture: false, passive: true });
 
 kbd_container.addEventListener("wheel", (e) => {
+    e.preventDefault();
     if ( !drag.state && !touch.started() && !e.ctrlKey ) {
         // make zoom out faster than zoom in
         const amount = -e.deltaY / (e.deltaY <= 0 ? 1000 : 500);
@@ -1283,68 +1284,80 @@ function findKeyUnderPoint(x, y) {
     const elements = document.elementsFromPoint(x, y);
     for ( const elm of elements ) {
         const parent = elm.parentElement;
-        if ( parent && ( parent.classList.contains("white-key") || parent.classList.contains("black-key") ) )
+        if ( parent?.classList.contains("key") )
             return parseInt(parent.getAttribute("value"));
     }
     return null;
 }
 
-kbd.addEventListener("pointerdown", (e) => {
-    if ( e.pointerType != "touch" && touch.enabled && e.button === 0 && !touch.started(e.pointerId)) {
+/** @param {PointerEvent} e */
+function handleKbdPointerDown(e) {
+    if ( e.pointerType != "touch" && touch.enabled 
+         && e.button === 0 && !touch.started(e.pointerId)) {
         const note = findKeyUnderPoint(e.clientX, e.clientY);
-        if ( note ) touch.add(e.pointerId, note);
+        if ( note ) { 
+            e.preventDefault();
+            touch.add(e.pointerId, note);
+        }
     }
-}, { capture: false, passive: false });
+}
 
-kbd_container.addEventListener("pointerup", (e) => {
-    if ( e.pointerType != "touch" && touch.started(e.pointerId) && e.button === 0 ) {
+/** @param {PointerEvent} e */
+function handleKbdPointerUp(e) {
+    if ( e.pointerType != "touch" && touch.started(e.pointerId) && e.button === 0 )
         touch.remove(e.pointerId);
-    }
-}, { capture: false, passive: false });
+}
 
-kbd_container.addEventListener("pointermove", (e) => {
+/** @param {PointerEvent} e */
+function handleKbdPointerMove(e) {
     if ( e.pointerType != "touch" && touch.started(e.pointerId) ) {
+        e.preventDefault();
         const note = findKeyUnderPoint(e.clientX, e.clientY);
         touch.change(e.pointerId, note);
     }
-}, { capture: false, passive: false });
+}
 
-kbd.addEventListener("touchstart", (e) => {
+/** @param {TouchEvent} e */
+function handleKbdTouchStart(e) {
     if ( touch.enabled ) {
-        for ( const t of e.changedTouches ) {
+        for ( const t of e.changedTouches )
             if ( !touch.started(t.identifier) ) {
                 const note = findKeyUnderPoint(t.clientX, t.clientY);
-                if ( note ) touch.change(t.identifier, note);
+                if ( note ) {
+                    e.preventDefault();
+                    touch.change(t.identifier, note);
+                }
             }
-        }
     }
-}, { capture: false, passive: false });
+}
 
-kbd_container.addEventListener("touchend", (e) => {
-    for ( const t of e.changedTouches ) {
+/** @param {TouchEvent} e */
+function handleKbdTouchEnd(e) {
+    for ( const t of e.changedTouches )
         if ( touch.started(t.identifier) ) {
             touch.remove(t.identifier);
         }
-    }
-}, { capture: false, passive: false });
+}
 
-kbd_container.addEventListener("touchcancel", (e) => {
-    for ( const t of e.changedTouches ) {
-        if ( touch.started(t.identifier) ) {
-            touch.remove(t.identifier);
-        }
-    }
-}, { capture: false, passive: false });
-
-kbd_container.addEventListener("touchmove", (e) => {
-    for ( const t of e.changedTouches ) {
+/** @param {TouchEvent} e */
+function handleKbdTouchMove(e) {
+    for ( const t of e.changedTouches )
         if ( touch.started(t.identifier) ) {
             e.preventDefault();
             const note = findKeyUnderPoint(t.clientX, t.clientY);
             touch.change(t.identifier, note);
         }
-    }
-}, { capture: false, passive: false });
+}
+
+
+kbd.addEventListener("pointerdown", handleKbdPointerDown, { capture: true, passive: false });
+kbd.addEventListener("touchstart", handleKbdTouchStart, { capture: true, passive: false });
+window.addEventListener("pointerup", handleKbdPointerUp, { capture: false, passive: true });
+window.addEventListener("pointercancel", handleKbdPointerUp, { capture: false, passive: true });
+window.addEventListener("touchend", handleKbdTouchEnd, { capture: false, passive: true });
+window.addEventListener("touchcancel", handleKbdTouchEnd, { capture: false, passive: true });
+window.addEventListener("pointermove", handleKbdPointerMove, { capture: false, passive: false });
+window.addEventListener("touchmove", handleKbdTouchMove, { capture: false, passive: false });
 
 
 // MIDI events
@@ -1542,6 +1555,11 @@ if ( !settings.device_name ) {
 
 if ( isMobile() ) {
     document.getElementById("btn-show-toolbar").classList.add("mobile");
+    for ( const btn of document.querySelectorAll("sl-dropdown>sl-button") ) {
+        const new_btn = btn.cloneNode(true);
+        btn.parentNode.insertBefore(new_btn, btn);
+        btn.remove();
+    }
 }
 
 if ( settings.device_name ) {
