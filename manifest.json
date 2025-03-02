@@ -1,7 +1,7 @@
 {
     "name": "Piano Projector",
     "short_name": "Piano Projector",
-    "description": "An easy to use on-screen virtual piano keyboard. Control it with a MIDI device or with your computer keyboard.",
+    "description": "A versatile and easy-to-use on-screen piano keyboard for music education. Control it with a MIDI device, your computer keyboard, mouse or touch.",
     "categories": "music,education",
     "start_url": "/",
     "scope": "/",

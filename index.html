@@ -1,5 +1,8 @@
 <!--
 Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
 Copyright (C) 2025 Josias Matschulat
 
 This program is free software: you can redistribute it and/or modify
@@ -20,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     <head>
         <meta http-equiv="Cache-Control" content="public" />
         <meta name="description" 
-            content="An easy to use on-screen piano keyboard. Control it with a MIDI device or with your computer keyboard." 
+            content="A versatile and easy-to-use on-screen piano keyboard for music education. Control it with a MIDI device, your computer keyboard, mouse or touch."
         />
         <meta name="viewport" content="user-scalable=no"/>
         <title i18n="main-title">Piano Projector</title>
@@ -32,28 +35,44 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         <link rel="icon" type="image/png" href="favicon.png">
     </head>
     <body>
+        <sl-dialog label="About" id="dialog-about" class="sl-theme-dark" hidden>
+            <span slot="label" class="title-text">
+                <sl-icon src="svg/favicon.svg"></sl-icon>
+                Piano Projector
+            </span>
+            <span>A versatile and easy-to-use on-screen piano keyboard for music education.</span><br /><br />
+            <span>© 2025 Josias Matschulat.</span><br /><br />
+            <span data-nosnippet>
+                Licensed under the <br />
+                <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank">
+                    GNU Affero General Public License version 3
+                </a>.
+            </span>
+            <span slot="footer" data-nosnippet>
+                Get the 
+                <a href="https://github.com/josiasmat/piano-projector" target="_blank">source code at GitHub</a>.
+            </span>
+        </sl-dialog>
         <div id="top-toolbar">
             <div id="top-toolbar-left">
                 <span id="toolbar-title" class="title-text">Piano Projector</span>
                 <sl-tooltip id="dropdown-connect-tooltip" content="" trigger="manual" distance="10" placement="bottom-start">
                     <sl-dropdown id="dropdown-connect">
                         <sl-button id="btn-connect" slot="trigger" caret>
-                            Control
+                            <span data-nosnippet>Control</span>
                             <sl-icon id="connection-power-icon" class="led-strong" slot="prefix" name="power"></sl-icon>
                         </sl-button>
-                        <sl-menu id="midi-connection-menu">
-                            <sl-menu-item disabled>No MIDI input devices available</sl-menu-item>
-                        </sl-menu>
+                        <sl-menu id="midi-connection-menu"></sl-menu>
                     </sl-dropdown>
                 </sl-tooltip>
                 <sl-dropdown id="dropdown-sound">
                     <sl-button id="btn-sound" slot="trigger" caret>
-                        Sound
+                        <span data-nosnippet>Sound</span>
                         <sl-icon id="sound-power-icon" class="led-weak" slot="prefix" name="music-note-beamed"></sl-icon>
                     </sl-button>
                     <sl-menu id="menu-sound">
                         <sl-menu-item id="menu-sound-item-unavailable" disabled>
-                            Sound not available.
+                            <span data-nosnippet>Sound not available.</span>
                             <sl-icon name="ban" slot="prefix"></sl-icon>
                         </sl-menu-item>
                         <sl-menu-item class="menu-sound-item" collection_index="" value="" type="checkbox" checked hidden>Disabled</sl-menu-item>
@@ -65,14 +84,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 </sl-dropdown>
                 <sl-dropdown id="dropdown-transpose" stay-open-on-select>
                     <sl-button id="btn-transpose" slot="trigger" caret>
-                        Transpose
+                        <span data-nosnippet>Transpose</span>
                         <sl-icon id="transpose-power-icon" class="led-strong" name="arrow-down-up" slot="prefix" label="Enable transpose"></sl-icon>
                     </sl-button>
                     <sl-menu>
                         <!-- <sl-menu-item> -->
                             <div id="transpose-controls" class="custom-menu-item">
                                 <div>
-                                    <span class="custom-menu-item-label">Semitones</span><br />
+                                    <span class="custom-menu-item-label" data-nosnippet>Semitones</span><br />
                                     <sl-button-group label="Transpose semitones">
                                         <sl-button id="btn-semitone-minus" pill>
                                             <sl-icon name="dash" label="Settings"></sl-icon>
@@ -84,7 +103,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                                     </sl-button-group>
                                 </div>
                                 <div>
-                                    <span class="custom-menu-item-label">Octaves</span><br />
+                                    <span class="custom-menu-item-label" data-nosnippet>Octaves</span><br />
                                     <sl-button-group label="Transpose octaves">
                                         <sl-button id="btn-octave-minus" pill>
                                             <sl-icon name="dash" label="Settings"></sl-icon>
@@ -99,7 +118,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         <!-- </sl-menu-item> -->
                         <sl-divider style="margin-top: 8px;"></sl-divider>
                         <sl-menu-item id="reset-transpose" disabled>
-                            Reset transposition
+                            <span data-nosnippet>Reset transposition</span>
                             <sl-icon slot="prefix" name="arrow-counterclockwise"></sl-icon>
                         </sl-menu-item>
                     </sl-menu>
@@ -108,7 +127,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     <sl-button id="btn-size" slot="trigger" caret>Size</sl-button>
                     <div id="menu-size" class="custom-dropdown-panel">
                         <div id="menu-group-number-of-keys" class="custom-menu-item">
-                            <span class="custom-menu-item-label">Number of keys:</span><br />
+                            <span class="custom-menu-item-label" data-nosnippet>Number of keys:</span><br />
                             <sl-button-group>
                                 <sl-button class="btn-number-of-keys" value="88" variant="neutral">88</sl-button>
                                 <sl-button class="btn-number-of-keys" value="61">61</sl-button>
@@ -118,7 +137,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                             </sl-button-group>
                         </div>
                         <div id="menu-group-key-depth" class="custom-menu-item">
-                            <span class="custom-menu-item-label">Key depth:</span><br />
+                            <span class="custom-menu-item-label" data-nosnippet>Key depth:</span><br />
                             <sl-button-group>
                                 <sl-button class="btn-key-depth" value="1.0" variant="neutral">Full</sl-button>
                                 <sl-button class="btn-key-depth" value="0.75">3/4</sl-button>
@@ -128,10 +147,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     </div>
                 </sl-dropdown>
                 <sl-dropdown id="dropdown-colors" stay-open-on-select>
-                    <sl-button id="btn-colors" slot="trigger" caret>Colors</sl-button>
+                    <sl-button id="btn-colors" slot="trigger" caret>
+                        <span data-nosnippet>Colors</span>
+                    </sl-button>
                     <sl-menu>
                         <sl-menu-item>
-                            Highlight color
+                            <span data-nosnippet>Highlight color</span>
                             <sl-menu slot="submenu">
                                 <sl-color-picker id="color-pressed" no-format-toggle inline value="#f00" 
                                     swatches="#f00; #f70; #ff0; #0f0; #0ff; #00f; #70f; #f0f;
@@ -141,7 +162,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                             </sl-menu>
                         </sl-menu-item>
                         <sl-menu-item>
-                            White key color
+                            <span data-nosnippet>White key color</span>
                             <sl-menu slot="submenu">
                                 <sl-color-picker id="color-white" no-format-toggle inline value="#fff" 
                                     swatches="#fff; #eee; #ddd; #bbb; #444; #222; #111; #000;"
@@ -150,7 +171,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                             </sl-menu>
                         </sl-menu-item>
                         <sl-menu-item>
-                            Black key color
+                            <span data-nosnippet>Black key color</span>
                             <sl-menu slot="submenu">
                                 <sl-color-picker id="color-black" no-format-toggle inline value="#000" 
                                     swatches="#fff; #eee; #ddd; #bbb; #444; #222; #111; #000;"
@@ -160,15 +181,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         </sl-menu-item>
                         <sl-divider></sl-divider>
                         <sl-menu-item id="menu-top-felt" type="checkbox" checked>
-                            Show red felt
+                            <span data-nosnippet>Show red felt</span>
                         </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
                 <sl-dropdown id="dropdown-labels" stay-open-on-select>
-                    <sl-button id="btn-labels" slot="trigger" caret>Labels</sl-button>
+                    <sl-button id="btn-labels" slot="trigger" caret>
+                        <span data-nosnippet>Labels</span>
+                    </sl-button>
                     <sl-menu id="menu-labels-top">
                         <sl-menu-item>
-                            Keys
+                            <span data-nosnippet>Keys</span>
                             <sl-menu id="menu-labels-where" slot="submenu">
                                 <sl-menu-item type="checkbox" value="none" checked>None</sl-menu-item>
                                 <sl-menu-item type="checkbox" value="played">Played keys</sl-menu-item>
@@ -179,7 +202,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                             <sl-badge slot="suffix" variant="neutral" pill>None</sl-badge>
                         </sl-menu-item>
                         <sl-menu-item>
-                            Format
+                            <span data-nosnippet>Format</span>
                             <sl-menu id="menu-labels-type" slot="submenu">
                                 <sl-menu-item type="checkbox" value="english" checked>English</sl-menu-item>
                                 <sl-menu-item type="checkbox" value="german">German</sl-menu-item>
@@ -191,13 +214,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         </sl-menu-item>
                         <sl-divider></sl-divider>
                         <sl-menu-item id="menu-item-labels-octave" type="checkbox" value="octave" checked>
-                            Show octave
+                            <span data-nosnippet>Show octave</span>
                         </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
                 <sl-dropdown id="dropdown-pedals" stay-open-on-select>
                     <sl-button id="btn-pedals" slot="trigger" caret>
-                        Pedals
+                        <span data-nosnippet>Pedals</span>
                         <div id="pedal-icons" slot="prefix">
                             <sl-icon id="pedl" class="pedal-indicator led-weak" slot="prefix" src="svg/lped.svg"></sl-icon>
                             <sl-icon id="pedm" class="pedal-indicator led-weak" slot="prefix" src="svg/mped.svg"></sl-icon>
@@ -205,8 +228,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         </div>
                     </sl-button>
                     <sl-menu id="pedal-menu">
-                        <sl-menu-item id="menu-pedal-follow" type="checkbox" checked>Follow pedals</sl-menu-item>
-                        <sl-menu-item id="menu-pedal-dim" type="checkbox" checked>Dim pedalized notes</sl-menu-item>
+                        <sl-menu-item id="menu-pedal-follow" type="checkbox" checked>
+                            <span data-nosnippet>Follow pedals</span>
+                        </sl-menu-item>
+                        <sl-menu-item id="menu-pedal-dim" type="checkbox" checked>
+                            <span data-nosnippet>Dim pedalized notes</span>
+                        </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
             </div>
@@ -234,16 +261,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             </div>
         </div>
 
-        <!-- Initially invisible elements -->
-        <sl-dialog label="About" id="dialog-about" class="sl-theme-dark" hidden>
-            <span slot="label" class="title-text">Piano Projector</span>
-            © 2025 Josias Matschulat.
-            <br /><br />
-            Licensed under the <br /><a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank">GNU Affero General Public License version 3</a>.
-            <span slot="footer">Get the <a href="https://github.com/josiasmat/piano-projector" target="_blank">source code at GitHub</a>.</span>
-        </sl-dialog>
+        
         <sl-alert id="alert-sound-connection-fail" variant="danger" duration="10000" countdown="rtl" closable>
-            <strong>The sound you selected could not be loaded.<br /></strong>
+            <span data-nosnippet>
+                <strong>The sound you selected could not be loaded.<br /></strong>
+            </span>
             <span></span>
             <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
         </sl-alert>
@@ -257,13 +279,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         </template>
         <template id="menu-connect-item-computer-keyboard-template">
             <sl-menu-item type="checkbox">
-                <span>Computer keyboard</span>
+                <span data-nosnippet>Computer keyboard</span>
                 <sl-icon name="keyboard" slot="prefix"></sl-icon>
             </sl-menu-item>
         </template>
         <template id="menu-connect-item-touch-template">
             <sl-menu-item type="checkbox">
-                <span>Touch or mouse</span>
+                <span data-nosnippet>Touch or mouse</span>
                 <sl-icon name="hand-index" slot="prefix"></sl-icon>
             </sl-menu-item>
         </template>

@@ -368,6 +368,14 @@ sl-dialog {
     &::part(panel) {
         box-shadow: var(--sl-shadow-large);
     }
+    .title-text {
+        text-wrap: nowrap;
+        sl-icon {
+            height: 55%;
+            vertical-align: -2%;
+            padding-right: 2px;
+        }
+    } 
 }
 
 sl-menu > sl-divider {
