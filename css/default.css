@@ -8,7 +8,7 @@
     --color-background: black;
     --color-key-light-border: #999;
     --color-key-dark-border: #444;
-
+    --key-transition-duration: 0.05s;
     touch-action: none;
 }
 
@@ -300,11 +300,18 @@ div.menu-msg {
             will-change: opacity;
         }
 
-        &:not(.active) .key-highlight {
-            opacity: 0%;
-            transition-property: opacity;
-            transition-duration: 0.05s;
-            transition-timing-function: ease-out;
+        &:not(.active) {
+            .key-highlight {
+                opacity: 0%;
+                transition-property: opacity;
+                transition-duration: var(--key-transition-duration);
+                transition-timing-function: ease-out;
+            }
+            .key-label.fixed-visibility.visible {
+                transition-property: fill;
+                transition-timing-function: ease-out;
+                transition-duration: var(--key-transition-duration);
+            }
         }
 
         &.active {
@@ -314,31 +321,49 @@ div.menu-msg {
             &.dim .key-highlight {
                 opacity: 70%;
                 transition-property: opacity;
-                transition-duration: 0.05s;
+                transition-duration: var(--key-transition-duration);
                 transition-timing-function: ease-out;
             }
-            .white-key-label, .black-key-label {
+            .key-label {
                 fill: lch(from var(--color-highlight) clamp(5, calc(calc(55 - l) * 10000), 95) 0 h);
             }
         }
     }
 
-    .white-key-label, .black-key-label {
+    .key-label {
         font-family: "PT Sans Narrow", "Arial Narrow", var(--sl-font-sans), sans-serif;
         font-weight: 100;
         text-anchor: middle;
         white-space: wrap;
-    }
-
-    .white-key-label {
-        font-size: 36px;
-        fill: lch(from var(--color-white-key) clamp(10, calc(calc(55 - l) * 10000), 90) 0 h);
-    }
-
-    .black-key-label {
-        font-size: 26px;
-        fill: lch(from var(--color-black-key) clamp(10, calc(calc(55 - l) * 10000), 90) 0 h);
-        tspan { text-anchor: middle; }
+        opacity: 0%;
+        &.hidden.fixed-visibility { 
+            visibility: hidden;
+        }
+        &.visible { 
+            opacity: 100%;
+            &.fixed-visibility {
+                will-change: fill;
+            }
+        }
+        &.may-change-visibility {
+            will-change: opacity;
+            &.hidden {
+                fill: lch(from var(--color-highlight) clamp(5, calc(calc(55 - l) * 10000), 95) 0 h);
+                opacity: 0%;
+                transition-property: opacity;
+                transition-timing-function: ease-out;
+                transition-duration: var(--key-transition-duration);
+            }
+        }
+        &.white-key-label {
+            font-size: 36px;
+            fill: lch(from var(--color-white-key) clamp(10, calc(calc(55 - l) * 10000), 90) 0 h);
+        }
+        &.black-key-label {
+            font-size: 26px;
+            fill: lch(from var(--color-black-key) clamp(10, calc(calc(55 - l) * 10000), 90) 0 h);
+            tspan { text-anchor: middle; }
+        }
     }
 
 }

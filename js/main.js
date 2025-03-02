@@ -367,7 +367,7 @@ function drawKeyboard(svg, options = {}) {
         const center = left + white_key_width_half;
         const elm = SvgTools.createElement("text", {
             x: center, y: white_key_height - white_key_width_half,
-            id: `keylabel${keynum}`, class: "white-key-label"
+            id: `keylabel${keynum}`, class: "key-label white-key-label"
         });
         elm.appendChild(SvgTools.createElement("tspan", { x: center }));
         return elm;
@@ -377,7 +377,7 @@ function drawKeyboard(svg, options = {}) {
         const center = left + black_key_width_half;
         const elm = SvgTools.createElement("text", {
             x: center, y: black_key_height - white_key_width_half,
-            id: `keylabel${keynum}`, class: "black-key-label"
+            id: `keylabel${keynum}`, class: "key-label black-key-label"
         });
         elm.appendChild(SvgTools.createElement("tspan", { x: center }));
         elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-0.9lh" }));
@@ -562,15 +562,32 @@ function updateKeyboardLabel(key, is_on) {
         for ( const [i,tspan] of Array.from(label.children).entries() )
             tspan.textContent = lines[i] ?? '';
 
-        let visible;
+        let visible, temporary; 
         switch ( settings.labels.where ) {
-            case "all": visible = true; break;
-            case "played": visible = is_on; break;
-            case "cs": visible = ( pc == 0 ); break;
-            case "white": visible = is_white_key; break;
-            default: visible = false;
+            case "all": 
+                visible = true; 
+                temporary = false; 
+                break;
+            case "played": 
+                visible = is_on; 
+                temporary = true; 
+                break;
+            case "cs": 
+                visible = ( pc == 0 ); 
+                temporary = false; 
+                break;
+            case "white": 
+                visible = is_white_key; 
+                temporary = false; 
+                break;
+            default: 
+                visible = false; 
+                temporary = false; 
         }
-        label.style.setProperty("opacity", visible ? "100%" : "0%");
+        label.classList.toggle("may-change-visibility", temporary);
+        label.classList.toggle("fixed-visibility", !temporary);
+        label.classList.toggle("visible", visible);
+        label.classList.toggle("hidden", !visible);
     }
 }
 
@@ -1560,6 +1577,17 @@ if ( isMobile() ) {
         btn.parentNode.insertBefore(new_btn, btn);
         btn.remove();
     }
+}
+
+for ( const dropdown of document.querySelectorAll("sl-dropdown") ) {
+    dropdown.addEventListener("sl-show", (e) => {
+        e.currentTarget.querySelector("sl-button")
+            .setAttribute("variant", "neutral");
+    });
+    dropdown.addEventListener("sl-hide", (e) => {
+        e.currentTarget.querySelector("sl-button")
+            .toggleAttribute("variant", false);
+    });
 }
 
 if ( settings.device_name ) {
