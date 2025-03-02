@@ -1204,7 +1204,7 @@ kbd.addEventListener("pointerup", (e) => {
 kbd.addEventListener("pointermove", (e) => {
     if ( e.pointerType != "touch" && drag.state ) {
 
-        const SNAP_THRESHOLD = 0.04;
+        const SNAP_THRESHOLD = 0.06;
 
         const kbd_rect = kbd.getBoundingClientRect();
         const cnt_rect = kbd_container.getBoundingClientRect();
