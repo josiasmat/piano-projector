@@ -419,7 +419,7 @@ function drawKeyboard(svg, options = {}) {
     if ( options.top_felt )
         svg.appendChild(SvgTools.makeRect(width, 7, 0, -4, null, null, { id: "top-felt" }));
     svg.appendChild(black_keys_g);
-    svg.setAttribute("viewBox", `-2 -4 ${width+(2*STROKE_WIDTH)} ${(white_key_height)+(2*STROKE_WIDTH)}`);
+    svg.setAttribute("viewBox", `-2 -4 ${width+STROKE_WIDTH+2} ${white_key_height+STROKE_WIDTH+4}`);
 
     function makeGradient(id, stops, vertical=false, attrs={}) {
         const grad = SvgTools.createElement("linearGradient", 
