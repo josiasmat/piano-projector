@@ -1591,50 +1591,45 @@ await Promise.allSettled([
     customElements.whenDefined('sl-menu-item')
 ]);
 
-window.onload = () => {
-    createKeyboard();
-    
-    if ( !settings.device_name ) {
-        const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
-        if ( isMobile() ) {
-            connectInput("touch");
-            connect_tooltip.setAttribute("content", 
-                "Play your keyboard using your fingers! " +
-                "Or change the input device by tapping this button."
-            );
-        } else {
-            connect_tooltip.setAttribute("content", 
-                "Select your input device by clicking this button."
-            );
-        }
-        connect_tooltip.open = true;
-        window.onclick = () => {
-            connect_tooltip.open = false;
-            window.onclick = null;
-        }
-    }
-    
-    if ( settings.device_name ) {
-        midi_state.queryAccess((access) => {
-            if ( access == "granted" )
-                connectInput(settings.device_name);
+if ( isSafari() ) {
+    // For now, disable sound button on Safari browser
+    document.getElementById("dropdown-sound").toggleAttribute("hidden", true);
+} else {
+    // Dynamically import smplr module
+    import("https://unpkg.com/smplr/dist/index.mjs")
+        .then( (result) => {
+            sound.apiano = result.SplendidGrandPiano;
+            sound.epiano = result.ElectricPiano;
+            document.getElementById("menu-sound-item-unavailable").hidden = true;
+            document.querySelectorAll(".menu-sound-item").forEach((item) => { item.hidden = false });
         });
-    }
-
-    if ( isSafari() ) {
-        // For now, disable sound button on Safari browser
-        document.getElementById("dropdown-sound").toggleAttribute("hidden", true);
-    } else {
-        // Dynamically import smplr module
-        import("https://unpkg.com/smplr/dist/index.mjs")
-            .then( (result) => {
-                sound.apiano = result.SplendidGrandPiano;
-                sound.epiano = result.ElectricPiano;
-                document.getElementById("menu-sound-item-unavailable").hidden = true;
-                document.querySelectorAll(".menu-sound-item").forEach((item) => { item.hidden = false });
-            });
-    }
-
-    updateToolbar();
-    midi_state.setWatchdog(2000);
 }
+
+if ( !settings.device_name ) {
+    const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
+    if ( isMobile() ) {
+        connectInput("touch");
+        connect_tooltip.setAttribute("content", 
+            "Play your keyboard using your fingers! " +
+            "Or change the input device by tapping this button."
+        );
+    } else {
+        connect_tooltip.setAttribute("content", 
+            "Select your input device by clicking this button."
+        );
+    }
+    connect_tooltip.open = true;
+    window.onclick = () => {
+        connect_tooltip.open = false;
+        window.onclick = null;
+    }
+} else {
+    midi_state.queryAccess((access) => {
+        if ( access == "granted" )
+            connectInput(settings.device_name);
+    });
+}
+
+createKeyboard();
+updateToolbar();
+midi_state.setWatchdog(2000);
