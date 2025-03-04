@@ -789,6 +789,7 @@ function updateNote(note) {
 function toggleToolbarVisibility() {
     settings.toolbar = !settings.toolbar;
     updateToolbar();
+    updateKeyboardPosition();
     writeSettings();
 }
 
