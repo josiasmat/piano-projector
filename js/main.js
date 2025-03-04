@@ -842,6 +842,56 @@ function transpose(params={}) {
     writeSettings();
 }
 
+/** @param {number} value 88, 61, 49, 37 or 25. */
+function setNumberOfKeys(value) {
+    settings.number_of_keys = value;
+    settings.zoom = 1.0;
+    updateSizeMenu();
+    createKeyboard();
+    writeSettings();
+}
+
+/** @param {number} value 1.0, 0.75 or 0.5*/
+function setKeyDepth(value) {
+    settings.height_factor = value;
+    updateSizeMenu();
+    createKeyboard();
+    writeSettings();
+}
+
+function switchKeyDepth() {
+    const OPTIONS = [0.5, 0.75, 1.0];
+    settings.height_factor = 
+        OPTIONS.at(OPTIONS.indexOf(settings.height_factor)-1);
+    updateSizeMenu();
+    createKeyboard();
+    writeSettings();
+}
+
+/** @param {string} value */
+function setLabelsWhere(value) {
+    settings.labels.where = value;
+    updateLabelsMenu();
+    updateKeyboardKeys();
+    writeSettings();
+}
+
+/** @param {string} value */
+function setLabelsType(value) {
+    settings.labels.type = value;
+    updateLabelsMenu();
+    updateKeyboardKeys();
+    writeSettings();
+}
+
+/** @param {boolean} value */
+function setLabelsOctave(value) {
+    settings.labels.octave = value;
+    updateLabelsMenu();
+    updateKeyboardKeys();
+    writeSettings();
+}
+
 
 function writeSettings() {
     settings_storage.writeBool("first-time", false);
@@ -1138,21 +1188,14 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
 
 toolbar.dropdowns.size.querySelectorAll(".btn-number-of-keys").forEach((item) => {
     item.addEventListener("click", (e) => {
-        settings.number_of_keys = parseInt(e.currentTarget.value);
-        settings.zoom = 1.0;
-        updateSizeMenu();
-        createKeyboard();
-        writeSettings();
+        setNumberOfKeys(parseInt(e.currentTarget.value));
         if ( isMobile() ) toolbar.dropdowns.size.hide();
     });
 });
+
 toolbar.dropdowns.size.querySelectorAll(".btn-key-depth").forEach((item) => {
     item.addEventListener("click", (e) => {
-        settings.height_factor = parseFloat(e.currentTarget.value);
-        // settings.zoom = 1.0;
-        updateSizeMenu();
-        createKeyboard();
-        writeSettings();
+        setKeyDepth(parseFloat(e.currentTarget.value));
         if ( isMobile() ) toolbar.dropdowns.size.hide();
     });
 });
@@ -1180,26 +1223,18 @@ document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
 });
 
 document.getElementById("menu-labels-where").addEventListener("sl-select", (e) => {
-    settings.labels.where = e.detail.item.value;
-    updateLabelsMenu();
-    updateKeyboardKeys();
-    writeSettings();
+    setLabelsWhere(e.detail.item.value);
     if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
 document.getElementById("menu-labels-type").addEventListener("sl-select", (e) => {
-    settings.labels.type = e.detail.item.value;
-    updateLabelsMenu();
-    updateKeyboardKeys();
-    writeSettings();
+    setLabelsType(e.detail.item.value);
     if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
 document.getElementById("menu-labels-top").addEventListener("sl-select", (e) => {
     if ( e.detail.item.id === "menu-item-labels-octave" )
-        settings.labels.octave = e.detail.item.checked;
-    updateKeyboardKeys();
-    writeSettings();
+        setLabelsOctave(e.detail.item.checked);
     if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
@@ -1527,17 +1562,6 @@ function midiWatchdog() {
 function handleKeyDown(e) {
     if ( e.repeat ) return;
 
-    function changeLabelWhere(value) {
-        settings.labels.where = value;
-        updateKeyboardKeys();
-        writeSettings();
-    }
-    function changeLabelType(value) {
-        settings.labels.type = value;
-        updateKeyboardKeys();
-        writeSettings();
-    }
-
     const kbd_shortcuts = {
         "f9": toggleToolbarVisibility,
         "escape": midiPanic,
@@ -1545,17 +1569,23 @@ function handleKeyDown(e) {
         "pagedown": () => transpose({ semitones: -1 }),
         "shift+pageup": () => transpose({ octaves: +1 }),
         "shift+pagedown": () => transpose({ octaves: -1 }),
+        "alt+2": () => setNumberOfKeys(25),
+        "alt+3": () => setNumberOfKeys(37),
+        "alt+4": () => setNumberOfKeys(49),
+        "alt+6": () => setNumberOfKeys(61),
+        "alt+8": () => setNumberOfKeys(88),
+        "alt+d": () => switchKeyDepth(),
         "alt+n": () => changeLabelWhere("none"),
-        "alt+p": () => changeLabelWhere("played"),
-        "alt+c": () => changeLabelWhere("cs"),
-        "alt+w": () => changeLabelWhere("white"),
-        "alt+a": () => changeLabelWhere("all"),
-        "alt+e": () => changeLabelType("english"),
-        "alt+g": () => changeLabelType("german"),
-        "alt+i": () => changeLabelType("italian"),
-        "alt+t": () => changeLabelType("pc"),
-        "alt+m": () => changeLabelType("midi"),
-        "alt+f": () => changeLabelType("freq"),
+        "alt+p": () => setLabelsWhere("played"),
+        "alt+c": () => setLabelsWhere("cs"),
+        "alt+w": () => setLabelsWhere("white"),
+        "alt+a": () => setLabelsWhere("all"),
+        "alt+e": () => setLabelsType("english"),
+        "alt+g": () => setLabelsType("german"),
+        "alt+i": () => setLabelsType("italian"),
+        "alt+t": () => setLabelsType("pc"),
+        "alt+m": () => setLabelsType("midi"),
+        "alt+f": () => setLabelsType("freq"),
         "alt+o": () => { 
             settings.labels.octave = !settings.labels.octave; 
             updateKeyboardKeys()
