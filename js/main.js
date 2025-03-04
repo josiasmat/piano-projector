@@ -214,7 +214,6 @@ const touch = {
     reset() {
         this.points.clear();
         sound.stopAll();
-        updateKeyboardKeys();
     },
     enable() {
         this.enabled = true;
@@ -802,10 +801,12 @@ function toggleToolbarVisibility() {
 function midiPanic() {
     sound.stopAll(true);
     Midi.reset();
+    touch.reset();
+    KbdNotes.resetState();
     createKeyboard();
     updatePedalIcons();
     toolbar.buttons.panic.setAttribute("variant", "danger");
-    setTimeout(() => { toolbar.buttons.panic.removeAttribute("variant"); }, 500);
+    setTimeout(() => { toolbar.buttons.panic.removeAttribute("variant"); }, 1000);
     
 }
 
