@@ -23,16 +23,6 @@ import { Midi, noteToMidi } from "./midi.js";
 import { KbdNotes} from "./kbdnotes.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
 
-// Dynamically import smplr module
-let SplendidGrandPiano, ElectricPiano;
-import("https://unpkg.com/smplr/dist/index.mjs")
-    .then( (result) => {
-        SplendidGrandPiano = result.SplendidGrandPiano;
-        ElectricPiano = result.ElectricPiano;
-        document.getElementById("menu-sound-item-unavailable").hidden = true;
-        document.querySelectorAll(".menu-sound-item").forEach((item) => { item.hidden = false });
-    });
-
 const settings_storage = new LocalStorageHandler("piano-projector");
 const session_storage = new SessionStorageHandler("piano-projector-session");
 
@@ -89,6 +79,58 @@ const settings = {
     },
 }
 
+const midi_state = {
+    /** @type {MIDIInput[]} */
+    ports: [],
+    /** @type {HTMLElement[]} */
+    menu_items: [],
+    /** @type {MIDIInput?} */
+    get connected_port() {
+        return Midi.getConnectedPort();
+    },
+    /** "granted", "denied", "prompt", "unavailable" */
+    access: "unavailable",
+    /** @param {(string)} callback */
+    queryAccess(callback = null) {
+        Midi.queryMidiAccess((result) => { 
+            this.access = result; 
+            callback?.(this.access) 
+        });
+    },
+    /** @param {(boolean)} callback */
+    requestAccess(callback = null) {
+        Midi.requestMidiAccess( 
+            () => { 
+                this.access = "granted";
+                callback?.(true);
+            },
+            () => { callback?.(false); }
+        );
+    },
+    /** @param {(MIDIInput[])} callback */
+    requestPorts(callback = null) {
+        Midi.requestInputPortList(
+            (ports) => {
+                this.ports = ports;
+                callback?.(ports);
+            }, () => {
+                this.ports = null;
+                callback?.(null);
+            }
+        );
+    },
+    clearMenuItems() {
+        for ( const menu_item of this.menu_items )
+            menu_item.remove();
+        this.menu_items = [];
+    },
+    watchdog_id: null,
+    setWatchdog(delay_ms) {
+        if ( this.watchdog_id ) clearInterval(this.watchdog_id);
+        this.watchdog_id = setInterval(midiWatchdog, delay_ms);
+    }
+}
+
 const sound = {
     type: "",
     loaded: false,
@@ -111,11 +153,9 @@ const sound = {
             for ( let key = 0; key < 128; key++ )
                 this.stop(key, false);
     },
-    collections: [
-        { loader: (...args) => new SplendidGrandPiano(...args), options: { decayTime: 0.4 } },
-        { loader: (...args) => new ElectricPiano(...args) },
-    ],
-    fail_alert: document.getElementById("alert-sound-connection-fail")
+    fail_alert: document.getElementById("alert-sound-connection-fail"),
+    apiano: null,
+    epiano: null
 }
 
 const drag = {
@@ -608,6 +648,7 @@ function updateToolbar() {
     changeLed("sound-power-icon", sound.led, (sound.led == 1 ? "red" : null));
     document.getElementById("top-toolbar").toggleAttribute("hidden", !settings.toolbar);
     document.getElementById("btn-show-toolbar").toggleAttribute("hidden", settings.toolbar);
+    document.getElementById("dropdown-pedals").toggleAttribute("hidden", touch.enabled);
     updatePedalIcons();
 }
 
@@ -776,10 +817,8 @@ function writeSettings() {
     settings_storage.writeBool("pedals", settings.pedals);
     settings_storage.writeBool("pedal-dim", settings.pedal_dim);
     settings_storage.writeNumber("offset-y", settings.offset.y);
-    if ( settings.device_name )
-        settings_storage.writeString("device", settings.device_name);
-    else
-        settings_storage.remove("device");
+    if ( settings.device_name ) settings_storage.writeString("device", settings.device_name);
+        else settings_storage.remove("device");
     session_storage.writeNumber("semitones", settings.semitones);
     session_storage.writeNumber("octaves", settings.octaves);
     session_storage.writeBool("toolbar", settings.toolbar);
@@ -890,139 +929,83 @@ function disconnectInput(save=false) {
 }
 
 
-// Set event listeners
+function updateConnectionMenu() {
+    const connection_menu = document.getElementById("midi-connection-menu");
+    const menu_divider = connection_menu.querySelector("sl-divider");
 
-document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
-    const menu = document.getElementById("midi-connection-menu");
-    menu.innerHTML = "";
+    document.getElementById("menu-connect-item-midi-denied")
+        .toggleAttribute("hidden", midi_state.access != "denied");
+    document.getElementById("menu-connect-item-midi-unavailable")
+        .toggleAttribute("hidden", midi_state.access != "unavailable");
+    document.getElementById("menu-connect-item-midi-prompt")
+        .toggleAttribute("hidden", midi_state.access != "prompt");
+    menu_divider.toggleAttribute("hidden", midi_state.ports?.length > 0);
 
-    function addComputerAndTouchMenuItems() {
-        const kbd_template = document
-            .getElementById("menu-connect-item-computer-keyboard-template");
-        const kbd_item = cloneTemplate(kbd_template,
-            { checked: settings.pc_keyboard_connected }
-        );
-        kbd_item.addEventListener("click", () => { 
-            togglePcKeyboardConnection();
-            writeSettings();
-        });
-        const touch_template = document
-            .getElementById("menu-connect-item-touch-template");
-        const touch_item = cloneTemplate(touch_template,
-            { checked: touch.enabled }
-        );
-        touch_item.addEventListener("click", () => { 
-            toggleTouchConnection();
-            writeSettings();
-        });
-        if ( menu.childElementCount ) {
-            menu.appendChild(newElement("sl-divider"));
-            if ( !isMobile() ) menu.appendChild(kbd_item);
-            menu.appendChild(touch_item);
-        } else {
-            if ( !isMobile() ) menu.appendChild(kbd_item);
-            menu.appendChild(touch_item);
-            menu.appendChild(newElement("sl-divider"));
-        }
-    }
-
-    if ( !Midi.browserHasMidiSupport ) {
-        addComputerAndTouchMenuItems();
-        const item = newElement("div", { class: "menu-msg" });
-        item.innerHTML = 
-            "Your browser does not support the Web MIDI API.<br />" +
-            "To use MIDI, try updating your browser or switching<br />" +
-            "to <a href=\"https://www.mozilla.org/firefox/\" target=\"_blank\">Mozilla Firefox</a> " +
-            "or <a href=\"https://www.google.com/chrome/\" target=\"_blank\">Google Chrome</a>.";
-        menu.appendChild(item);
-        updateToolbar();
+    if ( midi_state.access != "granted" ) {
+        midi_state.clearMenuItems();
         return;
     }
 
-    function doOnAccessDenied() {
-        const item = newElement("sl-menu-item", { disabled: true }, "MIDI access denied");
-        menu.appendChild(item);
-        addComputerAndTouchMenuItems();
-        updateToolbar();
-    }
+    const template = document
+        .getElementById("menu-connect-item-midi-port-template");
 
-    function populateConnectionMenu(ports) {
-        menu.innerHTML = "";
-        const connected_port = Midi.getConnectedPort();
-        let connected_port_found = false;
-        const template = document
-            .getElementById("menu-connect-item-midi-port-template");
-        for ( const port of ports ) {
-            const menu_item = cloneTemplate(template, 
+    // Add menu items for new ports
+    for ( const port of midi_state.ports ) {
+        if ( !midi_state.menu_items.some((menu_item) =>
+                port.name == menu_item.value,
+        ) ) {
+            const new_menu_item = cloneTemplate(template, 
                 { value: port.name }, port.name
             );
-            // check if port is connected
-            if ( connected_port?.name === port.name ) {
-                menu_item.checked = true;
-                connected_port_found = true;
-            }
             // menu item click event handler
-            menu_item.addEventListener("click", (e) => {
+            new_menu_item.addEventListener("click", (e) => {
                 if ( settings.device_name === e.currentTarget.value )
                     disconnectInput(true);
                 else
                     connectInput(e.currentTarget.value, true);
             });
-            menu.appendChild(menu_item);
+            connection_menu.insertBefore(new_menu_item, menu_divider);
+            midi_state.menu_items.push(new_menu_item);
         }
-        // if connected port disappeared, disconnect it
-        if ( !settings.pc_keyboard_connected && !touch.enabled && !connected_port_found )
-            disconnectInput();
-        if ( ports.length == 0 ) {
-            menu.appendChild(newElement(
-                "sl-menu-item", { disabled: true},
-                "No MIDI input devices available"
-            ));
-        }
-        addComputerAndTouchMenuItems();
-        updateToolbar();
     }
 
-    function doOnAccessGranted() {
-        Midi.requestInputPortList(
-            (ports) => {
-                const dropdown_connect = document.getElementById("dropdown-connect");
-                populateConnectionMenu(ports);
-                const timer = setInterval(() => {
-                    Midi.requestInputPortList(populateConnectionMenu);
-                }, 500);
-                function onConnectMenuClose() {
-                    clearInterval(timer);
-                    dropdown_connect.removeEventListener("sl-hide", onConnectMenuClose);
-                }
-                dropdown_connect.addEventListener("sl-hide", onConnectMenuClose);
-            },
-            doOnAccessDenied
-        );
+    // Check/uncheck menu items, and remove obsolete ports
+    for ( const [index,menu_item] of midi_state.menu_items.entries() ) {
+        if ( midi_state.ports.some((port) => menu_item.value == port.name) ) {
+            menu_item.toggleAttribute("checked", 
+                menu_item.value == midi_state.connected_port?.name);
+        } else{
+            midi_state.menu_items.splice(index, 1);
+            menu_item.remove();
+        }
     }
 
-    Midi.queryMidiAccess(
-        doOnAccessGranted,
-        doOnAccessDenied,
-        () => {
-            const temp_item = newElement(
-                "sl-menu-item", { loading: true },
-                "Requesting MIDI acces…"
-            );
-            menu.appendChild(temp_item);
-            Midi.requestMidiAccess(
-                () => {
-                    menu.removeChild(temp_item);
-                    doOnAccessGranted();
-                },
-                () => {
-                    menu.removeChild(temp_item);
-                    doOnAccessDenied();
-                }
-            );
-        }
-    )
-    
+    document.getElementById("menu-connect-item-computer-keyboard")
+        .toggleAttribute("checked", settings.pc_keyboard_connected);
+    document.getElementById("menu-connect-item-touch")
+        .toggleAttribute("checked", touch.enabled);
+}
+
+
+// Set event listeners
+
+document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
+    midi_state.setWatchdog(500);
+    midi_state.queryAccess((access) => {
+        if ( access != "granted" )
+            updateConnectionMenu();
+        if ( ["granted", "prompt"].includes(access) )
+            midi_state.requestAccess((result) => {
+                updateConnectionMenu();
+                if ( result )
+                    midi_state.requestPorts(updateConnectionMenu);
+            });
+    });
+});
+
+document.getElementById("dropdown-connect").addEventListener("sl-hide", () => {
+    midi_state.setWatchdog(2000);
+    updateToolbar();
 });
 
 document.getElementById("dropdown-sound")
@@ -1038,33 +1021,63 @@ document.getElementById("dropdown-pedals")
  document.getElementById("dropdown-transpose")
     .addEventListener("sl-show", updateTransposeMenuAndButton);
 
+for ( const dropdown of document.querySelectorAll("sl-dropdown") ) {
+    dropdown.addEventListener("sl-show", (e) => {
+        e.currentTarget.querySelector("sl-button")
+            .setAttribute("variant", "neutral");
+    });
+    dropdown.addEventListener("sl-hide", (e) => {
+        e.currentTarget.querySelector("sl-button")
+            .toggleAttribute("variant", false);
+    });
+}
 
-document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
+
+document.getElementById("menu-connect-item-computer-keyboard")
+    .addEventListener("click", () => {
+        togglePcKeyboardConnection();
+        writeSettings();
+    });
+document.getElementById("menu-connect-item-touch")
+    .addEventListener("click", () => {
+        toggleTouchConnection();
+        writeSettings();
+    });
+
+
+function loadSound(name = null, menu_item = null) {
     sound.stopAll(true);
-    const new_sound = e.detail.item.value;
-    if ( !new_sound ) {
+    if ( !name ) {
         if ( sound.player ) sound.player = null;
         sound.loaded = false;
         sound.led = 0;
         sound.type = "";
         updateToolbar();
-    } else if ( sound.type != new_sound ) {
+    } else if ( sound.type != name ) {
+        if ( !menu_item )
+            menu_item = document.querySelector(`.menu-sound-item[value="${name}"]`);
         if ( !sound.audio_ctx ) sound.audio_ctx = new AudioContext();
-        const collection_index = e.detail.item.getAttribute("collection_index");
-        const options = sound.collections[collection_index].options ?? {};
-        options.instrument = new_sound;
-        options.volume = parseInt(e.detail.item.getAttribute("volume") ?? "100");
-        sound.player = sound.collections[collection_index].loader(sound.audio_ctx, options);
+        const sound_params = {
+            apiano:  { loader: sound.apiano, 
+                       options: { volume: 90 } },
+            epiano1: { loader: sound.epiano, 
+                       options: { instrument: "TX81Z", volume: 127 } },
+            epiano2: { loader: sound.epiano, 
+                       options: { instrument: "WurlitzerEP200", volume: 70 } },
+            epiano3: { loader: sound.epiano, 
+                       options: { instrument: "CP80", volume: 70 } },
+        };
+        sound.player = new sound_params[name].loader(sound.audio_ctx, sound_params[name].options);
         sound.loaded = false;
         sound.led = 1;
-        e.detail.item.toggleAttribute("loading", true);
-        sound.type = new_sound;
+        menu_item.toggleAttribute("loading", true);
+        sound.type = name;
         updateToolbar();
         const interval = setInterval(() => {
             sound.led = ( sound.led == 0 ? 1 : 0 );
             updateToolbar();
         }, 400);
-        function onLoadFinished(result) {
+        const onLoadFinished = (result) => {
             clearInterval(interval);
             if ( !result ) {
                 sound.player = null;
@@ -1072,7 +1085,7 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
             }
             sound.loaded = result;
             sound.led = result ? 2 : 0;
-            e.detail.item.toggleAttribute("loading", false);
+            menu_item.toggleAttribute("loading", false);
             updateToolbar(); 
             updateSoundMenu();
         }
@@ -1084,6 +1097,11 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
             sound.fail_alert.toast();
         });
     }
+}
+
+document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
+    loadSound(e.detail.item.value, e.detail.item);
+    writeSettings();
 });
 
 document.querySelectorAll(".btn-number-of-keys").forEach((item) => {
@@ -1185,8 +1203,15 @@ document.getElementById("toolbar-title").onclick =
 window.onresize = updateKeyboardPosition;
 window.onkeydown = handleKeyDown;
 
-// Needed to correctly position the keyboard after page loading.
-window.onload = updateKeyboardPosition;
+if ( isMobile() ) {
+    document.getElementById("btn-show-toolbar").classList.add("mobile");
+    for ( const dropdown of document.querySelectorAll("sl-dropdown") ) {
+        const btn = dropdown.querySelector("sl-button");
+        const new_btn = btn.cloneNode(true);
+        btn.parentNode.insertBefore(new_btn, btn);
+        btn.remove();
+    }
+}
 
 
 // Pointer move events
@@ -1424,24 +1449,39 @@ KbdNotes.onSustain = handleSustainChange;
 KbdNotes.onReset = handleResetMsg;
 
 
-// Connection watchdog
+// MIDI watchdog
 
-setInterval( () => {
-    if ( !settings.device_name || settings.pc_keyboard_connected ) return;
-    Midi.queryMidiAccess(() => {
-        Midi.requestInputPortList((ports) => {
-            const port = ports.find((p) => p.name === settings.device_name);
-            const no_connection = !Midi.getConnectedPort();
-            if ( !port && !no_connection )
-                Midi.disconnect();
-            else if ( port && no_connection )
-                Midi.connect(port);
+function midiWatchdog() {
+    const dropdown_connect_open = document.getElementById("dropdown-connect").open;
+    midi_state.queryAccess((access) => {
+        if ( access == "granted" ) {
+            midi_state.requestPorts( (ports) => {
+                if ( settings.device_name 
+                        && settings.device_name != "pckbd" 
+                        && settings.device_name != "touch" 
+                ) {
+                    const connected_port = Midi.getConnectedPort();
+                    if ( !connected_port ) {
+                        const reconnected_port = 
+                            ports.find((p) => p.name == settings.device_name);
+                        if ( reconnected_port )
+                            Midi.connect(reconnected_port, () => {
+                                updateToolbar();
+                                if ( dropdown_connect_open ) 
+                                    updateConnectionMenu();
+                            });
+                    }
+                    updateToolbar();
+                }
+                if ( dropdown_connect_open ) updateConnectionMenu();
+            });
+        } else {
+            Midi.disconnect();
             updateToolbar();
-        });
-    }, 
-    () => { Midi.disconnect(); },
-    () => { Midi.disconnect(); })
-}, 2000);
+            if ( dropdown_connect_open ) updateConnectionMenu();
+        }
+    });
+}
 
 
 // Keyboard events
@@ -1533,6 +1573,10 @@ function isMobile() {
     return ( /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) );
 }
 
+function isSafari() {
+    return ( /^((?!chrome|android).)*safari/i.test(navigator.userAgent) );
+}
+
 
 // Initialize
 
@@ -1547,49 +1591,50 @@ await Promise.allSettled([
     customElements.whenDefined('sl-menu-item')
 ]);
 
-updateToolbar();
-createKeyboard();
+window.onload = () => {
+    createKeyboard();
+    
+    if ( !settings.device_name ) {
+        const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
+        if ( isMobile() ) {
+            connectInput("touch");
+            connect_tooltip.setAttribute("content", 
+                "Play your keyboard using your fingers! " +
+                "Or change the input device by tapping this button."
+            );
+        } else {
+            connect_tooltip.setAttribute("content", 
+                "Select your input device by clicking this button."
+            );
+        }
+        connect_tooltip.open = true;
+        window.onclick = () => {
+            connect_tooltip.open = false;
+            window.onclick = null;
+        }
+    }
+    
+    if ( settings.device_name ) {
+        midi_state.queryAccess((access) => {
+            if ( access == "granted" )
+                connectInput(settings.device_name);
+        });
+    }
 
-if ( !settings.device_name ) {
-    const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
-    if ( isMobile() ) {
-        connectInput("touch");
-        connect_tooltip.setAttribute("content", 
-            "Play your keyboard using your fingers! " +
-            "Or change the input device by tapping this button."
-        );
+    if ( isSafari() ) {
+        // For now, disable sound button on Safari browser
+        document.getElementById("dropdown-sound").toggleAttribute("hidden", true);
     } else {
-        connect_tooltip.setAttribute("content", 
-            "Select your input device by clicking this button."
-        );
+        // Dynamically import smplr module
+        import("https://unpkg.com/smplr/dist/index.mjs")
+            .then( (result) => {
+                sound.apiano = result.SplendidGrandPiano;
+                sound.epiano = result.ElectricPiano;
+                document.getElementById("menu-sound-item-unavailable").hidden = true;
+                document.querySelectorAll(".menu-sound-item").forEach((item) => { item.hidden = false });
+            });
     }
-    connect_tooltip.open = true;
-    window.onclick = () => {
-        connect_tooltip.open = false;
-        window.onclick = null;
-    }
-}
 
-if ( isMobile() ) {
-    document.getElementById("btn-show-toolbar").classList.add("mobile");
-    for ( const btn of document.querySelectorAll("sl-dropdown>sl-button") ) {
-        const new_btn = btn.cloneNode(true);
-        btn.parentNode.insertBefore(new_btn, btn);
-        btn.remove();
-    }
-}
-
-for ( const dropdown of document.querySelectorAll("sl-dropdown") ) {
-    dropdown.addEventListener("sl-show", (e) => {
-        e.currentTarget.querySelector("sl-button")
-            .setAttribute("variant", "neutral");
-    });
-    dropdown.addEventListener("sl-hide", (e) => {
-        e.currentTarget.querySelector("sl-button")
-            .toggleAttribute("variant", false);
-    });
-}
-
-if ( settings.device_name ) {
-    connectInput(settings.device_name);
+    updateToolbar();
+    midi_state.setWatchdog(2000);
 }

@@ -136,6 +136,8 @@ div.menu-msg {
         }
     }
 
+    #dropdown-pedals[hidden] { display: none; }
+
     .pedal-indicator {
         margin-bottom: -2px;
     }

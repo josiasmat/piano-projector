@@ -46,30 +46,30 @@ export const Midi = {
 
     /**
      * Queries access to MIDI instruments.
-     * @param {Function} callback_granted 
-     * @param {Function} callback_denied 
-     * @param {Function} callback_prompt 
-     * @param {Function} callback_unavailable
+     * @param {(string)} callback Function to receive the access level string,
+     *      which can be "granted", "denied", "prompt" or "unavailable".
+     * @returns {boolean} _false_ if MIDI is unavailable, _true_ otherwise.
      */
-    queryMidiAccess(callback_granted, callback_denied, callback_prompt, callback_unavailable) {
+    queryMidiAccess(callback = null) {
         if ( !this.browserHasMidiSupport ) {
-            callback_unavailable?.();
+            callback?.("unavailable");
             return false;
+        } else {
+            navigator.permissions.query({ name: "midi", sysex: false })
+            .then((perm) => {
+                switch ( perm.state ) {
+                    case "granted":
+                        callback?.("granted");
+                        break;
+                    case "prompt":
+                        callback?.("prompt");
+                        break;
+                    default:
+                        callback?.("denied");
+                }
+            });
+            return true;
         }
-        navigator.permissions.query({ name: "midi", sysex: false })
-        .then((perm) => {
-            switch ( perm.state ) {
-                case "granted":
-                    callback_granted?.();
-                    break;
-                case "prompt":
-                    callback_prompt?.();
-                    break;
-                default:
-                    callback_denied?.();
-            }
-        });
-        return true;
     },
 
     /**
@@ -78,7 +78,11 @@ export const Midi = {
      * @param {Function} callback_fail 
      */
     requestMidiAccess(callback_granted, callback_fail=null) {
-        navigator.requestMIDIAccess({sysex: false})
+        if ( !this.browserHasMidiSupport ) {
+            callback_fail?.();
+            return;
+        }
+        navigator.requestMIDIAccess({ sysex: false })
         .then(callback_granted, callback_fail);
     },
 
@@ -89,6 +93,10 @@ export const Midi = {
      * @param {Function} callback_fail 
      */
     requestInputPortList(callback_ok, callback_fail) {
+        if ( !this.browserHasMidiSupport ) {
+            callback_fail?.();
+            return;
+        }
         navigator.requestMIDIAccess({sysex: false})
         .then((access) => {
             const ports = [];
@@ -107,6 +115,7 @@ export const Midi = {
      * @param {number[]} channels - Defaults to all channels.
      */
     connect(port, callback_connected=null, channels=ALL_CHANNELS) {
+        if ( !this.browserHasMidiSupport ) return;
         this.disconnect();
         port.open().then(() => {
             midi_state.dev = port;
@@ -124,6 +133,7 @@ export const Midi = {
      * @param {number[]} channels - Defaults to all channels.
      */
     connectByPortName(port_name, callback_connected=null, channels=ALL_CHANNELS) {
+        if ( !this.browserHasMidiSupport ) return;
         this.requestInputPortList((ports) => {
             for ( const port of ports ) {
                 if ( port.name == port_name ) {
@@ -147,6 +157,7 @@ export const Midi = {
      * @param {number[]} channels - Defaults to all channels.
      */
     connectByPortId(port_id, callback_connected=null, channels=ALL_CHANNELS) {
+        if ( !this.browserHasMidiSupport ) return;
         this.requestInputPortList((ports) => {
             for ( const port of ports ) {
                 if ( port.id == port_id ) {
@@ -164,6 +175,7 @@ export const Midi = {
     },
 
     disconnect() {
+        if ( !this.browserHasMidiSupport ) return;
         const port = midi_state.dev;
         if ( port ) {
             midi_state.dev.removeEventListener("midimessage", handleMIDIEvent);
@@ -178,6 +190,7 @@ export const Midi = {
 
     /** @returns {MIDIInput?} */
     getConnectedPort() {
+        if ( !this.browserHasMidiSupport ) return null;
         return ( midi_state.dev?.state == "connected" )
             ? midi_state.dev : null;
     },

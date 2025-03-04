@@ -62,7 +62,31 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                             <span data-nosnippet>Control</span>
                             <sl-icon id="connection-power-icon" class="led-strong" slot="prefix" name="power"></sl-icon>
                         </sl-button>
-                        <sl-menu id="midi-connection-menu"></sl-menu>
+                        <sl-menu id="midi-connection-menu">
+                            <sl-menu-item id="menu-connect-item-midi-prompt" disabled loading>
+                                <span data-nosnippet>Requesting MIDI access…</span>
+                            </sl-menu-item>
+                            <sl-menu-item id="menu-connect-item-midi-denied" disabled>
+                                <span data-nosnippet>MIDI access denied.</span>
+                            </sl-menu-item>
+                            <sl-menu-item id="menu-connect-item-midi-unavailable" disabled>
+                                <span data-nosnippet>
+                                    Your browser does not support the Web MIDI API.<br />
+                                    To use MIDI, try updating your browser or switching<br />
+                                    to <a href="https://www.mozilla.org/firefox/" target="_blank">Mozilla Firefox</a>
+                                    or <a href="https://www.google.com/chrome/" target="_blank">Google Chrome</a>.
+                                </span>
+                            </sl-menu-item>
+                            <sl-divider></sl-divider>
+                            <sl-menu-item id="menu-connect-item-computer-keyboard" type="checkbox">
+                                <span data-nosnippet>Computer keyboard</span>
+                                <sl-icon name="keyboard" slot="prefix"></sl-icon>
+                            </sl-menu-item>
+                            <sl-menu-item id="menu-connect-item-touch" type="checkbox">
+                                <span data-nosnippet>Touch or mouse</span>
+                                <sl-icon name="hand-index" slot="prefix"></sl-icon>
+                            </sl-menu-item>
+                        </sl-menu>
                     </sl-dropdown>
                 </sl-tooltip>
                 <sl-dropdown id="dropdown-sound">
@@ -75,11 +99,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                             <span data-nosnippet>Sound not available.</span>
                             <sl-icon name="ban" slot="prefix"></sl-icon>
                         </sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" collection_index="" value="" type="checkbox" checked hidden>Disabled</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" collection_index="0" value="apiano" volume="90" type="checkbox" hidden>Acoustic Piano</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" collection_index="1" value="TX81Z" volume="127" type="checkbox" hidden>Electric Piano 1</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" collection_index="1" value="WurlitzerEP200" volume="70" type="checkbox" hidden>Electric Piano 2</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" collection_index="1" value="CP80" volume="70" type="checkbox" hidden>Electric Piano 3</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" value="" type="checkbox" checked hidden>Disabled</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" value="apiano"  type="checkbox" hidden>Acoustic Piano</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" value="epiano1" type="checkbox" hidden>Electric Piano 1</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" value="epiano2" type="checkbox" hidden>Electric Piano 2</sl-menu-item>
+                        <sl-menu-item class="menu-sound-item" value="epiano3" type="checkbox" hidden>Electric Piano 3</sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
                 <sl-dropdown id="dropdown-transpose" stay-open-on-select>
@@ -260,7 +284,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 </sl-tooltip>
             </div>
         </div>
-
         
         <sl-alert id="alert-sound-connection-fail" variant="danger" duration="10000" countdown="rtl" closable>
             <span data-nosnippet>
@@ -277,17 +300,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 <sl-icon src="svg/midikbd.svg" slot="prefix"></sl-icon>
             </sl-menu-item>
         </template>
-        <template id="menu-connect-item-computer-keyboard-template">
-            <sl-menu-item type="checkbox">
-                <span data-nosnippet>Computer keyboard</span>
-                <sl-icon name="keyboard" slot="prefix"></sl-icon>
-            </sl-menu-item>
-        </template>
-        <template id="menu-connect-item-touch-template">
-            <sl-menu-item type="checkbox">
-                <span data-nosnippet>Touch or mouse</span>
-                <sl-icon name="hand-index" slot="prefix"></sl-icon>
-            </sl-menu-item>
-        </template>
+        
     </body>
 </html>
