@@ -1239,6 +1239,7 @@ window.onresize = updateKeyboardPosition;
 window.onkeydown = handleKeyDown;
 
 if ( isMobile() ) {
+    document.documentElement.classList.add("mobile");
     toolbar.buttons.show_toolbar.classList.add("mobile");
 }
 
