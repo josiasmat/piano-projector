@@ -9,6 +9,7 @@
     --color-key-light-border: #999;
     --color-key-dark-border: #444;
     --key-transition-duration: 0.05s;
+
     touch-action: none;
 }
 
@@ -406,9 +407,18 @@ sl-dialog {
     } 
 }
 
-sl-menu > sl-divider {
-    margin-top: 2px;
-    margin-bottom: 2px;
+sl-dropdown {
+    &::part(panel) {
+        box-shadow: 3px 3px 4px #0008;
+    }
 }
 
-sl-menu-item[hidden] { display: none; }
+sl-menu {
+    &> sl-divider {
+        margin-top: 2px;
+        margin-bottom: 2px;
+    }
+    sl-menu-item[hidden] { 
+        display: none; 
+    }
+}
