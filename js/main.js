@@ -33,7 +33,9 @@ const settings = {
     device_name: null,
     offset: { x: 0.5, y: 0.5 },
     labels: {
+        /** @type {string} "none", "played", "cs", "white", "all" */
         where: "none",
+        /** @type {string} "english", "german", "italian", "pc", "midi" */
         type: "english",
         octave: true,
         get where_badge() {
@@ -220,6 +222,34 @@ const touch = {
         this.enabled = false;
         kbd.style.removeProperty("cursor");
     },
+}
+
+
+const toolbar = {
+    dropdowns: {
+        connect: document.getElementById("dropdown-connect"),
+        sound: document.getElementById("dropdown-sound"),
+        transpose: document.getElementById("dropdown-transpose"),
+        size: document.getElementById("dropdown-size"),
+        colors: document.getElementById("dropdown-colors"),
+        labels: document.getElementById("dropdown-labels"),
+        pedals: document.getElementById("dropdown-pedals"),
+        get all() {
+            return [
+                this.connect, this.sound, this.transpose,
+                this.size, this.colors, this.labels, this.pedals
+            ];
+        },
+        closeAll() {
+            for ( const dropdown of this.all )
+                dropdown.hide();
+        }
+    },
+    buttons: {
+        panic: document.getElementById("btn-panic"),
+        hide_toolbar: document.getElementById("btn-hide-toolbar"),
+        show_toolbar: document.getElementById("btn-show-toolbar")
+    }
 }
 
 
@@ -647,8 +677,8 @@ function updateToolbar() {
     changeLed("transpose-power-icon", ( settings.transpose != 0 ));
     changeLed("sound-power-icon", sound.led, (sound.led == 1 ? "red" : null));
     document.getElementById("top-toolbar").toggleAttribute("hidden", !settings.toolbar);
-    document.getElementById("btn-show-toolbar").toggleAttribute("hidden", settings.toolbar);
-    document.getElementById("dropdown-pedals").toggleAttribute("hidden", touch.enabled);
+    toolbar.buttons.show_toolbar.toggleAttribute("hidden", settings.toolbar);
+    toolbar.dropdowns.pedals.toggleAttribute("hidden", touch.enabled);
     updatePedalIcons();
 }
 
@@ -669,11 +699,11 @@ function updateSoundMenu() {
 
 
 function updateSizeMenu() {
-    for ( const elm of document.querySelectorAll(".btn-number-of-keys") ) {
+    for ( const elm of toolbar.dropdowns.size.querySelectorAll(".btn-number-of-keys") ) {
         const checked = ( parseInt(elm.value) == settings.number_of_keys );
         elm.variant = checked ? "neutral" : null;
     }
-    for ( const elm of document.querySelectorAll(".btn-key-depth") ) {
+    for ( const elm of toolbar.dropdowns.size.querySelectorAll(".btn-key-depth") ) {
         const checked = ( parseFloat(elm.value) == settings.height_factor );
         elm.variant = checked ? "neutral" : null;
     }
@@ -765,9 +795,8 @@ function midiPanic() {
     Midi.reset();
     createKeyboard();
     updatePedalIcons();
-    const btn_panic = document.getElementById("btn-panic");
-    btn_panic.setAttribute("variant", "danger");
-    setTimeout(() => { btn_panic.removeAttribute("variant"); }, 500);
+    toolbar.buttons.panic.setAttribute("variant", "danger");
+    setTimeout(() => { toolbar.buttons.panic.removeAttribute("variant"); }, 500);
     
 }
 
@@ -990,7 +1019,7 @@ function updateConnectionMenu() {
 
 // Set event listeners
 
-document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
+toolbar.dropdowns.connect.addEventListener("sl-show", () => {
     midi_state.setWatchdog(500);
     midi_state.queryAccess((access) => {
         if ( access != "granted" )
@@ -1004,25 +1033,19 @@ document.getElementById("dropdown-connect").addEventListener("sl-show", () => {
     });
 });
 
-document.getElementById("dropdown-connect").addEventListener("sl-hide", () => {
+toolbar.dropdowns.connect.addEventListener("sl-hide", () => {
     midi_state.setWatchdog(2000);
     updateToolbar();
 });
 
-document.getElementById("dropdown-sound")
-    .addEventListener("sl-show", updateSoundMenu);
-document.getElementById("dropdown-size")
-    .addEventListener("sl-show", updateSizeMenu);
-document.getElementById("dropdown-colors")
-    .addEventListener("sl-show", updateColorsMenu);
-document.getElementById("dropdown-pedals")
-    .addEventListener("sl-show", updatePedalsMenu);
-    document.getElementById("dropdown-labels")
-    .addEventListener("sl-show", updateLabelsMenu);
- document.getElementById("dropdown-transpose")
-    .addEventListener("sl-show", updateTransposeMenuAndButton);
+toolbar.dropdowns.sound.addEventListener("sl-show", updateSoundMenu);
+toolbar.dropdowns.size.addEventListener("sl-show", updateSizeMenu);
+toolbar.dropdowns.colors.addEventListener("sl-show", updateColorsMenu);
+toolbar.dropdowns.pedals.addEventListener("sl-show", updatePedalsMenu);
+toolbar.dropdowns.labels.addEventListener("sl-show", updateLabelsMenu);
+toolbar.dropdowns.transpose.addEventListener("sl-show", updateTransposeMenuAndButton);
 
-for ( const dropdown of document.querySelectorAll("sl-dropdown") ) {
+for ( const dropdown of toolbar.dropdowns.all ) {
     dropdown.addEventListener("sl-show", (e) => {
         e.currentTarget.querySelector("sl-button")
             .setAttribute("variant", "neutral");
@@ -1105,22 +1128,24 @@ document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
     writeSettings();
 });
 
-document.querySelectorAll(".btn-number-of-keys").forEach((item) => {
+toolbar.dropdowns.size.querySelectorAll(".btn-number-of-keys").forEach((item) => {
     item.addEventListener("click", (e) => {
         settings.number_of_keys = parseInt(e.currentTarget.value);
         settings.zoom = 1.0;
         updateSizeMenu();
         createKeyboard();
         writeSettings();
+        if ( isMobile() ) toolbar.dropdowns.size.hide();
     });
 });
-document.querySelectorAll(".btn-key-depth").forEach((item) => {
+toolbar.dropdowns.size.querySelectorAll(".btn-key-depth").forEach((item) => {
     item.addEventListener("click", (e) => {
         settings.height_factor = parseFloat(e.currentTarget.value);
         // settings.zoom = 1.0;
         updateSizeMenu();
         createKeyboard();
         writeSettings();
+        if ( isMobile() ) toolbar.dropdowns.size.hide();
     });
 });
 
@@ -1128,6 +1153,7 @@ document.getElementById("menu-top-felt").addEventListener("click", () => {
     settings.top_felt = !settings.top_felt;
     createKeyboard();
     writeSettings();
+    if ( isMobile() ) toolbar.dropdowns.colors.hide();
 });
 
 document.getElementById("color-white").addEventListener("sl-change", (e) => {
@@ -1150,6 +1176,7 @@ document.getElementById("menu-labels-where").addEventListener("sl-select", (e) =
     updateLabelsMenu();
     updateKeyboardKeys();
     writeSettings();
+    if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
 document.getElementById("menu-labels-type").addEventListener("sl-select", (e) => {
@@ -1157,6 +1184,7 @@ document.getElementById("menu-labels-type").addEventListener("sl-select", (e) =>
     updateLabelsMenu();
     updateKeyboardKeys();
     writeSettings();
+    if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
 document.getElementById("menu-labels-top").addEventListener("sl-select", (e) => {
@@ -1164,6 +1192,7 @@ document.getElementById("menu-labels-top").addEventListener("sl-select", (e) => 
         settings.labels.octave = e.detail.item.checked;
     updateKeyboardKeys();
     writeSettings();
+    if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
 document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
@@ -1177,6 +1206,7 @@ document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
     updatePedalIcons();
     updateKeyboardKeys();
     writeSettings();
+    if ( isMobile() ) toolbar.dropdowns.pedals.hide();
 });
 
 document.getElementById("btn-semitone-plus").onclick = 
@@ -1191,12 +1221,14 @@ document.getElementById("btn-octave-plus").onclick =
 document.getElementById("btn-octave-minus").onclick =
     () => { transpose({ octaves: -1 }) };
 
-document.getElementById("reset-transpose").onclick =
-    () => { transpose({ reset: true }) };
+document.getElementById("reset-transpose").onclick = () => {
+     transpose({ reset: true }) ;
+     if ( isMobile() ) toolbar.dropdowns.transpose.hide();
+};
 
-document.getElementById("btn-panic").onclick = midiPanic;
-document.getElementById("btn-hide-toolbar").onclick = toggleToolbarVisibility;
-document.getElementById("btn-show-toolbar").onclick = toggleToolbarVisibility;
+toolbar.buttons.panic.onclick = midiPanic;
+toolbar.buttons.hide_toolbar.onclick = toggleToolbarVisibility;
+toolbar.buttons.show_toolbar.onclick = toggleToolbarVisibility;
 
 document.getElementById("toolbar-title").onclick = 
     () => { document.getElementById("dialog-about").show() };
@@ -1205,13 +1237,7 @@ window.onresize = updateKeyboardPosition;
 window.onkeydown = handleKeyDown;
 
 if ( isMobile() ) {
-    document.getElementById("btn-show-toolbar").classList.add("mobile");
-    for ( const dropdown of document.querySelectorAll("sl-dropdown") ) {
-        const btn = dropdown.querySelector("sl-button");
-        const new_btn = btn.cloneNode(true);
-        btn.parentNode.insertBefore(new_btn, btn);
-        btn.remove();
-    }
+    toolbar.buttons.show_toolbar.classList.add("mobile");
 }
 
 
@@ -1223,6 +1249,7 @@ kbd.oncontextmenu = (e) => {
 };
 
 kbd.addEventListener("pointerdown", (e) => {
+    toolbar.dropdowns.closeAll();
     if ( e.pointerType != "touch" && e.button != 0 || !touch.enabled ) {
         drag.state = 1;
         drag.origin.x = e.screenX;
@@ -1307,12 +1334,11 @@ if ( !isMobile() ) {
     kbd_container.addEventListener("pointermove", (e) => {
         if ( e.pointerType == "touch" ) return;
         if ( btn_show_toolbar_timeout ) clearTimeout(btn_show_toolbar_timeout);
-        const btn_show_toolbar = document.getElementById("btn-show-toolbar");
-        btn_show_toolbar.toggleAttribute("visible", true);
+        toolbar.buttons.show_toolbar.toggleAttribute("visible", true);
         kbd_container.toggleAttribute("cursor-hidden", false);
         kbd.toggleAttribute("cursor-hidden", false);
         btn_show_toolbar_timeout = setTimeout(() => {
-            btn_show_toolbar.toggleAttribute("visible", false);
+            toolbar.buttons.show_toolbar.toggleAttribute("visible", false);
             kbd_container.toggleAttribute("cursor-hidden", true);
             kbd.toggleAttribute("cursor-hidden", true);
             btn_show_toolbar_timeout = null;
@@ -1335,6 +1361,7 @@ function findKeyUnderPoint(x, y) {
 
 /** @param {PointerEvent} e */
 function handleKbdPointerDown(e) {
+    toolbar.dropdowns.closeAll();
     if ( e.pointerType != "touch" && touch.enabled 
          && e.button === 0 && !touch.started(e.pointerId)) {
         const note = findKeyUnderPoint(e.clientX, e.clientY);
@@ -1453,7 +1480,7 @@ KbdNotes.onReset = handleResetMsg;
 // MIDI watchdog
 
 function midiWatchdog() {
-    const dropdown_connect_open = document.getElementById("dropdown-connect").open;
+    const dropdown_connect_open = toolbar.dropdowns.connect.open;
     midi_state.queryAccess((access) => {
         if ( access == "granted" ) {
             midi_state.requestPorts( (ports) => {
@@ -1487,39 +1514,51 @@ function midiWatchdog() {
 
 // Keyboard events
 
+/** @param {KeyboardEvent} e */
 function handleKeyDown(e) {
     if ( e.repeat ) return;
+
+    function changeLabelWhere(value) {
+        settings.labels.where = value;
+        updateKeyboardKeys();
+    }
+    function changeLabelType(value) {
+        settings.labels.type = value;
+        updateKeyboardKeys();
+    }
+
+    const kbd_shortcuts = {
+        "f9": toggleToolbarVisibility,
+        "escape": midiPanic,
+        "pageup": () => transpose({ semitones: +1 }),
+        "pagedown": () => transpose({ semitones: -1 }),
+        "shift+pageup": () => transpose({ octaves: +1 }),
+        "shift+pagedown": () => transpose({ octaves: -1 }),
+        "alt+n": () => changeLabelWhere("none"),
+        "alt+p": () => changeLabelWhere("played"),
+        "alt+c": () => changeLabelWhere("cs"),
+        "alt+w": () => changeLabelWhere("white"),
+        "alt+a": () => changeLabelWhere("all"),
+        "alt+e": () => changeLabelType("english"),
+        "alt+g": () => changeLabelType("german"),
+        "alt+i": () => changeLabelType("italian"),
+        "alt+t": () => changeLabelType("pc"),
+        "alt+m": () => changeLabelType("midi"),
+        "alt+o": () => { 
+            settings.labels.octave = !settings.labels.octave; 
+            updateKeyboardKeys()
+        },
+    }
+
     let comb = [];
     if ( e.ctrlKey  ) comb.push("ctrl");
     if ( e.altKey   ) comb.push("alt");
     if ( e.shiftKey ) comb.push("shift");
     comb.push(e.key.toLowerCase());
     const k = comb.join("+");
-    switch ( k ) {
-        case "f9":
-            e.preventDefault();
-            toggleToolbarVisibility();
-            break;
-        case "escape":
-            e.preventDefault();
-            midiPanic();
-            break;
-        case "pageup":
-            e.preventDefault();
-            transpose({ semitones: +1 });
-            break;
-        case "pagedown":
-            e.preventDefault();
-            transpose({ semitones: -1 });
-            break;
-        case "shift+pageup":
-            e.preventDefault();
-            transpose({ octaves: +1 });
-            break;
-        case "shift+pagedown":
-            e.preventDefault();
-            transpose({ octaves: -1 });
-            break;
+    if ( Object.hasOwn(kbd_shortcuts, k) ) {
+        e.preventDefault();
+        kbd_shortcuts[k]();
     }
 }
 
@@ -1600,7 +1639,7 @@ updateToolbar();
 
 if ( isSafari() ) {
     // For now, disable sound button on Safari browser
-    document.getElementById("dropdown-sound").toggleAttribute("hidden", true);
+    toolbar.dropdowns.sound.toggleAttribute("hidden", true);
 } else {
     // Dynamically import smplr module
     import("https://unpkg.com/smplr/dist/index.mjs")
@@ -1613,17 +1652,14 @@ if ( isSafari() ) {
 }
 
 if ( !settings.device_name ) {
-    console.log("No device name.");
     const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
     if ( isMobile() ) {
-        console.log("Is mobile!");
         connectInput("touch", true);
         connect_tooltip.setAttribute("content", 
             "Play your keyboard using your fingers! " +
             "Or change the input device by tapping this button."
         );
     } else {
-        console.log("Isn't mobile!");
         connect_tooltip.setAttribute("content", 
             "Select your input device by clicking this button."
         );
@@ -1634,7 +1670,6 @@ if ( !settings.device_name ) {
         window.onclick = null;
     }
 } else {
-    console.log(`Device name is "${settings.device_name}"`);
     midi_state.queryAccess((access) => {
         if ( access == "granted" )
             connectInput(settings.device_name);
