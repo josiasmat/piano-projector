@@ -46,7 +46,7 @@ const settings = {
         get type_badge() {
             return {
                 english: "English", german: "German", italian: "Italian",
-                pc: "Pitch-class", midi: "MIDI"
+                pc: "Pitch-class", midi: "MIDI", freq: "Frequency"
             }[this.type];
         }
     },
@@ -628,6 +628,10 @@ function updateKeyboardLabel(key, is_on) {
                     ? `${ITALIAN_NAMES_1[pc]}${it_oct}`
                     : `${ITALIAN_NAMES_2[pc]}\n${ITALIAN_NAMES_1[pc]}\n${it_oct}`;
                 break;
+            case "freq":
+                const freq = midiFreq(touch.enabled ? key+settings.transpose : key);
+                text = `${freq.toFixed(freq<1000 ? 1 : 0)}`;
+                break;
             default: 
                 text = `${key}`;
         }
@@ -661,6 +665,7 @@ function updateKeyboardLabel(key, is_on) {
         label.classList.toggle("fixed-visibility", !temporary);
         label.classList.toggle("visible", visible);
         label.classList.toggle("hidden", !visible);
+        label.classList.toggle("rotated", settings.labels.type == "freq");
     }
 }
 
@@ -739,7 +744,7 @@ function updateLabelsMenu() {
         item.checked = ( item.value === settings.labels.type );
     menu_labels_type.nextElementSibling.innerText = settings.labels.type_badge;
     const menu_labels_octave = document.getElementById("menu-item-labels-octave");
-    menu_labels_octave.disabled = ["pc","midi"].includes(settings.labels.type);
+    menu_labels_octave.disabled = ["pc","midi","freq"].includes(settings.labels.type);
     menu_labels_octave.checked = settings.labels.octave;
 }
 
@@ -1524,10 +1529,12 @@ function handleKeyDown(e) {
     function changeLabelWhere(value) {
         settings.labels.where = value;
         updateKeyboardKeys();
+        writeSettings();
     }
     function changeLabelType(value) {
         settings.labels.type = value;
         updateKeyboardKeys();
+        writeSettings();
     }
 
     const kbd_shortcuts = {
@@ -1547,6 +1554,7 @@ function handleKeyDown(e) {
         "alt+i": () => changeLabelType("italian"),
         "alt+t": () => changeLabelType("pc"),
         "alt+m": () => changeLabelType("midi"),
+        "alt+f": () => changeLabelType("freq"),
         "alt+o": () => { 
             settings.labels.octave = !settings.labels.octave; 
             updateKeyboardKeys()
@@ -1619,8 +1627,15 @@ function isMobile() {
         return ( /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) );
 }
 
+
 function isSafari() {
     return ( /^((?!chrome|android).)*safari/i.test(navigator.userAgent) );
+}
+
+
+function midiFreq(midi_value) {
+    const n = midi_value - 69; // Distance from A4
+    return 2**(n/12)*440;
 }
 
 

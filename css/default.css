@@ -329,7 +329,7 @@ div.menu-msg {
                 transition-timing-function: ease-out;
             }
             .key-label {
-                fill: lch(from var(--color-highlight) clamp(5, calc(calc(55 - l) * 10000), 95) 0 h);
+                fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
             }
         }
     }
@@ -338,10 +338,23 @@ div.menu-msg {
         font-family: "PT Sans Narrow", "Arial Narrow", var(--sl-font-sans), sans-serif;
         font-weight: 100;
         text-anchor: middle;
+        text-rendering: optimizeSpeed;
         white-space: wrap;
         opacity: 0%;
+        &.rotated {
+            text-anchor: start;
+            transform-box: content-box;
+            &.white-key-label {
+                transform-origin: left center;
+                transform: rotate(-90deg) translateX(-27px) scale(90%);
+            }
+            &.black-key-label {
+                transform-origin: center center;
+                transform: rotate(-90deg);
+            }
+        }
         &.hidden.fixed-visibility { 
-            visibility: hidden;
+            display: none;
         }
         &.visible { 
             opacity: 100%;
@@ -352,7 +365,7 @@ div.menu-msg {
         &.may-change-visibility {
             will-change: opacity;
             &.hidden {
-                fill: lch(from var(--color-highlight) clamp(5, calc(calc(55 - l) * 10000), 95) 0 h);
+                fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
                 opacity: 0%;
                 transition-property: opacity;
                 transition-timing-function: ease-out;
@@ -361,11 +374,11 @@ div.menu-msg {
         }
         &.white-key-label {
             font-size: 36px;
-            fill: lch(from var(--color-white-key) clamp(10, calc(calc(55 - l) * 10000), 90) 0 h);
+            fill: lch(from var(--color-white-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
         }
         &.black-key-label {
             font-size: 26px;
-            fill: lch(from var(--color-black-key) clamp(10, calc(calc(55 - l) * 10000), 90) 0 h);
+            fill: lch(from var(--color-black-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
             tspan { text-anchor: middle; }
         }
     }
