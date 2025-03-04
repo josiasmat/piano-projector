@@ -84,8 +84,12 @@ const settings = {
 const midi_state = {
     /** @type {MIDIInput[]} */
     ports: [],
-    /** @type {HTMLElement[]} */
-    menu_items: [],
+    /** @returns {HTMLElement[]} */
+    get menu_items() {
+        return Array.from(
+            toolbar.dropdowns.connect
+                .querySelectorAll(".menu-connect-item-midi-input"));
+    },
     /** @type {MIDIInput?} */
     get connected_port() {
         return Midi.getConnectedPort();
@@ -124,7 +128,6 @@ const midi_state = {
     clearMenuItems() {
         for ( const menu_item of this.menu_items )
             menu_item.remove();
-        this.menu_items = [];
     },
     watchdog_id: null,
     setWatchdog(delay_ms) {
@@ -685,12 +688,12 @@ function updateToolbar() {
 
 function updateSoundMenu() {
     if ( sound.type && !sound.loaded ) {
-        for ( const item of document.querySelectorAll(".menu-sound-item") ) {
+        for ( const item of toolbar.dropdowns.sound.querySelectorAll(".menu-sound-item") ) {
             item.toggleAttribute("disabled", !item.hasAttribute("loading"));
             item.checked = false;
         }
     } else {
-        for ( const item of document.querySelectorAll(".menu-sound-item") ) {
+        for ( const item of toolbar.dropdowns.sound.querySelectorAll(".menu-sound-item") ) {
             item.toggleAttribute("disabled", false);
             item.checked = ( item.value == sound.type && !item.hasAttribute("loading") );
         }
@@ -995,17 +998,15 @@ function updateConnectionMenu() {
                     connectInput(e.currentTarget.value, true);
             });
             connection_menu.insertBefore(new_menu_item, menu_divider);
-            midi_state.menu_items.push(new_menu_item);
         }
     }
 
     // Check/uncheck menu items, and remove obsolete ports
-    for ( const [index,menu_item] of midi_state.menu_items.entries() ) {
+    for ( const menu_item of midi_state.menu_items ) {
         if ( midi_state.ports.some((port) => menu_item.value == port.name) ) {
             menu_item.toggleAttribute("checked", 
                 menu_item.value == midi_state.connected_port?.name);
         } else{
-            midi_state.menu_items.splice(index, 1);
             menu_item.remove();
         }
     }
@@ -1079,7 +1080,7 @@ function loadSound(name = null, menu_item = null) {
         updateToolbar();
     } else if ( sound.type != name ) {
         if ( !menu_item )
-            menu_item = document.querySelector(`.menu-sound-item[value="${name}"]`);
+            menu_item = toolbar.dropdowns.sound.querySelector(`.menu-sound-item[value="${name}"]`);
         if ( !sound.audio_ctx ) sound.audio_ctx = new AudioContext();
         const sound_params = {
             apiano:  { loader: sound.apiano, 
@@ -1647,7 +1648,8 @@ if ( isSafari() ) {
             sound.apiano = result.SplendidGrandPiano;
             sound.epiano = result.ElectricPiano;
             document.getElementById("menu-sound-item-unavailable").hidden = true;
-            document.querySelectorAll(".menu-sound-item").forEach((item) => { item.hidden = false });
+            toolbar.dropdowns.sound.querySelectorAll(".menu-sound-item")
+                .forEach((item) => { item.hidden = false });
         });
 }
 
