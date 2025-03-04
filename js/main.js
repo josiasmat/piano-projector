@@ -838,7 +838,7 @@ function loadSettings() {
     settings.pedals = settings_storage.readBool("pedals", settings.pedals);
     settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
     settings.offset.y = settings_storage.readNumber("offset-y", settings.offset.y);
-    settings.device_name = settings_storage.readString("device", isMobile() ? "touch" : null);
+    settings.device_name = settings_storage.readString("device", null);
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
     settings.toolbar = session_storage.readBool("toolbar", settings.toolbar);
@@ -939,7 +939,8 @@ function updateConnectionMenu() {
         .toggleAttribute("hidden", midi_state.access != "unavailable");
     document.getElementById("menu-connect-item-midi-prompt")
         .toggleAttribute("hidden", midi_state.access != "prompt");
-    menu_divider.toggleAttribute("hidden", midi_state.ports?.length > 0);
+    menu_divider
+        .toggleAttribute("hidden", !(midi_state.ports?.length == 0));
 
     if ( midi_state.access != "granted" ) {
         midi_state.clearMenuItems();
@@ -1570,7 +1571,10 @@ function cloneTemplate(template, attrs={}, inner_text=null) {
 
 
 function isMobile() {
-    return ( /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) );
+    if ( !!navigator.userAgentData ) 
+        return navigator.userAgentData.mobile;
+    else
+        return ( /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) );
 }
 
 function isSafari() {
@@ -1591,6 +1595,9 @@ await Promise.allSettled([
     customElements.whenDefined('sl-menu-item')
 ]);
 
+createKeyboard();
+updateToolbar();
+
 if ( isSafari() ) {
     // For now, disable sound button on Safari browser
     document.getElementById("dropdown-sound").toggleAttribute("hidden", true);
@@ -1606,14 +1613,17 @@ if ( isSafari() ) {
 }
 
 if ( !settings.device_name ) {
+    console.log("No device name.");
     const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
     if ( isMobile() ) {
-        connectInput("touch");
+        console.log("Is mobile!");
+        connectInput("touch", true);
         connect_tooltip.setAttribute("content", 
             "Play your keyboard using your fingers! " +
             "Or change the input device by tapping this button."
         );
     } else {
+        console.log("Isn't mobile!");
         connect_tooltip.setAttribute("content", 
             "Select your input device by clicking this button."
         );
@@ -1624,12 +1634,11 @@ if ( !settings.device_name ) {
         window.onclick = null;
     }
 } else {
+    console.log(`Device name is "${settings.device_name}"`);
     midi_state.queryAccess((access) => {
         if ( access == "granted" )
             connectInput(settings.device_name);
     });
 }
 
-createKeyboard();
-updateToolbar();
 midi_state.setWatchdog(2000);
