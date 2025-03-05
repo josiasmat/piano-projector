@@ -579,9 +579,10 @@ function updateKeyboardKeys(first_key=0, last_key=127) {
 
 
 function updateKeyboardLabel(key, is_on) {
-    // const OCTAVES_SUP_EN = ['⁻¹','⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
+    //const OCTAVES_SUP_EN = ['⁻¹','⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
     const OCTAVES_SUB_EN = ['₋₁','₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'];
-    const OCTAVES_SUB_IT = ['₋₂','₋₁','₁','₂','₃','₄','₅','₆','₇','₈','₉','₉','₁₀'];
+    const OCTAVES_SUP_IT = ['⁻²','⁻¹','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹','¹⁰'];
+    const OCTAVES_SUB_IT = ['₋₂','₋₁','₁','₂','₃','₄','₅','₆','₇','₈','₉','₁₀'];
     const ENGLISH_NAMES_1 = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
     const ENGLISH_NAMES_2 = [   ,'D♭',   ,'E♭',   ,   ,'G♭',    ,'A♭',   ,'B♭',   ];
     const GERMAN_NAMES_1 = ['C','Ces','D','Des','E','F','Fes','G','Ges','A','Aes','H'];
@@ -621,7 +622,7 @@ function updateKeyboardLabel(key, is_on) {
                 break;
             case "italian": 
                 const it_oct = settings.labels.octave 
-                    ? ( is_white_key ? OCTAVES_SUB_IT[octave-1] : OCTAVES_SUB_IT[octave-1] )
+                    ? ( is_white_key ? OCTAVES_SUP_IT[octave-1] : OCTAVES_SUB_IT[octave-1] )
                     : '';
                 text = ( is_white_key )
                     ? `${ITALIAN_NAMES_1[pc]}${it_oct}`
