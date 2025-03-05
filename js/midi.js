@@ -278,7 +278,7 @@ const midi_state = {
     channels: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
 
     cc: Array(128).fill(0),
-    keys: Array(128).fill(false),
+    keys: Array(128).fill(null),
     pcs: Array(12).fill(0),
     sustain: Array(128).fill(false),
     sostenuto: Array(128).fill(false),
@@ -330,7 +330,7 @@ function setNoteOn(key, velocity) {
     // console.log(`Note on: ${key}`);
     const pc = key%12.
     if ( !midi_state.keys[key] ) {
-        midi_state.keys[key] = true;
+        midi_state.keys[key] = Date.now();
         midi_state.pcs[pc] += 1;
     }
     if ( midi_state.pedals.sustain )
@@ -345,11 +345,13 @@ function setNoteOn(key, velocity) {
 function setNoteOff(key, velocity) {
     // console.log(`Note off: ${key}`);
     const pc = key%12;
+    let duration = 0;
     if ( midi_state.keys[key] ) {
-        midi_state.keys[key] = false;
+        duration = Date.now() - midi_state.keys[key];
+        midi_state.keys[key] = null;
         midi_state.pcs[pc] -= 1;
     }
-    Midi.onKeyRelease?.(key, velocity);
+    Midi.onKeyRelease?.(key, velocity, duration);
     if ( midi_state.pcs[pc] == 0 )
         Midi.onPitchClassOff?.(pc);
 }
