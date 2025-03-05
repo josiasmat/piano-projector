@@ -1474,8 +1474,11 @@ function handleKeyPress(key, vel) {
     sound.play(key, vel);
 }
 
-function handleKeyRelease(key) {
-    updateNote(key);
+function handleKeyRelease(key, vel, duration) {
+    if ( duration && duration < 100 )
+        setTimeout( () => { updateNote(key); }, 100 - duration);
+    else
+        updateNote(key);
     sound.stop(key, false);
 }
 
