@@ -1029,7 +1029,7 @@ function updateConnectionMenu() {
     document.getElementById("menu-connect-item-midi-prompt")
         .toggleAttribute("hidden", midi_state.access != "prompt");
     menu_divider
-        .toggleAttribute("hidden", !(midi_state.ports?.length == 0));
+        .toggleAttribute("hidden", !(midi_state.ports?.length));
 
     if ( midi_state.access != "granted" ) {
         midi_state.clearMenuItems();
