@@ -11,6 +11,10 @@
     --key-transition-duration: 0.05s;
 
     touch-action: none;
+
+    &.mobile {
+        u { text-decoration: none; }
+    }
 }
 
 * {

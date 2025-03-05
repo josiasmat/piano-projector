@@ -852,6 +852,10 @@ function setNumberOfKeys(value) {
     writeSettings();
 }
 
+function switchNumberOfKeys() {
+    setNumberOfKeys(nextOf(settings.number_of_keys, [88,61,49,37,25]));
+}
+
 /** @param {number} value 1.0, 0.75 or 0.5*/
 function setKeyDepth(value) {
     settings.height_factor = value;
@@ -861,12 +865,7 @@ function setKeyDepth(value) {
 }
 
 function switchKeyDepth() {
-    const OPTIONS = [0.5, 0.75, 1.0];
-    settings.height_factor = 
-        OPTIONS.at(OPTIONS.indexOf(settings.height_factor)-1);
-    updateSizeMenu();
-    createKeyboard();
-    writeSettings();
+    setKeyDepth(nextOf(settings.height_factor, [1.0, 0.75, 0.5]));
 }
 
 /** @param {string} value */
@@ -1280,11 +1279,6 @@ document.getElementById("toolbar-title").onclick =
 window.onresize = updateKeyboardPosition;
 window.onkeydown = handleKeyDown;
 
-if ( isMobile() ) {
-    document.documentElement.classList.add("mobile");
-    toolbar.buttons.show_toolbar.classList.add("mobile");
-}
-
 
 // Pointer move events
 
@@ -1563,35 +1557,36 @@ function midiWatchdog() {
 function handleKeyDown(e) {
     if ( e.repeat ) return;
 
-    const kbd_shortcuts = {
-        "f9": toggleToolbarVisibility,
-        "escape": midiPanic,
-        "pageup": () => transpose({ semitones: +1 }),
-        "pagedown": () => transpose({ semitones: -1 }),
-        "shift+pageup": () => transpose({ octaves: +1 }),
-        "shift+pagedown": () => transpose({ octaves: -1 }),
-        "alt+2": () => setNumberOfKeys(25),
-        "alt+3": () => setNumberOfKeys(37),
-        "alt+4": () => setNumberOfKeys(49),
-        "alt+6": () => setNumberOfKeys(61),
-        "alt+8": () => setNumberOfKeys(88),
-        "alt+d": () => switchKeyDepth(),
-        "alt+n": () => changeLabelWhere("none"),
-        "alt+p": () => setLabelsWhere("played"),
-        "alt+c": () => setLabelsWhere("cs"),
-        "alt+w": () => setLabelsWhere("white"),
-        "alt+a": () => setLabelsWhere("all"),
-        "alt+e": () => setLabelsType("english"),
-        "alt+g": () => setLabelsType("german"),
-        "alt+i": () => setLabelsType("italian"),
-        "alt+t": () => setLabelsType("pc"),
-        "alt+m": () => setLabelsType("midi"),
-        "alt+f": () => setLabelsType("freq"),
-        "alt+o": () => { 
+    const kbd_shortcuts = new Map([
+        ["f9", toggleToolbarVisibility],
+        ["escape", midiPanic],
+        ["pageup", () => transpose({ semitones: +1 })],
+        ["pagedown", () => transpose({ semitones: -1 })],
+        ["shift+pageup", () => transpose({ octaves: +1 })],
+        ["shift+pagedown", () => transpose({ octaves: -1 })],
+        ["alt+2", () => setNumberOfKeys(25)],
+        ["alt+3", () => setNumberOfKeys(37)],
+        ["alt+4", () => setNumberOfKeys(49)],
+        ["alt+6", () => setNumberOfKeys(61)],
+        ["alt+8", () => setNumberOfKeys(88)],
+        ["alt+k", () => switchNumberOfKeys()],
+        ["alt+d", () => switchKeyDepth()],
+        ["alt+n", () => setLabelsWhere("none")],
+        ["alt+p", () => setLabelsWhere("played")],
+        ["alt+c", () => setLabelsWhere("cs")],
+        ["alt+w", () => setLabelsWhere("white")],
+        ["alt+a", () => setLabelsWhere("all")],
+        ["alt+e", () => setLabelsType("english")],
+        ["alt+g", () => setLabelsType("german")],
+        ["alt+i", () => setLabelsType("italian")],
+        ["alt+t", () => setLabelsType("pc")],
+        ["alt+m", () => setLabelsType("midi")],
+        ["alt+f", () => setLabelsType("freq")],
+        ["alt+o", () => { 
             settings.labels.octave = !settings.labels.octave; 
             updateKeyboardKeys()
-        },
-    }
+        }]
+    ]);
 
     let comb = [];
     if ( e.ctrlKey  ) comb.push("ctrl");
@@ -1599,9 +1594,9 @@ function handleKeyDown(e) {
     if ( e.shiftKey ) comb.push("shift");
     comb.push(e.key.toLowerCase());
     const k = comb.join("+");
-    if ( Object.hasOwn(kbd_shortcuts, k) ) {
+    if ( kbd_shortcuts.has(k) ) {
         e.preventDefault();
-        kbd_shortcuts[k]();
+        kbd_shortcuts.get(k)();
     }
 }
 
@@ -1652,6 +1647,7 @@ function cloneTemplate(template, attrs={}, inner_text=null) {
 }
 
 
+/** @returns {boolean} */
 function isMobile() {
     if ( !!navigator.userAgentData ) 
         return navigator.userAgentData.mobile;
@@ -1660,14 +1656,34 @@ function isMobile() {
 }
 
 
+/** @returns {boolean} */
 function isSafari() {
     return ( /^((?!chrome|android).)*safari/i.test(navigator.userAgent) );
 }
 
 
-function midiFreq(midi_value) {
-    const n = midi_value - 69; // Distance from A4
+/**
+ * Converts a MIDI note number to frequency.
+ * @param {number} midi_note 
+ * @returns {number}
+ */
+function midiFreq(midi_note) {
+    const n = midi_note - 69; // Distance from A4
     return 2**(n/12)*440;
+}
+
+
+/**
+ * Returns the value that comes after a given value in an array. If the value
+ * doesn't exist in the array, returns the first one.
+ * @param {any} value 
+ * @param {Array} array 
+ * @returns {any}
+ */
+function nextOf(value, array) {
+    let i = array.indexOf(value) + 1;
+    if ( i == array.length ) i = 0;
+    return array[i];
 }
 
 
@@ -1686,6 +1702,15 @@ await Promise.allSettled([
 
 createKeyboard();
 updateToolbar();
+
+if ( isMobile() ) {
+    document.documentElement.classList.add("mobile");
+    toolbar.buttons.show_toolbar.classList.add("mobile");
+    // Disable tooltips
+    toolbar.buttons.panic.parentElement.toggleAttribute("disabled", true);
+    toolbar.buttons.hide_toolbar.parentElement.toggleAttribute("disabled", true);
+    toolbar.buttons.show_toolbar.parentElement.toggleAttribute("disabled", true);
+}
 
 if ( isSafari() ) {
     // For now, disable sound button on Safari browser
