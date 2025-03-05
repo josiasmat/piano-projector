@@ -431,7 +431,7 @@ sl-menu {
         margin-top: 2px;
         margin-bottom: 2px;
     }
-    sl-menu-item[hidden] { 
+    *[hidden] { 
         display: none; 
     }
 }
