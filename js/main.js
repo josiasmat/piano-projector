@@ -245,6 +245,9 @@ const toolbar = {
         closeAll() {
             for ( const dropdown of this.all )
                 dropdown.hide();
+        },
+        getOpen() {
+            return this.all.find(dropdown => dropdown.open) ?? null;
         }
     },
     buttons: {
@@ -555,7 +558,8 @@ function createKeyboard() {
             options.last_key = noteToMidi("e4") + Math.ceil(settings.number_of_keys / 2) - 1;
     }
     drawKeyboard(kbd, options);
-    updateKeyboard();
+    updateKeyboardPosition();
+    updateKeyboardKeys();
 }
 
 
@@ -775,12 +779,6 @@ function updateKeyboardPosition() {
     // compute horizontal position
     const px = Math.round((kbd_rect.width - cnt_rect.width) * settings.offset.x);
     kbd_container.scroll(px, 0);
-}
-
-
-function updateKeyboard() {
-    updateKeyboardPosition();
-    updateKeyboardKeys();
 }
 
 
@@ -1502,7 +1500,7 @@ function handleResetMsg() {
 }
 
 Midi.onConnectionChange = () => {
-    updateKeyboard();
+    updateKeyboardKeys();
     updateToolbar();
 }
 
@@ -1559,7 +1557,9 @@ function handleKeyDown(e) {
 
     const kbd_shortcuts = new Map([
         ["f9", toggleToolbarVisibility],
-        ["escape", midiPanic],
+        ["escape", () => { 
+            if ( !toolbar.dropdowns.getOpen() ) midiPanic()
+        }],
         ["pageup", () => transpose({ semitones: +1 })],
         ["pagedown", () => transpose({ semitones: -1 })],
         ["shift+pageup", () => transpose({ octaves: +1 })],
@@ -1691,6 +1691,12 @@ function nextOf(value, array) {
 
 loadSettings();
 
+window.addEventListener("load", () => {
+    updateKeyboardPosition();
+    // Sometimes the window.load event fires too early
+    setTimeout(() => { updateKeyboardPosition() }, 500);
+});
+
 await Promise.allSettled([
     customElements.whenDefined('sl-dropdown'),
     customElements.whenDefined('sl-button'),
@@ -1700,8 +1706,8 @@ await Promise.allSettled([
     customElements.whenDefined('sl-menu-item')
 ]);
 
-createKeyboard();
 updateToolbar();
+createKeyboard();
 
 if ( isMobile() ) {
     document.documentElement.classList.add("mobile");
