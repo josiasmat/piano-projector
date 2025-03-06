@@ -354,16 +354,17 @@ div.menu-msg {
         white-space: wrap;
         opacity: 0%;
         pointer-events: none;
+
         &.rotated {
             text-anchor: start;
             transform-box: content-box;
             &.white-key-label {
                 transform-origin: left center;
-                transform: rotate(-90deg) translateX(-27px) scale(90%);
+                transform: rotate(-90deg) translateX(-30px) scale(90%);
             }
             &.black-key-label {
                 transform-origin: center center;
-                transform: rotate(-90deg);
+                transform: rotate(-90deg) translateX(10px);
             }
         }
         &.hidden.fixed-visibility { 
