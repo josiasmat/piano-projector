@@ -284,7 +284,7 @@ function drawKeyboard(svg, options = {}) {
     const last_key = options.last_key ?? noteToMidi("c8");
 
     const white_key_height = height * height_factor;
-    const black_key_height = white_key_height * (0.2 * height_factor + 0.45);
+    const black_key_height = white_key_height * (0.14 * height_factor + 0.51);
     const white_key_width = height * 2.2 / 15.5;
     const black_key_width = height * 1.45 / 15.5;
     const white_key_width_half = white_key_width / 2;
