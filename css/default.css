@@ -286,6 +286,8 @@ div.menu-msg {
     position: absolute;
     cursor: grab;
     transform-origin: top left;
+    image-rendering: optimizeSpeed;
+    * { image-rendering: optimizeSpeed; }
 
     #top-felt {
         fill: url("#top-felt-gradient");
@@ -297,6 +299,7 @@ div.menu-msg {
 
     .key {
         transform-origin: center top 0px;
+        pointer-events: visible;
 
         .key-light-border, .key-dark-border {
             fill: none;
