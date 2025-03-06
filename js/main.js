@@ -1561,7 +1561,12 @@ function handleKeyDown(e) {
     const kbd_shortcuts = new Map([
         ["f9", toggleToolbarVisibility],
         ["escape", () => { 
-            if ( !toolbar.dropdowns.getOpen() ) midiPanic()
+            const open_dropdown = toolbar.dropdowns.getOpen();
+            if ( open_dropdown ) {
+                open_dropdown.hide();
+                open_dropdown.querySelector("sl-button[slot=trigger]").blur();
+            } else
+                midiPanic();
         }],
         ["pageup", () => transpose({ semitones: +1 })],
         ["pagedown", () => transpose({ semitones: -1 })],
