@@ -273,8 +273,10 @@ const key_labels = Array(128).fill(null);
 function drawKeyboard(svg, options = {}) {
 
     const STROKE_WIDTH = 1.5;
+    const BK_OFFSET = 0.13;
+
     const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
-    const BK_OFFSETS = [,-0.1,,+0.1,,,-0.1,,0,,+0.1,];
+    const BK_OFFSETS = [,-BK_OFFSET,,+BK_OFFSET,,,-1.4*BK_OFFSET,,0,,+1.4*BK_OFFSET,];
 
     const height = KBD_HEIGHT;
     const height_factor = options.height_factor ?? 1.0;
@@ -284,7 +286,7 @@ function drawKeyboard(svg, options = {}) {
     const white_key_height = height * height_factor;
     const black_key_height = white_key_height * (0.2 * height_factor + 0.45);
     const white_key_width = height * 2.2 / 15.5;
-    const black_key_width = height * 1.4 / 15.5;
+    const black_key_width = height * 1.45 / 15.5;
     const white_key_width_half = white_key_width / 2;
     const black_key_width_half = black_key_width / 2;
     const key_rounding = white_key_width / 20;
@@ -1387,13 +1389,10 @@ if ( !isMobile() ) {
 // Pointer & touch control events
 
 function findKeyUnderPoint(x, y) {
-    const elements = document.elementsFromPoint(x, y);
-    for ( const elm of elements ) {
-        const parent = elm.parentElement;
-        if ( parent?.classList.contains("key") )
-            return parseInt(parent.getAttribute("value"));
-    }
-    return null;
+    const parent = document.elementFromPoint(x, y)?.parentElement;
+    return ( parent?.classList.contains("key") )
+        ? parseInt(parent.getAttribute("value"))
+        : null;
 }
 
 /** @param {PointerEvent} e */

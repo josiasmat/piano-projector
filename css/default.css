@@ -299,15 +299,20 @@ div.menu-msg {
 
     .key {
         transform-origin: center top 0px;
-        pointer-events: visible;
+
+        .key-fill {
+            pointer-events: fill;
+        }
 
         .key-light-border, .key-dark-border {
+            pointer-events: stroke;
             fill: none;
             stroke-width: 1.5px;
             stroke-linecap: square;
         }
 
         .key-highlight {
+            pointer-events: none;
             will-change: opacity;
         }
 
@@ -348,6 +353,7 @@ div.menu-msg {
         text-rendering: optimizeSpeed;
         white-space: wrap;
         opacity: 0%;
+        pointer-events: none;
         &.rotated {
             text-anchor: start;
             transform-box: content-box;
