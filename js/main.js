@@ -33,6 +33,7 @@ const settings = {
     number_of_keys: 88,
     height_factor: 1,
     device_name: null,
+    sound: null,
     offset: { x: 0.5, y: 0.5 },
     labels: {
         /** @type {string} "none", "played", "cs", "white", "all" */
@@ -938,6 +939,7 @@ function writeSettings() {
     settings_storage.writeNumber("offset-y", settings.offset.y);
     if ( settings.device_name ) settings_storage.writeString("device", settings.device_name);
         else settings_storage.remove("device");
+    settings_storage.writeString("sound", sound.type);
     session_storage.writeNumber("semitones", settings.semitones);
     session_storage.writeNumber("octaves", settings.octaves);
     session_storage.writeBool("toolbar", settings.toolbar);
@@ -959,6 +961,7 @@ function loadSettings() {
     settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
     settings.offset.y = settings_storage.readNumber("offset-y", settings.offset.y);
     settings.device_name = settings_storage.readString("device", null);
+    settings.sound = settings_storage.readString("sound", "");
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
     settings.toolbar = session_storage.readBool("toolbar", settings.toolbar);
@@ -1194,10 +1197,6 @@ function loadSound(name = null, menu_item = null) {
         }, 400);
         const onLoadFinished = (result) => {
             clearInterval(interval);
-            if ( !result ) {
-                sound.player = null;
-                sound.type = "";
-            }
             sound.loaded = result;
             sound.led = result ? 2 : 0;
             menu_item.toggleAttribute("loading", false);
@@ -1206,7 +1205,10 @@ function loadSound(name = null, menu_item = null) {
         }
         sound.player.load.then(() => { 
             onLoadFinished(true);
+            writeSettings();
         }, (reason) => {
+            sound.player = null;
+            sound.type = '';
             onLoadFinished(false);
             sound.fail_alert.children[1].innerText = `Reason: ${reason}`;
             sound.fail_alert.toast();
@@ -1727,16 +1729,6 @@ function handleKeyDown(e) {
 }
 
 
-// /** @param {KeyboardEvent} e */
-// function handleKeyUp(e) {
-//     if ( e.code.startsWith("Alt") ) {
-//         hideBreadcrumbs();
-//         alt_shortcut_state = "";
-//         e.preventDefault();
-//     }
-// }
-
-
 // Auxiliary functions
 
 function clamp(value, min, max) {
@@ -1866,6 +1858,7 @@ if ( isSafari() ) {
             document.getElementById("menu-sound-item-unavailable").hidden = true;
             toolbar.dropdowns.sound.querySelectorAll(".menu-sound-item")
                 .forEach((item) => { item.hidden = false });
+            if ( isMobile() && settings.sound ) loadSound(settings.sound);
         });
 }
 
