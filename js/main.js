@@ -1141,8 +1141,9 @@ for ( const dropdown of toolbar.dropdowns.all ) {
             .setAttribute("variant", "neutral");
     });
     dropdown.addEventListener("sl-hide", (e) => {
-        e.currentTarget.querySelector("sl-button")
-            .toggleAttribute("variant", false);
+        const btn = e.currentTarget.querySelector("sl-button");
+        btn.toggleAttribute("variant", false);
+        btn.blur();
     });
 }
 
@@ -1318,17 +1319,17 @@ window.addEventListener("keydown", handleKeyDown);
 function buildKbdNavStructure() {
     function populateControlNav() {
         const list = midi_state.ports.map((p,i) => [
-            `&${i}: ${p.name}`,
+            p.name,
             () => connectInput(p.name, true),
             {checked: ( settings.device_name == p.name )}
         ]);
         list.push([
-            `&${list.length}: Computer keyboard`, 
+            "Computer keyboard", 
             () => connectInput("pckbd", true), 
             {checked: settings.pc_keyboard_connected}
         ]);
         list.push([
-            `&${list.length}: Touch or mouse`, 
+            "Touch or mouse", 
             () => connectInput("touch", true), 
             {checked: touch.enabled}
         ]);
@@ -1339,6 +1340,9 @@ function buildKbdNavStructure() {
         const semitones = `${settings.semitones} semitone${settings.semitones != 1 ? 's' : ''}`;
         const octaves = `${settings.octaves} octave${settings.octaves != 1 ? 's' : ''}`;
         return `${semitones}, ${octaves}`;
+    }
+    function getKeyDepthStr() {
+        return settings.height_factor == 1.0 ? "Full" : settings.height_factor == 0.5 ? "1/2" : "3/4";
     }
     return [
         ['', [
@@ -1351,25 +1355,20 @@ function buildKbdNavStructure() {
             //     ["&4. Electric piano 3", () => loadSound('epiano3'), {checked: (sound.type == 'epiano3')}]
             // ]],
             ["&Transpose", [
-                ["[↑] Semitone up", () => transpose({semitones:+1}), {key: 'arrowup'}],
-                ["[↓] Semitone down", () => transpose({semitones:-1}), {key: 'arrowdown'}],
-                ["[→] Octave up", () => transpose({octaves:+1}), {key: 'arrowright'}],
-                ["[←] Octave down", () => transpose({octaves:-1}), {key: 'arrowleft'}],
+                ["[↑] Semitone up", () => transpose({semitones:+1}), {noindex:true, key:'arrowup'}],
+                ["[↓] Semitone down", () => transpose({semitones:-1}), {noindex:true, key:'arrowdown'}],
+                ["[→] Octave up", () => transpose({octaves:+1}), {noindex:true, key:'arrowright'}],
+                ["[←] Octave down", () => transpose({octaves:-1}), {noindex:true, key:'arrowleft'}],
+                ["&Reset", () => transpose({reset:true}), {noindex:true}],
                 [`State: ${getTranspositionStr()}`, null]
             ]],
             ["&Size", [
-                ["&Number of keys", [
-                    ["&88", () => setNumberOfKeys(88), {checked: (settings.number_of_keys == 88)}],
-                    ["&61", () => setNumberOfKeys(61), {checked: (settings.number_of_keys == 61)}],
-                    ["&49", () => setNumberOfKeys(49), {checked: (settings.number_of_keys == 49)}],
-                    ["&37", () => setNumberOfKeys(37), {checked: (settings.number_of_keys == 37)}],
-                    ["&25", () => setNumberOfKeys(25), {checked: (settings.number_of_keys == 25)}]
-                ]],
-                ["&Key depth", [
-                    ["&Full", () => setKeyDepth(1.0 ), {checked: (settings.height_factor == 1.0)}],
-                    ["&3/4",  () => setKeyDepth(0.75), {checked: (settings.height_factor == 0.75)}],
-                    ["&1/2",  () => setKeyDepth(0.5 ), {checked: (settings.height_factor == 0.5)}]
-                ]]
+                ["88 keys", () => setNumberOfKeys(88), {checked: (settings.number_of_keys == 88)}],
+                ["61 keys", () => setNumberOfKeys(61), {checked: (settings.number_of_keys == 61)}],
+                ["49 keys", () => setNumberOfKeys(49), {checked: (settings.number_of_keys == 49)}],
+                ["37 keys", () => setNumberOfKeys(37), {checked: (settings.number_of_keys == 37)}],
+                ["25 keys", () => setNumberOfKeys(25), {checked: (settings.number_of_keys == 25)}],
+                [`Change &key depth (current: ${getKeyDepthStr()})`, () => switchKeyDepth()]
             ]],
             ["&Labels", [
                 ["&Which keys", [
@@ -1389,12 +1388,12 @@ function buildKbdNavStructure() {
                 ]],
                 ["Show &octave", () => toggleLabelsOctave(), {checked: settings.labels.octave}]
             ]],
-            ["Pe&dals", [
+            ["&Pedals", [
                 ["&Follow pedals", () => togglePedalsFollow(), {checked: settings.pedals}],
                 ["&Dim pedalized notes", () => togglePedalsDim(), {checked: settings.pedal_dim}]
             ]],
-            ["&Panic!", midiPanic],
-            [`${settings.toolbar ? "Hide" : "Show"} toolbar [F9]`, toggleToolbarVisibility, {key: "f9"}]
+            ["Panic!", midiPanic],
+            [`${settings.toolbar ? "Hide" : "Show"} toolbar [<u>F9</u>]`, toggleToolbarVisibility, {key: "f9"}]
         ]]
     ];
 }

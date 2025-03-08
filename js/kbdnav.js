@@ -24,8 +24,10 @@ export class KbdNav {
     #structure;
     /** @type {[number]} */
     #current_path = [];
-    /** @type {[{html:string, html:string, action:Function, key:string, checkbox: boolean, checked:boolean}]} */
+    /** @type {[{html:string, html:string, action:Function, keys:string, checkbox: boolean, checked:boolean}]} */
     #current_menu = [];
+    /** @type {[{html:string, html:string, action:Function, keys:string, checkbox: boolean, checked:boolean}]} */
+    #parent_menu = [];
     /** @type {string} */
     #trigger;
 
@@ -48,7 +50,7 @@ export class KbdNav {
     /**
      * @param {HTMLDivElement} container 
      * @param {Array} structure 
-     * @param {string} trigger_key - "alt" (default), "ctrl" or "shift"
+     * @param {string} trigger_key - "alt" (default), "control" or "shift"
      */
     constructor(container, structure, trigger_key="alt") {
         this.#container = container;
@@ -86,6 +88,7 @@ export class KbdNav {
             this.#current_path = [0];
             this.onshow?.();
             this.#container.hidden = false;
+            this.#container.focus();
         }
         this.#build();
     }
@@ -94,6 +97,13 @@ export class KbdNav {
     #enter(index) {
         this.#current_path.push(index);
         this.onmenuenter?.(this.#current_menu[index].text);
+    }
+
+    #back() {
+        if ( this.#current_path.length > 1 ) {
+            this.#current_path.pop();
+            this.onmenuenter?.(this.#parent_menu.text);
+        }
     }
 
     #build() {
@@ -111,16 +121,28 @@ export class KbdNav {
         // Prepare menu
         this.#current_menu = [];
         for ( const [index,item] of menu.entries() ) {
-            const text = item[0];
+            this.#parent_menu = this.#current_menu;
+            const text = ( item[1] === null || item[2]?.noindex ) 
+                ? item[0] 
+                : `&${index+1}: ${item[0]}`;
             this.#current_menu.push({
                 html: replaceAmpersand(text),
-                text: removeAmpersand(text),
+                text: removeAmpersand(item[0]),
                 action: Array.isArray(item[1]) ? index : item[1],
-                key: item[2]?.key ?? getShortcutKey(text),
+                keys: item[2]?.key 
+                    ? getShortcutKeys(text).concat([item[2].key]) 
+                    : getShortcutKeys(text),
                 checkbox: item[2] ? Object.hasOwn(item[2], "checked") : false,
                 checked: item[2]?.checked,
             });
         }
+        if ( this.#current_path.length > 1 )
+            this.#current_menu.push({
+                html: replaceAmpersand("&0: Back"),
+                text: "Back",
+                action: () => this.#back(),
+                keys: ["0"],
+            });
         // Build menu part
         const html = this.#current_menu.map(
                 item => item.checkbox
@@ -148,10 +170,10 @@ export class KbdNav {
             e.preventDefault();
             this.#show();
         } else if ( triggerMatchHold(this.#trigger, e) ) {
-              e.preventDefault();
-              const k = e.key.toLowerCase();
-              for ( const item of this.#current_menu ) {
-                if ( k == item.key && item.action !== null ) {
+            e.preventDefault();
+            const k = e.key.toLowerCase();
+            for ( const item of this.#current_menu ) {
+                if ( item.keys.includes(k) && item.action !== null ) {
                     if ( typeof(item.action) == "number" ) {
                         this.#enter(item.action);
                     } else if ( typeof(item.action) == "function" ) {
@@ -187,17 +209,18 @@ function replaceAmpersand(s) {
 
 /** @param {string} s */
 function removeAmpersand(s) {
-    return s.replace('&', '');
+    return s.replaceAll('&', '');
 }
 
 /** @param {string} s */
-function getShortcutKey(s) {
-    return s.at(s.indexOf('&')+1).toLowerCase();
+function getShortcutKeys(s) {
+    const matches = s.match(/(?<=&)./g);
+    return matches?.map(c => c.toLowerCase()) ?? [];
 }
 
 /** @param {string} t @param {KeyboardEvent} e */
 function triggerMatchKey(t, e) {
-    return ( e.key.toLowerCase() == t );
+    return ( e.key.toLowerCase() == t || e.code.toLowerCase().startsWith(t) );
 }
 
 /** @param {string} t @param {KeyboardEvent} e */
