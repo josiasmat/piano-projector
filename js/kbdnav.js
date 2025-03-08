@@ -1,0 +1,212 @@
+/*
+Piano Projector - Keyboard navigation module
+Copyright (C) 2025 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+export class KbdNav {
+
+    /** @type {HTMLDivElement} */
+    #container;
+    /** @type {Array} */
+    #structure;
+    /** @type {[number]} */
+    #current_path = [];
+    /** @type {[{html:string, html:string, action:Function, key:string, checkbox: boolean, checked:boolean}]} */
+    #current_menu = [];
+    /** @type {string} */
+    #trigger;
+
+    #enabled = false;
+    #visible = false;
+
+    get visible() {
+        return this.#visible;
+    }
+
+    /** @type {function()} */
+    onshow = undefined;
+    /** @type {function()} */
+    onhide = undefined;
+    /** @type {function(string)} item label */
+    onmenuenter = undefined;
+    /** @type {function(string)} item label */
+    onoptionenter = undefined;
+
+    /**
+     * @param {HTMLDivElement} container 
+     * @param {Array} structure 
+     * @param {string} trigger_key - "alt" (default), "ctrl" or "shift"
+     */
+    constructor(container, structure, trigger_key="alt") {
+        this.#container = container;
+        this.#structure = structure;
+        this.#trigger = trigger_key;
+        this.enable();
+    }
+
+    enable() {
+        if ( !this.#enabled ) {
+            this.#enabled = true;
+            window.addEventListener("keydown", (e) => this.#keyDownHandler(e));
+            window.addEventListener("keyup", (e) => this.#keyUpHandler(e));
+            window.addEventListener("blur", () => this.#blurHandler());
+        }
+    }
+
+    disable() {
+        if ( this.#enabled ) {
+            window.removeEventListener("keydown", (e) => this.#keyDownHandler(e));
+            window.removeEventListener("keyup", (e) => this.#keyUpHandler(e));
+            window.removeEventListener("blur", () => this.#blurHandler());
+            this.#enabled = false;
+        }
+    }
+
+    replaceStructure(structure) {
+        this.#structure = structure;
+        if ( this.#visible ) this.#build();
+    }
+
+    #show() {
+        if ( this.#visible == false ) {
+            this.#visible = true;
+            this.#current_path = [0];
+            this.onshow?.();
+            this.#container.hidden = false;
+        }
+        this.#build();
+    }
+
+    /** @param {number} index */
+    #enter(index) {
+        this.#current_path.push(index);
+        this.onmenuenter?.(this.#current_menu[index].text);
+    }
+
+    #build() {
+        this.#container.innerHTML = '';
+        const breadcrumb_top = document.createElement("sl-breadcrumb");
+        this.#container.appendChild(breadcrumb_top);
+        // Build ancestors part
+        let menu = this.#structure;
+        for ( const index of this.#current_path) {
+            const item = document.createElement("sl-breadcrumb-item");
+            item.innerHTML = removeAmpersand(menu[index][0]);
+            menu = menu[index][1];
+            breadcrumb_top.appendChild(item);
+        }
+        // Prepare menu
+        this.#current_menu = [];
+        for ( const [index,item] of menu.entries() ) {
+            const text = item[0];
+            this.#current_menu.push({
+                html: replaceAmpersand(text),
+                text: removeAmpersand(text),
+                action: Array.isArray(item[1]) ? index : item[1],
+                key: item[2]?.key ?? getShortcutKey(text),
+                checkbox: item[2] ? Object.hasOwn(item[2], "checked") : false,
+                checked: item[2]?.checked,
+            });
+        }
+        // Build menu part
+        const html = this.#current_menu.map(
+                item => item.checkbox
+                    ? `<span check-item${item.checked ? " checked" : ''}><span class="checkbox">${item.checked ? "🗹" : "☐"}</span> ${item.html}</span>`
+                    : `<span>${item.html}</span>`
+            ).join('|');
+        const menu_elm = document.createElement("sl-breadcrumb-item");
+        menu_elm.innerHTML = html;
+        breadcrumb_top.appendChild(menu_elm);
+    }
+
+    #hide() {
+        if ( this.#visible ) {
+            this.#visible = false;
+            this.#container.hidden = true;
+            this.onhide?.();
+        }
+    }
+
+    
+    /** @param {KeyboardEvent} e */
+    #keyDownHandler(e) {
+        if ( e.repeat ) return;
+        if ( triggerMatchKey(this.#trigger, e) ) {
+            e.preventDefault();
+            this.#show();
+        } else if ( triggerMatchHold(this.#trigger, e) ) {
+              e.preventDefault();
+              const k = e.key.toLowerCase();
+              for ( const item of this.#current_menu ) {
+                if ( k == item.key && item.action !== null ) {
+                    if ( typeof(item.action) == "number" ) {
+                        this.#enter(item.action);
+                    } else if ( typeof(item.action) == "function" ) {
+                        item.action();
+                        this.onoptionenter?.();
+                    }
+                }
+            }
+            this.#build();
+        }
+    }
+
+    /** @param {KeyboardEvent} e */
+    #keyUpHandler(e) {
+        if ( triggerMatchKey(this.#trigger, e) ) {
+            e.preventDefault();
+            this.#hide();
+        }
+    }
+
+    #blurHandler() {
+        if ( this.#visible )
+            this.#hide();
+    }
+
+}
+
+
+/** @param {string} s */
+function replaceAmpersand(s) {
+    return s.replace(/&(.)/g, '<u>$1</u>');
+}
+
+/** @param {string} s */
+function removeAmpersand(s) {
+    return s.replace('&', '');
+}
+
+/** @param {string} s */
+function getShortcutKey(s) {
+    return s.at(s.indexOf('&')+1).toLowerCase();
+}
+
+/** @param {string} t @param {KeyboardEvent} e */
+function triggerMatchKey(t, e) {
+    return ( e.key.toLowerCase() == t );
+}
+
+/** @param {string} t @param {KeyboardEvent} e */
+function triggerMatchHold(t, e) {
+    return [ ( t == "ctrl"  && e.ctrlKey ),
+             ( t == "alt"   && e.altKey ),
+             ( t == "shift" && e.shiftKey ) ]
+             .filter(x => x).length == 1;
+}
+
+
+export default KbdNav;

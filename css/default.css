@@ -263,7 +263,7 @@ div.menu-msg {
     position: fixed;
     right: 12px;
     top: 6px;
-    filter: drop-shadow(1px 1px 4px black);
+    filter: drop-shadow(2px 2px 2px #0009);
     &:hover {
         opacity: 100%;
     }
@@ -447,5 +447,45 @@ sl-menu {
     }
     *[hidden] { 
         display: none; 
+    }
+}
+
+#keyboard-navigator {
+    position: fixed;
+    z-index: 999;
+    left: 20px;
+    padding: 10px 20px 10px 10px;
+    height: auto;
+    width: auto;
+    border-radius: 20px;
+    background-color: var(--sl-panel-background-color);
+    transition: all 0.1s ease-out;
+    box-shadow: 3px 3px 4px #0008;
+    &[position-top] { 
+        top: 75px; 
+        &[hidden] { top: 55px; }
+    }
+    &:not([position-top]) { 
+        bottom: 20px; 
+        &[hidden] { bottom: 0px; }
+    }
+    *, sl-breadcrumb-item::part(label) {
+        font-family: monospace;
+    }
+    &[hidden] { 
+        opacity: 0%;
+        display: block; 
+    }
+    span { 
+        color: var(--sl-color-neutral-800);
+        margin-right: 10px;
+        &:not(:first-child) { margin-left: 10px; }
+        u { text-decoration: underline; }
+        &.checkbox {
+            line-height: 0.7lh;
+            margin-right: -4px;
+            font-size: 120%;
+            vertical-align: -10%;
+        }
     }
 }

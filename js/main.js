@@ -22,6 +22,8 @@ import SvgTools from "./svgtools.js";
 import { Midi, noteToMidi } from "./midi.js";
 import { KbdNotes} from "./kbdnotes.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
+import KbdNav from "./kbdnav.js";
+
 
 const settings_storage = new LocalStorageHandler("piano-projector");
 const session_storage = new SessionStorageHandler("piano-projector-session");
@@ -142,6 +144,9 @@ const sound = {
     led: null,
     audio_ctx: null,
     player: null,
+    get loading() {
+        return this.type && !this.loaded;
+    },
     play(note, vel=100) {
         this.player?.start({ note: note+settings.transpose, velocity: vel });
     },
@@ -781,6 +786,8 @@ function updateKeyboardPosition() {
     // compute horizontal position
     const px = Math.round((kbd_rect.width - cnt_rect.width) * settings.offset.x);
     kbd_container.scroll(px, 0);
+
+    document.getElementById("keyboard-navigator").toggleAttribute("position-top", settings.offset.y > 0.5);
 }
 
 
@@ -885,9 +892,31 @@ function setLabelsType(value) {
 }
 
 /** @param {boolean} value */
-function setLabelsOctave(value) {
-    settings.labels.octave = value;
+function toggleLabelsOctave(value = undefined) {
+    settings.labels.octave = ( value === undefined )
+        ? !settings.labels.octave 
+        : value;
     updateLabelsMenu();
+    updateKeyboardKeys();
+    writeSettings();
+}
+
+/** @param {boolean} value */
+function togglePedalsFollow(value = undefined) {
+    settings.pedals = ( value === undefined )
+        ? !settings.pedals
+        : value;
+    updatePedalsMenu();
+    updateKeyboardKeys();
+    writeSettings();
+}
+
+/** @param {boolean} value */
+function togglePedalsDim(value = undefined) {
+    settings.pedal_dim = ( value === undefined )
+        ? !settings.pedal_dim
+        : value;
+    updatePedalsMenu();
     updateKeyboardKeys();
     writeSettings();
 }
@@ -902,6 +931,7 @@ function writeSettings() {
     settings_storage.writeString("color-black", settings.color_black);
     settings_storage.writeString("labels-where", settings.labels.where);
     settings_storage.writeString("labels-type", settings.labels.type);
+    settings_storage.writeBool("labels-octave", settings.labels.octave);
     settings_storage.writeBool("top-felt", settings.top_felt);
     settings_storage.writeBool("pedals", settings.pedals);
     settings_storage.writeBool("pedal-dim", settings.pedal_dim);
@@ -923,6 +953,7 @@ function loadSettings() {
     settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight);
     settings.labels.where = settings_storage.readString("labels-where", settings.labels.where);
     settings.labels.type = settings_storage.readString("labels-type", settings.labels.type);
+    settings.labels.octave = settings_storage.readBool("labels-octave", settings.labels.octave);
     settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
     settings.pedals = settings_storage.readBool("pedals", settings.pedals);
     settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
@@ -1001,6 +1032,7 @@ function connectInput(name, save=false) {
             Midi.connectByPortName(name, () => {
                 settings.device_name = name;
                 updateToolbar();
+                if ( kbdnav.visible ) kbdnav.replaceStructure(buildKbdNavStructure());
                 if ( save ) writeSettings();
             });
     }
@@ -1234,7 +1266,7 @@ document.getElementById("menu-labels-type").addEventListener("sl-select", (e) =>
 
 document.getElementById("menu-labels-top").addEventListener("sl-select", (e) => {
     if ( e.detail.item.id === "menu-item-labels-octave" )
-        setLabelsOctave(e.detail.item.checked);
+        toggleLabelsOctave(e.detail.item.checked);
     if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
@@ -1276,8 +1308,109 @@ toolbar.buttons.show_toolbar.onclick = toggleToolbarVisibility;
 document.getElementById("toolbar-title").onclick = 
     () => { document.getElementById("dialog-about").show() };
 
-window.onresize = updateKeyboardPosition;
-window.onkeydown = handleKeyDown;
+window.addEventListener("resize", updateKeyboardPosition);
+window.addEventListener("keydown", handleKeyDown);
+// window.onkeyup = handleKeyUp;
+
+
+// Keyboard navigator
+
+function buildKbdNavStructure() {
+    function populateControlNav() {
+        const list = midi_state.ports.map((p,i) => [
+            `&${i}: ${p.name}`,
+            () => connectInput(p.name, true),
+            {checked: ( settings.device_name == p.name )}
+        ]);
+        list.push([
+            `&${list.length}: Computer keyboard`, 
+            () => connectInput("pckbd", true), 
+            {checked: settings.pc_keyboard_connected}
+        ]);
+        list.push([
+            `&${list.length}: Touch or mouse`, 
+            () => connectInput("touch", true), 
+            {checked: touch.enabled}
+        ]);
+        return list;
+    }
+    function getTranspositionStr() {
+        if ( !settings.transpose ) return "not transposed";
+        const semitones = `${settings.semitones} semitone${settings.semitones != 1 ? 's' : ''}`;
+        const octaves = `${settings.octaves} octave${settings.octaves != 1 ? 's' : ''}`;
+        return `${semitones}, ${octaves}`;
+    }
+    return [
+        ['', [
+            ["&Control", populateControlNav()],
+            // ["&Sound", sound.loading ? [["Loading...", null]] : [
+            //     ["&Disabled", () => loadSound(''), {checked: (sound.type == '')}],
+            //     ["&1. Acoustic piano", () => loadSound('apiano'), {checked: (sound.type == 'apiano')}],
+            //     ["&2. Electric piano 1", () => loadSound('epiano1'), {checked: (sound.type == 'epiano1')}],
+            //     ["&3. Electric piano 2", () => loadSound('epiano2'), {checked: (sound.type == 'epiano2')}],
+            //     ["&4. Electric piano 3", () => loadSound('epiano3'), {checked: (sound.type == 'epiano3')}]
+            // ]],
+            ["&Transpose", [
+                ["[↑] Semitone up", () => transpose({semitones:+1}), {key: 'arrowup'}],
+                ["[↓] Semitone down", () => transpose({semitones:-1}), {key: 'arrowdown'}],
+                ["[→] Octave up", () => transpose({octaves:+1}), {key: 'arrowright'}],
+                ["[←] Octave down", () => transpose({octaves:-1}), {key: 'arrowleft'}],
+                [`State: ${getTranspositionStr()}`, null]
+            ]],
+            ["&Size", [
+                ["&Number of keys", [
+                    ["&88", () => setNumberOfKeys(88), {checked: (settings.number_of_keys == 88)}],
+                    ["&61", () => setNumberOfKeys(61), {checked: (settings.number_of_keys == 61)}],
+                    ["&49", () => setNumberOfKeys(49), {checked: (settings.number_of_keys == 49)}],
+                    ["&37", () => setNumberOfKeys(37), {checked: (settings.number_of_keys == 37)}],
+                    ["&25", () => setNumberOfKeys(25), {checked: (settings.number_of_keys == 25)}]
+                ]],
+                ["&Key depth", [
+                    ["&Full", () => setKeyDepth(1.0 ), {checked: (settings.height_factor == 1.0)}],
+                    ["&3/4",  () => setKeyDepth(0.75), {checked: (settings.height_factor == 0.75)}],
+                    ["&1/2",  () => setKeyDepth(0.5 ), {checked: (settings.height_factor == 0.5)}]
+                ]]
+            ]],
+            ["&Labels", [
+                ["&Which keys", [
+                    ["&None", () => setLabelsWhere("none"), {checked: settings.labels.where == "none"}],
+                    ["&Played keys", () => setLabelsWhere("played"), {checked: settings.labels.where == "played"}],
+                    ["&C-keys", () => setLabelsWhere("cs"), {checked: settings.labels.where == "cs"}],
+                    ["&White keys", () => setLabelsWhere("white"), {checked: settings.labels.where == "white"}],
+                    ["&All keys", () => setLabelsWhere("all"), {checked: settings.labels.where == "all"}],
+                ]],
+                ["&Type", [
+                    ["&English", () => setLabelsType("english"), {checked: settings.labels.type == "english"}],
+                    ["&German", () => setLabelsType("german"), {checked: settings.labels.type == "german"}],
+                    ["&Italian", () => setLabelsType("italian"), {checked: settings.labels.type == "italian"}],
+                    ["&Pitch-class", () => setLabelsType("pc"), {checked: settings.labels.type == "pc"}],
+                    ["&MIDI value", () => setLabelsType("midi"), {checked: settings.labels.type == "midi"}],
+                    ["&Frequency", () => setLabelsType("freq"), {checked: settings.labels.type == "freq"}],
+                ]],
+                ["Show &octave", () => toggleLabelsOctave(), {checked: settings.labels.octave}]
+            ]],
+            ["Pe&dals", [
+                ["&Follow pedals", () => togglePedalsFollow(), {checked: settings.pedals}],
+                ["&Dim pedalized notes", () => togglePedalsDim(), {checked: settings.pedal_dim}]
+            ]],
+            ["&Panic!", midiPanic],
+            [`${settings.toolbar ? "Hide" : "Show"} toolbar [F9]`, toggleToolbarVisibility, {key: "f9"}]
+        ]]
+    ];
+}
+
+const kbdnav = new KbdNav(
+    document.getElementById("keyboard-navigator"), 
+    buildKbdNavStructure(),
+);
+
+kbdnav.onmenuenter = (s) => {
+    midi_state.setWatchdog(( s == "Control" ) ? 500 : 2000);
+    kbdnav.replaceStructure(buildKbdNavStructure());
+}
+kbdnav.onoptionenter = () => kbdnav.replaceStructure(buildKbdNavStructure());
+kbdnav.onshow = () => midi_state.setWatchdog(2000);
+kbdnav.onhide = () => midi_state.setWatchdog(2000);
 
 
 // Pointer move events
@@ -1522,7 +1655,9 @@ function midiWatchdog() {
     const dropdown_connect_open = toolbar.dropdowns.connect.open;
     midi_state.queryAccess((access) => {
         if ( access == "granted" ) {
+            if ( kbdnav.visible ) kbdnav.replaceStructure(buildKbdNavStructure());
             midi_state.requestPorts( (ports) => {
+                midi_state.ports = ports;
                 if ( settings.device_name 
                         && settings.device_name != "pckbd" 
                         && settings.device_name != "touch" 
@@ -1556,6 +1691,13 @@ function midiWatchdog() {
 /** @param {KeyboardEvent} e */
 function handleKeyDown(e) {
     if ( e.repeat ) return;
+    if ( e.key == "Alt" ) {
+        const open_dropdown = toolbar.dropdowns.getOpen();
+        if ( open_dropdown ) {
+            open_dropdown.hide();
+            open_dropdown.querySelector("sl-button[slot=trigger]").blur();
+        }
+    }
 
     const kbd_shortcuts = new Map([
         ["f9", toggleToolbarVisibility],
@@ -1571,28 +1713,6 @@ function handleKeyDown(e) {
         ["pagedown", () => transpose({ semitones: -1 })],
         ["shift+pageup", () => transpose({ octaves: +1 })],
         ["shift+pagedown", () => transpose({ octaves: -1 })],
-        ["alt+2", () => setNumberOfKeys(25)],
-        ["alt+3", () => setNumberOfKeys(37)],
-        ["alt+4", () => setNumberOfKeys(49)],
-        ["alt+6", () => setNumberOfKeys(61)],
-        ["alt+8", () => setNumberOfKeys(88)],
-        ["alt+k", () => switchNumberOfKeys()],
-        ["alt+d", () => switchKeyDepth()],
-        ["alt+n", () => setLabelsWhere("none")],
-        ["alt+p", () => setLabelsWhere("played")],
-        ["alt+c", () => setLabelsWhere("cs")],
-        ["alt+w", () => setLabelsWhere("white")],
-        ["alt+a", () => setLabelsWhere("all")],
-        ["alt+e", () => setLabelsType("english")],
-        ["alt+g", () => setLabelsType("german")],
-        ["alt+i", () => setLabelsType("italian")],
-        ["alt+t", () => setLabelsType("pc")],
-        ["alt+m", () => setLabelsType("midi")],
-        ["alt+f", () => setLabelsType("freq")],
-        ["alt+o", () => { 
-            settings.labels.octave = !settings.labels.octave; 
-            updateKeyboardKeys()
-        }]
     ]);
 
     let comb = [];
@@ -1606,6 +1726,16 @@ function handleKeyDown(e) {
         kbd_shortcuts.get(k)();
     }
 }
+
+
+// /** @param {KeyboardEvent} e */
+// function handleKeyUp(e) {
+//     if ( e.code.startsWith("Alt") ) {
+//         hideBreadcrumbs();
+//         alt_shortcut_state = "";
+//         e.preventDefault();
+//     }
+// }
 
 
 // Auxiliary functions
@@ -1750,7 +1880,7 @@ if ( !settings.device_name ) {
         );
     } else {
         connect_tooltip.setAttribute("content", 
-            "Select your input device by clicking this button."
+            "Click on this button to select an input device."
         );
     }
     connect_tooltip.open = true;
@@ -1765,4 +1895,5 @@ if ( !settings.device_name ) {
     });
 }
 
+midiWatchdog();
 midi_state.setWatchdog(2000);
