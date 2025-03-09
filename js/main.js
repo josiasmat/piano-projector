@@ -209,6 +209,7 @@ const touch = {
         }
         updateKeyboardKeys(previous_note, previous_note);
         updateKeyboardKeys(note, note);
+        return ( note != previous_note );
     },
     /** @param {number} pointer_id @param {number} key */
     remove(pointer_id) {
@@ -1566,6 +1567,7 @@ function handleKbdTouchStart(e) {
                 if ( note ) {
                     e.preventDefault();
                     touch.change(t.identifier, note);
+                    navigator.vibrate(50);
                 }
             }
     }
@@ -1585,7 +1587,8 @@ function handleKbdTouchMove(e) {
         if ( touch.started(t.identifier) ) {
             e.preventDefault();
             const note = findKeyUnderPoint(t.clientX, t.clientY);
-            touch.change(t.identifier, note);
+            touch.change(t.identifier, note) 
+                && navigator.vibrate(50);
         }
 }
 
