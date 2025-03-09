@@ -1382,12 +1382,12 @@ function buildKbdNavStructure() {
                 [`State: ${getTranspositionStr()}`, null]
             ]],
             ["&Size", [
-                ["88 keys", () => setNumberOfKeys(88), {checked: (settings.number_of_keys == 88)}],
-                ["61 keys", () => setNumberOfKeys(61), {checked: (settings.number_of_keys == 61)}],
-                ["49 keys", () => setNumberOfKeys(49), {checked: (settings.number_of_keys == 49)}],
-                ["37 keys", () => setNumberOfKeys(37), {checked: (settings.number_of_keys == 37)}],
-                ["25 keys", () => setNumberOfKeys(25), {checked: (settings.number_of_keys == 25)}],
-                [`Change &key depth (current: ${getKeyDepthStr()})`, () => switchKeyDepth()]
+                ["&88 keys", () => setNumberOfKeys(88), {noindex: true, checked: (settings.number_of_keys == 88)}],
+                ["&61 keys", () => setNumberOfKeys(61), {noindex: true, checked: (settings.number_of_keys == 61)}],
+                ["&49 keys", () => setNumberOfKeys(49), {noindex: true, checked: (settings.number_of_keys == 49)}],
+                ["&37 keys", () => setNumberOfKeys(37), {noindex: true, checked: (settings.number_of_keys == 37)}],
+                ["&25 keys", () => setNumberOfKeys(25), {noindex: true, checked: (settings.number_of_keys == 25)}],
+                [`Change key &depth (current: ${getKeyDepthStr()})`, () => switchKeyDepth(), {noindex: true}]
             ]],
             ["&Labels", [
                 ["&Which keys", [
