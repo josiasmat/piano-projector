@@ -79,12 +79,18 @@ const settings = {
     set color_black(value) {
         document.documentElement.style.setProperty('--color-black-key', value);
     },
+    get color_top_felt() {
+        return getComputedStyle(document.documentElement).getPropertyValue("--color-felt-top");
+    },
+    set color_top_felt(value) {
+        document.documentElement.style.setProperty('--color-felt-top', value);
+    },
     get pc_keyboard_connected() {
         return this.device_name === "pckbd";
     },
 }
 
-const midi_state = {
+const midi = {
     /** @type {MIDIInput[]} */
     ports: [],
     /** @returns {HTMLElement[]} */
@@ -500,8 +506,7 @@ function drawKeyboard(svg, options = {}) {
     }
     
     svg.appendChild(white_keys_g);
-    if ( options.top_felt )
-        svg.appendChild(SvgTools.makeRect(width, 7, 0, -4, null, null, { id: "top-felt" }));
+    svg.appendChild(SvgTools.makeRect(width, 7, 0, -4, null, null, { id: "top-felt" }));
     svg.appendChild(black_keys_g);
     svg.setAttribute("viewBox", `-2 -4 ${width+STROKE_WIDTH+2} ${white_key_height+STROKE_WIDTH+4}`);
 
@@ -527,8 +532,8 @@ function drawKeyboard(svg, options = {}) {
 
     if ( options.top_felt )
         svg_defs.appendChild(makeGradient("top-felt-gradient", [
-            { offset: "50%", "stop-color": "#920" },
-            { offset: "100%", "stop-color": "#400", "stop-opacity": "70%" }
+            { offset: "50%", "stop-color": "var(--color-felt-top)" },
+            { offset: "100%", "stop-color": "var(--color-felt-bottom)" }//, "stop-opacity": "70%" }
         ], true));
 
     svg.appendChild(svg_defs);
@@ -588,6 +593,7 @@ function updateKeyboardKeys(first_key=0, last_key=127) {
             updateKeyboardLabel(i, note_on);
         }
     }
+    document.getElementById("top-felt").toggleAttribute("hidden", !settings.top_felt);
 }
 
 
@@ -1059,16 +1065,16 @@ function updateConnectionMenu() {
     const menu_divider = connection_menu.querySelector("sl-divider");
 
     document.getElementById("menu-connect-item-midi-denied")
-        .toggleAttribute("hidden", midi_state.access != "denied");
+        .toggleAttribute("hidden", midi.access != "denied");
     document.getElementById("menu-connect-item-midi-unavailable")
-        .toggleAttribute("hidden", midi_state.access != "unavailable");
+        .toggleAttribute("hidden", midi.access != "unavailable");
     document.getElementById("menu-connect-item-midi-prompt")
-        .toggleAttribute("hidden", midi_state.access != "prompt");
+        .toggleAttribute("hidden", midi.access != "prompt");
     menu_divider
-        .toggleAttribute("hidden", !(midi_state.ports?.length));
+        .toggleAttribute("hidden", !(midi.ports?.length));
 
-    if ( midi_state.access != "granted" ) {
-        midi_state.clearMenuItems();
+    if ( midi.access != "granted" ) {
+        midi.clearMenuItems();
         return;
     }
 
@@ -1076,8 +1082,8 @@ function updateConnectionMenu() {
         .getElementById("menu-connect-item-midi-port-template");
 
     // Add menu items for new ports
-    for ( const port of midi_state.ports ) {
-        if ( !midi_state.menu_items.some((menu_item) =>
+    for ( const port of midi.ports ) {
+        if ( !midi.menu_items.some((menu_item) =>
                 port.name == menu_item.value,
         ) ) {
             const new_menu_item = cloneTemplate(template, 
@@ -1095,10 +1101,10 @@ function updateConnectionMenu() {
     }
 
     // Check/uncheck menu items, and remove obsolete ports
-    for ( const menu_item of midi_state.menu_items ) {
-        if ( midi_state.ports.some((port) => menu_item.value == port.name) ) {
+    for ( const menu_item of midi.menu_items ) {
+        if ( midi.ports.some((port) => menu_item.value == port.name) ) {
             menu_item.toggleAttribute("checked", 
-                menu_item.value == midi_state.connected_port?.name);
+                menu_item.value == midi.connected_port?.name);
         } else{
             menu_item.remove();
         }
@@ -1114,21 +1120,21 @@ function updateConnectionMenu() {
 // Set event listeners
 
 toolbar.dropdowns.connect.addEventListener("sl-show", () => {
-    midi_state.setWatchdog(500);
-    midi_state.queryAccess((access) => {
+    midi.setWatchdog(500);
+    midi.queryAccess((access) => {
         if ( access != "granted" )
             updateConnectionMenu();
         if ( ["granted", "prompt"].includes(access) )
-            midi_state.requestAccess((result) => {
+            midi.requestAccess((result) => {
                 updateConnectionMenu();
                 if ( result )
-                    midi_state.requestPorts(updateConnectionMenu);
+                    midi.requestPorts(updateConnectionMenu);
             });
     });
 });
 
 toolbar.dropdowns.connect.addEventListener("sl-hide", () => {
-    midi_state.setWatchdog(2000);
+    midi.setWatchdog(2000);
     updateToolbar();
 });
 
@@ -1238,7 +1244,7 @@ toolbar.dropdowns.size.querySelectorAll(".btn-key-depth").forEach((item) => {
 
 document.getElementById("menu-top-felt").addEventListener("click", () => {
     settings.top_felt = !settings.top_felt;
-    createKeyboard();
+    updateKeyboardKeys();
     writeSettings();
     if ( isMobile() ) toolbar.dropdowns.colors.hide();
 });
@@ -1321,7 +1327,7 @@ window.addEventListener("keydown", handleKeyDown);
 
 function buildKbdNavStructure() {
     function populateControlNav() {
-        const list = midi_state.ports.map((p,i) => [
+        const list = midi.ports.map((p,i) => [
             p.name,
             () => connectInput(p.name, true),
             {checked: ( settings.device_name == p.name )}
@@ -1407,12 +1413,12 @@ const kbdnav = new KbdNav(
 );
 
 kbdnav.onmenuenter = (s) => {
-    midi_state.setWatchdog(( s == "Control" ) ? 500 : 2000);
+    midi.setWatchdog(( s == "Control" ) ? 500 : 2000);
     kbdnav.replaceStructure(buildKbdNavStructure());
 }
 kbdnav.onoptionenter = () => kbdnav.replaceStructure(buildKbdNavStructure());
-kbdnav.onshow = () => midi_state.setWatchdog(2000);
-kbdnav.onhide = () => midi_state.setWatchdog(2000);
+kbdnav.onshow = () => midi.setWatchdog(2000);
+kbdnav.onhide = () => midi.setWatchdog(2000);
 
 
 // Pointer move events
@@ -1565,9 +1571,9 @@ function handleKbdTouchStart(e) {
             if ( !touch.started(t.identifier) ) {
                 const note = findKeyUnderPoint(t.clientX, t.clientY);
                 if ( note ) {
-                    e.preventDefault();
                     touch.change(t.identifier, note);
-                    navigator.vibrate(50);
+                    navigator.vibrate(-0.23*note+60);
+                    e.preventDefault();
                 }
             }
     }
@@ -1588,7 +1594,7 @@ function handleKbdTouchMove(e) {
             e.preventDefault();
             const note = findKeyUnderPoint(t.clientX, t.clientY);
             touch.change(t.identifier, note) 
-                && navigator.vibrate(50);
+                && navigator.vibrate(-0.23*note+60);
         }
 }
 
@@ -1657,11 +1663,11 @@ KbdNotes.onReset = handleResetMsg;
 
 function midiWatchdog() {
     const dropdown_connect_open = toolbar.dropdowns.connect.open;
-    midi_state.queryAccess((access) => {
+    midi.queryAccess((access) => {
         if ( access == "granted" ) {
             if ( kbdnav.visible ) kbdnav.replaceStructure(buildKbdNavStructure());
-            midi_state.requestPorts( (ports) => {
-                midi_state.ports = ports;
+            midi.requestPorts( (ports) => {
+                midi.ports = ports;
                 if ( settings.device_name 
                         && settings.device_name != "pckbd" 
                         && settings.device_name != "touch" 
@@ -1884,11 +1890,14 @@ if ( !settings.device_name ) {
         window.onclick = null;
     }
 } else {
-    midi_state.queryAccess((access) => {
-        if ( access == "granted" )
-            connectInput(settings.device_name);
-    });
+    if ( ["pckbd","touch"].includes(settings.device_name) )
+        connectInput(settings.device_name)
+    else
+        midi.queryAccess((access) => {
+            if ( access == "granted" )
+                connectInput(settings.device_name);
+        });
 }
 
 midiWatchdog();
-midi_state.setWatchdog(2000);
+midi.setWatchdog(2000);

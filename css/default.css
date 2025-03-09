@@ -8,6 +8,8 @@
     --color-background: black;
     --color-key-light-border: #999;
     --color-key-dark-border: #444;
+    --color-felt-top: #920;
+    --color-felt-bottom: color-mix(in hsl, var(--color-felt-top) 30%, #000 45%);
     --key-transition-duration: 0.05s;
 
     touch-action: none;
@@ -27,12 +29,16 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+html {
+    height: 100%;
+}
+
 body {
     margin: 0;
     background-color: var(--color-background);
     overflow: hidden;
     width: 100vw;
-    height: 100vh;
+    height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -291,6 +297,7 @@ div.menu-msg {
 
     #top-felt {
         fill: url("#top-felt-gradient");
+        &[hidden] { display: none; }
     }
 
     &[grabbing] {
