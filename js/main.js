@@ -1067,7 +1067,7 @@ function updateConnectionMenu() {
     document.getElementById("menu-connect-item-midi-denied")
         .toggleAttribute("hidden", midi.access != "denied");
     document.getElementById("menu-connect-item-midi-unavailable")
-        .toggleAttribute("hidden", midi.access != "unavailable");
+        .toggleAttribute("hidden", isMobile() || midi.access != "unavailable");
     document.getElementById("menu-connect-item-midi-prompt")
         .toggleAttribute("hidden", midi.access != "prompt");
     menu_divider
