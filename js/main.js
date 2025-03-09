@@ -96,7 +96,7 @@ const midi = {
     /** @returns {HTMLElement[]} */
     get menu_items() {
         return Array.from(
-            toolbar.dropdowns.connect
+            toolbar.menus.connect
                 .querySelectorAll(".menu-connect-item-midi-input"));
     },
     /** @type {MIDIInput?} */
@@ -267,6 +267,16 @@ const toolbar = {
         panic: document.getElementById("btn-panic"),
         hide_toolbar: document.getElementById("btn-hide-toolbar"),
         show_toolbar: document.getElementById("btn-show-toolbar")
+    },
+    menus: {
+        connect: document.getElementById("midi-connection-menu"),
+        sound: document.getElementById("menu-sound"),
+        labels: {
+            top: document.getElementById("menu-labels-top"),
+            where: document.getElementById("menu-labels-where"),
+            type: document.getElementById("menu-labels-type"),
+        },
+        pedals: document.getElementById("pedal-menu")
     }
 }
 
@@ -712,12 +722,12 @@ function updateToolbar() {
 
 function updateSoundMenu() {
     if ( sound.type && !sound.loaded ) {
-        for ( const item of toolbar.dropdowns.sound.querySelectorAll(".menu-sound-item") ) {
+        for ( const item of toolbar.menus.sound.querySelectorAll(".menu-sound-item") ) {
             item.toggleAttribute("disabled", !item.hasAttribute("loading"));
             item.checked = false;
         }
     } else {
-        for ( const item of toolbar.dropdowns.sound.querySelectorAll(".menu-sound-item") ) {
+        for ( const item of toolbar.menus.sound.querySelectorAll(".menu-sound-item") ) {
             item.toggleAttribute("disabled", false);
             item.checked = ( item.value == sound.type && !item.hasAttribute("loading") );
         }
@@ -754,14 +764,12 @@ function updatePedalsMenu() {
 
 
 function updateLabelsMenu() {
-    const menu_labels_where = document.getElementById("menu-labels-where");
-    for ( const item of menu_labels_where.children ) 
+    for ( const item of toolbar.menus.labels.where.children ) 
         item.checked = ( item.value === settings.labels.where );
-    menu_labels_where.nextElementSibling.innerText = settings.labels.where_badge;
-    const menu_labels_type = document.getElementById("menu-labels-type");
-    for ( const item of menu_labels_type.children )
+    toolbar.menus.labels.where.nextElementSibling.innerText = settings.labels.where_badge;
+    for ( const item of toolbar.menus.labels.type.children )
         item.checked = ( item.value === settings.labels.type );
-    menu_labels_type.nextElementSibling.innerText = settings.labels.type_badge;
+    toolbar.menus.labels.type.nextElementSibling.innerText = settings.labels.type_badge;
     const menu_labels_octave = document.getElementById("menu-item-labels-octave");
     menu_labels_octave.disabled = ["pc","midi","freq"].includes(settings.labels.type);
     menu_labels_octave.checked = settings.labels.octave;
@@ -1061,8 +1069,7 @@ function disconnectInput(save=false) {
 
 
 function updateConnectionMenu() {
-    const connection_menu = document.getElementById("midi-connection-menu");
-    const menu_divider = connection_menu.querySelector("sl-divider");
+    const menu_divider = toolbar.menus.connect.querySelector("sl-divider");
 
     document.getElementById("menu-connect-item-midi-denied")
         .toggleAttribute("hidden", midi.access != "denied");
@@ -1070,8 +1077,14 @@ function updateConnectionMenu() {
         .toggleAttribute("hidden", isMobile() || midi.access != "unavailable");
     document.getElementById("menu-connect-item-midi-prompt")
         .toggleAttribute("hidden", midi.access != "prompt");
-    menu_divider
-        .toggleAttribute("hidden", !(midi.ports?.length));
+    menu_divider.toggleAttribute("hidden", 
+        (midi.access == "granted" && !midi.ports?.length) 
+        || ( isMobile() && midi.access == "unavailable"));
+
+    document.getElementById("menu-connect-item-computer-keyboard")
+        .toggleAttribute("checked", settings.pc_keyboard_connected);
+    document.getElementById("menu-connect-item-touch")
+        .toggleAttribute("checked", touch.enabled);
 
     if ( midi.access != "granted" ) {
         midi.clearMenuItems();
@@ -1082,7 +1095,7 @@ function updateConnectionMenu() {
         .getElementById("menu-connect-item-midi-port-template");
 
     // Add menu items for new ports
-    for ( const port of midi.ports ) {
+    for ( const port of midi.ports ?? [] ) {
         if ( !midi.menu_items.some((menu_item) =>
                 port.name == menu_item.value,
         ) ) {
@@ -1096,12 +1109,12 @@ function updateConnectionMenu() {
                 else
                     connectInput(e.currentTarget.value, true);
             });
-            connection_menu.insertBefore(new_menu_item, menu_divider);
+            toolbar.menus.connect.insertBefore(new_menu_item, menu_divider);
         }
     }
 
     // Check/uncheck menu items, and remove obsolete ports
-    for ( const menu_item of midi.menu_items ) {
+    for ( const menu_item of midi.menu_items ?? [] ) {
         if ( midi.ports.some((port) => menu_item.value == port.name) ) {
             menu_item.toggleAttribute("checked", 
                 menu_item.value == midi.connected_port?.name);
@@ -1110,10 +1123,6 @@ function updateConnectionMenu() {
         }
     }
 
-    document.getElementById("menu-connect-item-computer-keyboard")
-        .toggleAttribute("checked", settings.pc_keyboard_connected);
-    document.getElementById("menu-connect-item-touch")
-        .toggleAttribute("checked", touch.enabled);
 }
 
 
@@ -1265,23 +1274,23 @@ document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
     writeSettings();
 });
 
-document.getElementById("menu-labels-where").addEventListener("sl-select", (e) => {
+toolbar.menus.labels.where.addEventListener("sl-select", (e) => {
     setLabelsWhere(e.detail.item.value);
     if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
-document.getElementById("menu-labels-type").addEventListener("sl-select", (e) => {
+toolbar.menus.labels.type.addEventListener("sl-select", (e) => {
     setLabelsType(e.detail.item.value);
     if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
-document.getElementById("menu-labels-top").addEventListener("sl-select", (e) => {
+toolbar.menus.labels.top.addEventListener("sl-select", (e) => {
     if ( e.detail.item.id === "menu-item-labels-octave" )
         toggleLabelsOctave(e.detail.item.checked);
     if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
-document.getElementById("pedal-menu").addEventListener("sl-select", (e) => {
+toolbar.menus.pedals.addEventListener("sl-select", (e) => {
     const item = e.detail.item;
     switch ( item.id ) {
         case "menu-pedal-follow": settings.pedals = item.checked; break;
@@ -1866,7 +1875,7 @@ if ( isSafari() ) {
             sound.apiano = result.SplendidGrandPiano;
             sound.epiano = result.ElectricPiano;
             document.getElementById("menu-sound-item-unavailable").hidden = true;
-            toolbar.dropdowns.sound.querySelectorAll(".menu-sound-item")
+            toolbar.menus.sound.querySelectorAll(".menu-sound-item")
                 .forEach((item) => { item.hidden = false });
             if ( isMobile() && settings.sound ) loadSound(settings.sound);
         });
