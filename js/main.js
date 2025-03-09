@@ -1120,6 +1120,7 @@ function updateConnectionMenu() {
 // Set event listeners
 
 toolbar.dropdowns.connect.addEventListener("sl-show", () => {
+    updateConnectionMenu();
     midi.setWatchdog(500);
     midi.queryAccess((access) => {
         if ( access != "granted" )
