@@ -314,7 +314,9 @@ function drawKeyboard(svg, options = {}) {
     const black_key_width_half = black_key_width / 2;
     const key_rounding = white_key_width / 20;
     const white_key_highlight_inset = 2;
-    const black_key_highlight_inset = 1;
+    const black_key_highlight_inset = 2;
+
+    const stroke_width_half = STROKE_WIDTH/2;
 
     svg.innerHTML = "";
 
@@ -358,30 +360,30 @@ function drawKeyboard(svg, options = {}) {
 
         const inset = white_key_highlight_inset;
         const key_highlight = SvgTools.makePolygon([
-                {x:left_offset+inset, y:inset}, 
-                {x:right_offset-inset, y:inset},
-                black_after ? {x:right_offset-inset, y:cut_point+inset-round} : null,
-                black_after ? {x:right_offset-inset+round, y:cut_point+inset} : null,
+                {x:left_offset+inset, y:inset-stroke_width_half}, 
+                {x:right_offset-inset, y:inset-stroke_width_half},
+                black_after ? {x:right_offset-inset, y:cut_point+inset-round-stroke_width_half} : null,
+                black_after ? {x:right_offset-inset+round+stroke_width_half, y:cut_point+inset} : null,
                 black_after ? {x:right-inset, y:cut_point+inset} : null,
-                {x:right-inset, y:height-inset-round},
-                {x:right-round-inset, y:height-inset},
-                {x:left+inset+round, y:height-inset},
-                {x:left+inset, y:height-inset-round},
+                {x:right-inset, y:height-inset-round+stroke_width_half},
+                {x:right-round-inset+stroke_width_half, y:height-inset},
+                {x:left+inset+round-stroke_width_half, y:height-inset},
+                {x:left+inset, y:height-inset-round+stroke_width_half},
                 black_before ? {x:left+inset, y:cut_point+inset} : null,
-                black_before ? {x:left_offset+inset-round, y:cut_point+inset} : null,
-                black_before ? {x:left_offset+inset, y:cut_point+inset-round} : null
+                black_before ? {x:left_offset+inset-round-stroke_width_half, y:cut_point+inset} : null,
+                black_before ? {x:left_offset+inset, y:cut_point+inset-round-stroke_width_half} : null
             ], 
             { class: "key-highlight", fill: 'url("#pressed-white-key-highlight-gradient")' }
         );
 
-        const light_array = ['M', left_offset, STROKE_WIDTH/2,];
+        const light_array = ['M', left_offset, stroke_width_half,];
         if ( black_before ) 
             light_array.push(
                 'V', cut_point-round,
                 'L', left_offset-round, cut_point,
                 'H', left
             );
-        light_array.push('L', left, height-round-STROKE_WIDTH/2);
+        light_array.push('L', left, height-round-stroke_width_half);
         if ( black_after ) 
             light_array.push(
                 'M', right, cut_point,
@@ -401,7 +403,7 @@ function drawKeyboard(svg, options = {}) {
                 'V', cut_point,
                 'M', right_offset, cut_point-round,
             );
-        dark_array.push('V', STROKE_WIDTH/2);
+        dark_array.push('V', stroke_width_half);
         const dark_border = SvgTools.makePath(dark_array, { class: "key-dark-border" } );
 
         key_group.appendChild(key_fill);
@@ -434,10 +436,10 @@ function drawKeyboard(svg, options = {}) {
             [
                 {x:left+inset, y:inset}, 
                 {x:right-inset, y:inset},
-                {x:right-inset, y:height-inset-round},
-                {x:right-round-inset, y:height-inset},
-                {x:left+inset+round, y:height-inset},
-                {x:left+inset, y:height-inset-round}
+                {x:right-inset, y:height-inset-round+stroke_width_half},
+                {x:right-round-inset+stroke_width_half, y:height-inset},
+                {x:left+inset+round-stroke_width_half, y:height-inset},
+                {x:left+inset, y:height-inset-round+stroke_width_half}
             ], 
             { class: "key-highlight", fill: 'url("#pressed-black-key-highlight-gradient")'}
         );
@@ -445,11 +447,11 @@ function drawKeyboard(svg, options = {}) {
         const light_border = SvgTools.makePath([
             'M', right, 0, 
             'H', left,
-            'V', height-round-STROKE_WIDTH/2
+            'V', height-round-stroke_width_half
         ], { class: "key-light-border" });
 
         const dark_border = SvgTools.makePath([
-            'M', right, 0, 
+            'M', right, stroke_width_half, 
             'V', height-round,
             'L', right-round, height,
             'H', left+round,
@@ -1529,9 +1531,10 @@ if ( !isMobile() ) {
         kbd.toggleAttribute("cursor-hidden", false);
         btn_show_toolbar_timeout = setTimeout(() => {
             toolbar.buttons.show_toolbar.toggleAttribute("visible", false);
-            kbd_container.toggleAttribute("cursor-hidden", true);
-            kbd.toggleAttribute("cursor-hidden", true);
-            btn_show_toolbar_timeout = null;
+            if ( !touch.enabled ) {
+                kbd_container.toggleAttribute("cursor-hidden", true);
+                kbd.toggleAttribute("cursor-hidden", true);
+            }
         }, 4000);
     }, { capture: false, passive: true });
 }
