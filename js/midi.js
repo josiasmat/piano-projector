@@ -41,7 +41,7 @@ export const Midi = {
     onConnectionChange: null,
 
     get browserHasMidiSupport() {
-        return !!navigator.requestMIDIAccess;
+        return navigator.requestMIDIAccess ? true : false;
     },
 
     /**

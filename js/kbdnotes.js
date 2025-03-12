@@ -1,5 +1,5 @@
 /*
-Get music notes from the computer keyboard
+Piano Projector - Keyboard to MIDI notes module
 Copyright (C) 2025 Josias Matschulat
 
 This program is free software: you can redistribute it and/or modify

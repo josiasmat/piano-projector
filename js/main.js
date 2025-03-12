@@ -37,14 +37,14 @@ const settings = {
     offset: { x: 0.5, y: 0.5 },
     labels: {
         /** @type {string} "none", "played", "cs", "white", "all" */
-        where: "none",
+        which: "none",
         /** @type {string} "english", "german", "italian", "pc", "midi" */
         type: "english",
         octave: true,
-        get where_badge() {
+        get which_badge() {
             return {
                 none: "None", played: "Played", cs: "C's", white: "White", all: "All"
-            }[this.where];
+            }[this.which];
         },
         get type_badge() {
             return {
@@ -273,7 +273,7 @@ const toolbar = {
         sound: document.getElementById("menu-sound"),
         labels: {
             top: document.getElementById("menu-labels-top"),
-            where: document.getElementById("menu-labels-where"),
+            which: document.getElementById("menu-labels-which"),
             type: document.getElementById("menu-labels-type"),
         },
         pedals: document.getElementById("pedal-menu")
@@ -671,7 +671,7 @@ function updateKeyboardLabel(key, is_on) {
             tspan.textContent = lines[i] ?? '';
 
         let visible, temporary; 
-        switch ( settings.labels.where ) {
+        switch ( settings.labels.which ) {
             case "all": 
                 visible = true; 
                 temporary = false; 
@@ -766,9 +766,9 @@ function updatePedalsMenu() {
 
 
 function updateLabelsMenu() {
-    for ( const item of toolbar.menus.labels.where.children ) 
-        item.checked = ( item.value === settings.labels.where );
-    toolbar.menus.labels.where.nextElementSibling.innerText = settings.labels.where_badge;
+    for ( const item of toolbar.menus.labels.which.children ) 
+        item.checked = ( item.value === settings.labels.which );
+    toolbar.menus.labels.which.nextElementSibling.innerText = settings.labels.which_badge;
     for ( const item of toolbar.menus.labels.type.children )
         item.checked = ( item.value === settings.labels.type );
     toolbar.menus.labels.type.nextElementSibling.innerText = settings.labels.type_badge;
@@ -894,8 +894,8 @@ function switchKeyDepth() {
 }
 
 /** @param {string} value */
-function setLabelsWhere(value) {
-    settings.labels.where = value;
+function setLabelsWhich(value) {
+    settings.labels.which = value;
     updateLabelsMenu();
     updateKeyboardKeys();
     writeSettings();
@@ -947,7 +947,7 @@ function writeSettings() {
     settings_storage.writeString("color-pressed", settings.color_highlight);
     settings_storage.writeString("color-white", settings.color_white);
     settings_storage.writeString("color-black", settings.color_black);
-    settings_storage.writeString("labels-where", settings.labels.where);
+    settings_storage.writeString("labels-which", settings.labels.which);
     settings_storage.writeString("labels-type", settings.labels.type);
     settings_storage.writeBool("labels-octave", settings.labels.octave);
     settings_storage.writeBool("top-felt", settings.top_felt);
@@ -970,7 +970,7 @@ function loadSettings() {
     settings.color_white = settings_storage.readString("color-white", settings.color_white);
     settings.color_black = settings_storage.readString("color-black", settings.color_black);
     settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight);
-    settings.labels.where = settings_storage.readString("labels-where", settings.labels.where);
+    settings.labels.which = settings_storage.readString("labels-which", settings.labels.which);
     settings.labels.type = settings_storage.readString("labels-type", settings.labels.type);
     settings.labels.octave = settings_storage.readBool("labels-octave", settings.labels.octave);
     settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
@@ -1276,8 +1276,8 @@ document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
     writeSettings();
 });
 
-toolbar.menus.labels.where.addEventListener("sl-select", (e) => {
-    setLabelsWhere(e.detail.item.value);
+toolbar.menus.labels.which.addEventListener("sl-select", (e) => {
+    setLabelsWhich(e.detail.item.value);
     if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
@@ -1393,11 +1393,11 @@ function buildKbdNavStructure() {
             ]],
             ["&Labels", [
                 ["&Which keys", [
-                    ["&None", () => setLabelsWhere("none"), {checked: settings.labels.where == "none"}],
-                    ["&Played keys", () => setLabelsWhere("played"), {checked: settings.labels.where == "played"}],
-                    ["&C-keys", () => setLabelsWhere("cs"), {checked: settings.labels.where == "cs"}],
-                    ["&White keys", () => setLabelsWhere("white"), {checked: settings.labels.where == "white"}],
-                    ["&All keys", () => setLabelsWhere("all"), {checked: settings.labels.where == "all"}],
+                    ["&None", () => setLabelsWhich("none"), {checked: settings.labels.which == "none"}],
+                    ["&Played keys", () => setLabelsWhich("played"), {checked: settings.labels.which == "played"}],
+                    ["&C-keys", () => setLabelsWhich("cs"), {checked: settings.labels.which == "cs"}],
+                    ["&White keys", () => setLabelsWhich("white"), {checked: settings.labels.which == "white"}],
+                    ["&All keys", () => setLabelsWhich("all"), {checked: settings.labels.which == "all"}],
                 ]],
                 ["&Type", [
                     ["&English", () => setLabelsType("english"), {checked: settings.labels.type == "english"}],

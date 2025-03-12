@@ -1,5 +1,5 @@
 /*
-SVG Tools Javascript library
+SVG Tools JavaScript module
 Copyright (C) 2025 Josias Matschulat
 
 This program is free software: you can redistribute it and/or modify
