@@ -1874,7 +1874,7 @@ if ( isSafari() ) {
     toolbar.dropdowns.sound.toggleAttribute("hidden", true);
 } else {
     // Dynamically import smplr module
-    import("https://unpkg.com/smplr/dist/index.mjs")
+    import("https://unpkg.com/smplr@0.16.1/dist/index.mjs")
         .then( (result) => {
             sound.cache = new result.CacheStorage("sound_v1");
             sound.apiano = result.SplendidGrandPiano;
