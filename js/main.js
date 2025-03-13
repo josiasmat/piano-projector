@@ -20,7 +20,7 @@ const KBD_HEIGHT = 500;
 
 import SvgTools from "./svgtools.js";
 import { Midi, noteToMidi } from "./midi.js";
-import { KbdNotes} from "./kbdnotes.js";
+import { KbdNotes } from "./kbdnotes.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
 import KbdNav from "./kbdnav.js";
 
@@ -38,7 +38,7 @@ const settings = {
     labels: {
         /** @type {string} "none", "played", "cs", "white", "all" */
         which: "none",
-        /** @type {string} "english", "german", "italian", "pc", "midi" */
+        /** @type {string} "english", "german", "italian", "pc", "midi", "freq" */
         type: "english",
         octave: true,
         get which_badge() {
@@ -172,7 +172,8 @@ const sound = {
     },
     fail_alert: document.getElementById("alert-sound-connection-fail"),
     apiano: null,
-    epiano: null
+    epiano: null,
+    cache: null,
 }
 
 const drag = {
@@ -545,7 +546,7 @@ function drawKeyboard(svg, options = {}) {
     if ( options.top_felt )
         svg_defs.appendChild(makeGradient("top-felt-gradient", [
             { offset: "50%", "stop-color": "var(--color-felt-top)" },
-            { offset: "100%", "stop-color": "var(--color-felt-bottom)" }//, "stop-opacity": "70%" }
+            { offset: "100%", "stop-color": "var(--color-felt-bottom)" }
         ], true));
 
     svg.appendChild(svg_defs);
@@ -1196,13 +1197,13 @@ function loadSound(name = null, menu_item = null) {
         if ( !sound.audio_ctx ) sound.audio_ctx = new AudioContext();
         const sound_params = {
             apiano:  { loader: sound.apiano, 
-                       options: { volume: 90 } },
+                       options: { volume: 90, storage: sound.cache } },
             epiano1: { loader: sound.epiano, 
-                       options: { instrument: "TX81Z", volume: 127 } },
+                       options: { instrument: "TX81Z", volume: 127, storage: sound.cache } },
             epiano2: { loader: sound.epiano, 
-                       options: { instrument: "WurlitzerEP200", volume: 70 } },
+                       options: { instrument: "WurlitzerEP200", volume: 70, storage: sound.cache } },
             epiano3: { loader: sound.epiano, 
-                       options: { instrument: "CP80", volume: 70 } },
+                       options: { instrument: "CP80", volume: 70, storage: sound.cache } },
         };
         sound.player = new sound_params[name].loader(sound.audio_ctx, sound_params[name].options);
         sound.loaded = false;
@@ -1235,7 +1236,7 @@ function loadSound(name = null, menu_item = null) {
     }
 }
 
-document.getElementById("menu-sound").addEventListener("sl-select", (e) => {
+toolbar.menus.sound.addEventListener("sl-select", (e) => {
     loadSound(e.detail.item.value, e.detail.item);
     writeSettings();
 });
@@ -1875,6 +1876,7 @@ if ( isSafari() ) {
     // Dynamically import smplr module
     import("https://unpkg.com/smplr/dist/index.mjs")
         .then( (result) => {
+            sound.cache = new result.CacheStorage("sound_v1");
             sound.apiano = result.SplendidGrandPiano;
             sound.epiano = result.ElectricPiano;
             document.getElementById("menu-sound-item-unavailable").hidden = true;
