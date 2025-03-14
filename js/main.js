@@ -858,9 +858,9 @@ function transpose(params={}) {
             settings.octaves = params.octaves;
     } else {
         if ( Object.hasOwn(params, "semitones") )
-            settings.semitones += params.semitones;
+            settings.semitones = clamp(settings.semitones+params.semitones, -11, 11);
         if ( Object.hasOwn(params, "octaves") )
-            settings.octaves += params.octaves;
+            settings.octaves = clamp(settings.octaves+params.octaves, -2, 2);
     }
     if ( previous_transpose != settings.transpose ) 
         sound.stopAll(true);
@@ -1754,8 +1754,24 @@ function handleKeyDown(e) {
 
 // Auxiliary functions
 
+/** 
+ * @param {number} value
+ * @param {number} min
+ * @param {number} max
+ * @returns {number}
+ */
 function clamp(value, min, max) {
     return (value < min) ? min : ( (value > max) ? max : value );
+}
+
+/** 
+ * @param {number} value
+ * @param {number} div
+ * @param {boolean} allow_negative
+ * @returns {number}
+ */
+function mod(value, div, allow_negative=true) {
+    return (allow_negative || value >= 0) ? value%div : (value%div)+div;
 }
 
 /**
