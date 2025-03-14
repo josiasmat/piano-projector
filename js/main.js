@@ -155,9 +155,12 @@ const sound = {
         return this.type && !this.loaded;
     },
     play(note, vel=100) {
+        if ( this.type == "epiano1" ) note += 12;
+        else if ( this.type == "harpsi" ) vel = 127;
         this.player?.start({ note: note+settings.transpose, velocity: vel });
     },
     stop(note, force) {
+        if ( this.type == "epiano1" ) note += 12;
         if ( force 
              || !( Midi.isNoteOn(note, settings.pedals ? "both" : "none") 
                    || KbdNotes.isNoteSustained(note) ) )
@@ -173,6 +176,7 @@ const sound = {
     fail_alert: document.getElementById("alert-sound-connection-fail"),
     apiano: null,
     epiano: null,
+    versilian: null,
     cache: null,
 }
 
@@ -1196,16 +1200,18 @@ function loadSound(name = null, menu_item = null) {
             menu_item = toolbar.dropdowns.sound.querySelector(`.menu-sound-item[value="${name}"]`);
         if ( !sound.audio_ctx ) sound.audio_ctx = new AudioContext();
         const sound_params = {
-            apiano:  { loader: sound.apiano, 
-                       options: { volume: 90, storage: sound.cache } },
+            apiano:  { loader: sound.apiano, options: { volume: 90 } },
             epiano1: { loader: sound.epiano, 
-                       options: { instrument: "TX81Z", volume: 127, storage: sound.cache } },
+                       options: { instrument: "TX81Z", volume: 127 } },
             epiano2: { loader: sound.epiano, 
-                       options: { instrument: "WurlitzerEP200", volume: 70, storage: sound.cache } },
+                       options: { instrument: "WurlitzerEP200", volume: 70 } },
             epiano3: { loader: sound.epiano, 
-                       options: { instrument: "CP80", volume: 70, storage: sound.cache } },
-        };
-        sound.player = new sound_params[name].loader(sound.audio_ctx, sound_params[name].options);
+                       options: { instrument: "CP80", volume: 70 } },
+            harpsi: { loader: sound.versilian, 
+                       options: { instrument: "Chordophones/Zithers/Harpsichord, Unk", volume: 100 } },
+        }[name];
+        sound_params.storage = sound.cache;
+        sound.player = new sound_params.loader(sound.audio_ctx, sound_params.options);
         sound.loaded = false;
         sound.led = 1;
         menu_item.toggleAttribute("loading", true);
@@ -1895,6 +1901,7 @@ if ( isSafari() ) {
             sound.cache = new result.CacheStorage("sound_v1");
             sound.apiano = result.SplendidGrandPiano;
             sound.epiano = result.ElectricPiano;
+            sound.versilian = result.Versilian;
             document.getElementById("menu-sound-item-unavailable").hidden = true;
             toolbar.menus.sound.querySelectorAll(".menu-sound-item")
                 .forEach((item) => { item.hidden = false });
