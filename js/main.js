@@ -189,7 +189,7 @@ const drag = {
 
 const touch = {
     enabled: false,
-    /** @type {Map<number,number>} */
+    /** @type {Map<number,Set<number>} */
     points: new Map(),
     /** @param {number?} pointer_id @returns {boolean} */
     started(pointer_id=null) {
@@ -200,34 +200,47 @@ const touch = {
     },
     /** @param {number} note @returns {boolean} */
     has_note(note) {
-        for ( const entry of this.points )
-            if ( entry[1] == note ) return true;
+        for ( const entry of this.points.values() )
+            if ( entry.has(note) ) return true;
         return false;
     },
-    /** @param {number} pointer_id @param {number} note */
-    add(pointer_id, note) {
-        this.points.set(pointer_id, note);
-        sound.play(note);
-        updateKeyboardKeys(note, note);
-    },
-    /** @param {number} pointer_id @param {number} note */
-    change(pointer_id, note) {
-        const previous_note = this.points.get(pointer_id);
-        if ( note != previous_note ) {
-            this.points.set(pointer_id, note);
-            if ( previous_note ) sound.stop(previous_note);
-            if ( note ) sound.play(note);
+    /** @param {number} pointer_id @param {Set<number>} notes */
+    add(pointer_id, notes) {
+        if ( this.points.has(pointer_id) )
+            notes = this.points.get(pointer_id).union(notes);
+        this.points.set(pointer_id, notes);
+        for ( const note of notes.values() ) {
+            sound.play(note);
+            updateKeyboardKeys(note, note);
         }
-        updateKeyboardKeys(previous_note, previous_note);
-        updateKeyboardKeys(note, note);
-        return ( note != previous_note );
     },
-    /** @param {number} pointer_id @param {number} key */
+    /** @param {number} pointer_id @param {Set<number>} notes */
+    change(pointer_id, notes) {
+        let changed = false;
+        const previous_notes = new Set().union(this.points.get(pointer_id));
+        this.points.set(pointer_id, notes);
+        for ( const old_note of previous_notes.values() )
+            if ( !notes.has(old_note) ) {
+                sound.stop(old_note);
+                updateKeyboardKeys(old_note, old_note);
+                changed = true;
+            }
+        for ( const new_note of notes.values() )
+            if ( !previous_notes.has(new_note) ) {
+                sound.play(new_note);
+                updateKeyboardKeys(new_note, new_note);
+                changed = true;
+            }
+        return changed;
+    },
+    /** @param {number} pointer_id */
     remove(pointer_id) {
-        const note = this.points.get(pointer_id);
+        const notes = this.points.get(pointer_id);
         this.points.delete(pointer_id);
-        if ( !this.has_note(note) ) sound.stop(note);
-        updateKeyboardKeys(note, note);
+        for ( const note of notes.values() ) {
+            if ( !this.has_note(note) ) sound.stop(note);
+            updateKeyboardKeys(note, note);
+        }
     },
     reset() {
         this.points.clear();
@@ -707,10 +720,9 @@ function updateKeyboardLabel(key, is_on) {
 
 
 function updatePedalIcons() {
-    changeLed("pedr", KbdNotes.isSustainActive() 
-                        || Midi.getLastControlValue(64) / 127);
-    changeLed("pedm", Midi.getLastControlValue(66) / 127);
-    changeLed("pedl", Midi.getLastControlValue(67) / 127);
+    changeLed("pedr", KbdNotes.isSustainActive() || Midi.sustain_pedal_value / 127);
+    changeLed("pedm", Midi.sostenuto_pedal_value / 127);
+    changeLed("pedl", Midi.soft_pedal_value / 127);
 }
 
 
@@ -1549,6 +1561,11 @@ if ( !isMobile() ) {
 
 // Pointer & touch control events
 
+/** 
+ * @param {number} x
+ * @param {number} y
+ * @returns {number?}
+ */
 function findKeyUnderPoint(x, y) {
     const parent = document.elementFromPoint(x, y)?.parentElement;
     return ( parent?.classList.contains("key") )
@@ -1556,43 +1573,81 @@ function findKeyUnderPoint(x, y) {
         : null;
 }
 
+/** 
+ * @param {number} x
+ * @param {number} y
+ * @param {number} rx
+ * @param {number} ry
+ * @param {number} deg
+ * @returns {Set<number>}
+ */
+function findKeysUnderArea(x, y, rx, ry, deg) {
+    // Not the most precise algorithm, because instead of
+    // finding points inside an ellipse, it finds points
+    // inside the largest diameter line of the ellipse.
+    const keys = new Set();
+    const rad = degToRad(deg);
+    rx *= 1.5 * Math.cos(rad);
+    ry *= 1.5 * Math.sin(rad);
+    const [x1,y1] = [x-rx, y-ry];
+    const [x2,y2] = [x+rx, y+ry];
+    const k1 = findKeyUnderPoint(x1, y1);
+    const k2 = findKeyUnderPoint(x2, y2);
+    keys.add(k1).add(k2);
+    const span = Math.abs(k2-k1);
+    if ( span > 1 ) {
+        const [xmin,ymin] = k1 < k2 ? [x1,y1] : [x2,y2];
+        const [xmax,ymax] = k1 > k2 ? [x1,y1] : [x2,y2];
+        const step_x = (xmax - xmin) / span;
+        const step_y = (ymax - ymin) / span;
+        for ( let n = 0.5; n < span; n += 0.5 ) {
+            const [xn,yn] = [xmin+(step_x*n), ymin+(step_y*n)];
+            const kn = findKeyUnderPoint(xn, yn);
+            keys.add(kn);
+        }
+    }
+    return keys;
+}
+
 /** @param {PointerEvent} e */
-function handleKbdPointerDown(e) {
+function handlePianoPointerDown(e) {
     toolbar.dropdowns.closeAll();
     if ( e.pointerType != "touch" && touch.enabled 
          && e.button === 0 && !touch.started(e.pointerId)) {
         const note = findKeyUnderPoint(e.clientX, e.clientY);
         if ( note ) { 
             e.preventDefault();
-            touch.add(e.pointerId, note);
+            touch.add(e.pointerId, new Set([note]));
         }
     }
 }
 
 /** @param {PointerEvent} e */
-function handleKbdPointerUp(e) {
+function handlePianoPointerUp(e) {
     if ( e.pointerType != "touch" && touch.started(e.pointerId) && e.button === 0 )
         touch.remove(e.pointerId);
 }
 
 /** @param {PointerEvent} e */
-function handleKbdPointerMove(e) {
+function handlePianoPointerMove(e) {
     if ( e.pointerType != "touch" && touch.started(e.pointerId) ) {
         e.preventDefault();
         const note = findKeyUnderPoint(e.clientX, e.clientY);
-        touch.change(e.pointerId, note);
+        touch.change(e.pointerId, new Set([note]));
     }
 }
 
 /** @param {TouchEvent} e */
-function handleKbdTouchStart(e) {
+function handlePianoTouchStart(e) {
     if ( touch.enabled ) {
         for ( const t of e.changedTouches )
             if ( !touch.started(t.identifier) ) {
-                const note = findKeyUnderPoint(t.clientX, t.clientY);
-                if ( note ) {
-                    touch.change(t.identifier, note);
-                    navigator.vibrate(-0.23*note+60);
+                const notes = findKeysUnderArea(
+                    t.clientX, t.clientY, t.radiusX, t.radiusY, t.rotationAngle
+                );
+                if ( notes.size ) {
+                    touch.add(t.identifier, notes);
+                    navigator.vibrate(-0.23*notes.values()[0]+60);
                     e.preventDefault();
                 }
             }
@@ -1600,7 +1655,7 @@ function handleKbdTouchStart(e) {
 }
 
 /** @param {TouchEvent} e */
-function handleKbdTouchEnd(e) {
+function handlePianoTouchEnd(e) {
     for ( const t of e.changedTouches )
         if ( touch.started(t.identifier) ) {
             touch.remove(t.identifier);
@@ -1608,37 +1663,42 @@ function handleKbdTouchEnd(e) {
 }
 
 /** @param {TouchEvent} e */
-function handleKbdTouchMove(e) {
+function handlePianoTouchMove(e) {
     for ( const t of e.changedTouches )
         if ( touch.started(t.identifier) ) {
             e.preventDefault();
-            const note = findKeyUnderPoint(t.clientX, t.clientY);
-            touch.change(t.identifier, note) 
-                && navigator.vibrate(-0.23*note+60);
+            const notes = findKeysUnderArea(
+                t.clientX, t.clientY, t.radiusX, t.radiusY, t.rotationAngle
+            );
+            touch.change(t.identifier, notes) 
+                && navigator.vibrate(-0.23*notes.values()[0]+60);
         }
 }
 
 
-kbd.addEventListener("pointerdown", handleKbdPointerDown, { capture: true, passive: false });
-kbd.addEventListener("touchstart", handleKbdTouchStart, { capture: true, passive: false });
-window.addEventListener("pointerup", handleKbdPointerUp, { capture: false, passive: true });
-window.addEventListener("pointercancel", handleKbdPointerUp, { capture: false, passive: true });
-window.addEventListener("touchend", handleKbdTouchEnd, { capture: false, passive: true });
-window.addEventListener("touchcancel", handleKbdTouchEnd, { capture: false, passive: true });
-window.addEventListener("pointermove", handleKbdPointerMove, { capture: false, passive: false });
-window.addEventListener("touchmove", handleKbdTouchMove, { capture: false, passive: false });
+kbd.addEventListener("pointerdown", handlePianoPointerDown, { capture: true, passive: false });
+kbd.addEventListener("touchstart", handlePianoTouchStart, { capture: true, passive: false });
+window.addEventListener("pointerup", handlePianoPointerUp, { capture: false, passive: true });
+window.addEventListener("pointercancel", handlePianoPointerUp, { capture: false, passive: true });
+window.addEventListener("touchend", handlePianoTouchEnd, { capture: false, passive: true });
+window.addEventListener("touchcancel", handlePianoTouchEnd, { capture: false, passive: true });
+window.addEventListener("pointermove", handlePianoPointerMove, { capture: false, passive: false });
+window.addEventListener("touchmove", handlePianoTouchMove, { capture: false, passive: false });
 
 
 // MIDI events
 
+/** @param {number} key @param {number} vel */
 function handleKeyPress(key, vel) {
     updateNote(key);
     sound.play(key, vel);
 }
 
+/** @param {number} key @param {number} vel  @param {number} duration */
 function handleKeyRelease(key, vel, duration) {
-    if ( duration && duration < 100 )
-        setTimeout( () => { updateNote(key); }, 100 - duration);
+    const MIN_HIGHLIGHT_TIME = 100;
+    if ( duration && duration < MIN_HIGHLIGHT_TIME )
+        setTimeout(() => updateNote(key), MIN_HIGHLIGHT_TIME - duration);
     else
         updateNote(key);
     sound.stop(key, false);
@@ -1857,6 +1917,16 @@ function nextOf(value, array) {
     let i = array.indexOf(value) + 1;
     if ( i == array.length ) i = 0;
     return array[i];
+}
+
+
+/**
+ * Convert an angle in degrees to radians.
+ * @param {Number} deg 
+ * @returns {Number}
+ */
+function degToRad(deg) {
+    return deg*(Math.PI/180);
 }
 
 
