@@ -464,17 +464,26 @@ function drawKeyboard(svg, options = {}) {
         );
 
         const light_border = SvgTools.makePath([
-            'M', right, 0, 
-            'H', left,
-            'V', height-round-stroke_width_half
+            'M', left, height-round,
+            'L', left+round, height,
+            'H', right-round,
+            'L', right, height-round,
+            'L', right-round-STROKE_WIDTH, height-20,
+            'H', left+round+STROKE_WIDTH,
+            'Z'
         ], { class: "key-light-border" });
 
         const dark_border = SvgTools.makePath([
-            'M', right, stroke_width_half, 
+            'M', left, 0,
             'V', height-round,
-            'L', right-round, height,
-            'H', left+round,
-            'L', left, height-round
+            'L', left+round+STROKE_WIDTH, height-20,
+            'L', left+STROKE_WIDTH, 0,
+            'Z',
+            'M', right, 0,
+            'V', height-round,
+            'L', right-round-STROKE_WIDTH, height-20,
+            'L', right-STROKE_WIDTH, 0,
+            'Z'
         ], { class: "key-dark-border" });
 
         key_group.appendChild(key_fill);
