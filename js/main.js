@@ -290,6 +290,7 @@ const toolbar = {
     menus: {
         connect: document.getElementById("midi-connection-menu"),
         sound: document.getElementById("menu-sound"),
+        size: document.getElementById("menu-size"),
         labels: {
             top: document.getElementById("menu-labels-top"),
             which: document.getElementById("menu-labels-which"),
@@ -609,6 +610,10 @@ function createKeyboard() {
             break;
         case 25:
             options.first_key = noteToMidi("c3");
+            options.last_key = noteToMidi("c5");
+            break;
+        case 20:
+            options.first_key = noteToMidi("f3");
             options.last_key = noteToMidi("c5");
             break;
         default:
@@ -997,7 +1002,7 @@ function writeSettings() {
 function loadSettings() {
     settings.first_time = settings_storage.readBool("first-time", true);
     settings.height_factor = settings_storage.readNumber("height-factor", isMobile() ? 0.75 : settings.height_factor);
-    settings.number_of_keys = settings_storage.readNumber("number-of-keys", isMobile() ? 25 : settings.number_of_keys);
+    settings.number_of_keys = settings_storage.readNumber("number-of-keys", isMobile() ? 20 : settings.number_of_keys);
     settings.color_white = settings_storage.readString("color-white", settings.color_white);
     settings.color_black = settings_storage.readString("color-black", settings.color_black);
     settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight);
@@ -1997,6 +2002,7 @@ if ( isMobile() ) {
     toolbar.buttons.panic.parentElement.toggleAttribute("disabled", true);
     toolbar.buttons.hide_toolbar.parentElement.toggleAttribute("disabled", true);
     toolbar.buttons.show_toolbar.parentElement.toggleAttribute("disabled", true);
+    toolbar.menus.size.querySelector('.btn-number-of-keys[value="20"]').toggleAttribute("hidden", false);
 }
 
 if ( isSafari() ) {

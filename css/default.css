@@ -88,7 +88,7 @@ div.menu-msg {
 
     & :not(:defined) { visibility: hidden; }
 
-    &[hidden] { display: none; }
+    &[hidden], *[hidden] { display: none; }
 
     #toolbar-title { cursor: pointer; }
 
@@ -419,7 +419,7 @@ div.menu-msg {
             fill: lch(from var(--color-white-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
         }
         &.black-key-label {
-            font-size: 26px;
+            font-size: 25px;
             fill: lch(from var(--color-black-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
             tspan { text-anchor: middle; }
         }
@@ -476,9 +476,6 @@ sl-menu {
     &> sl-divider {
         margin-top: 2px;
         margin-bottom: 2px;
-    }
-    *[hidden] { 
-        display: none; 
     }
 }
 
