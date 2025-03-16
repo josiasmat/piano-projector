@@ -162,8 +162,9 @@ const sound = {
     stop(note, force) {
         if ( this.type == "epiano1" ) note += 12;
         if ( force 
-             || !( Midi.isNoteOn(note, settings.pedals ? "both" : "none") 
-                   || KbdNotes.isNoteSustained(note) ) )
+             || ( !( Midi.isNoteOn(note, settings.pedals ? "both" : "none") 
+                     || KbdNotes.isNoteSustained(note) ) )
+                  && !( this.type == "apiano" && note > 88 ) )
             this.player?.stop(note+settings.transpose);
     },
     stopAll(force) {
@@ -1578,26 +1579,50 @@ function findKeyUnderPoint(x, y) {
  * @param {number} y
  * @param {number} rx
  * @param {number} ry
- * @param {number} deg
+ * @param {number} a_deg
  * @returns {Set<number>}
  */
-function findKeysUnderArea(x, y, rx, ry, deg) {
-    // Not the most precise algorithm, because instead of
-    // finding points inside an ellipse, it finds points
-    // inside the largest diameter line of the ellipse.
-    const keys = new Set();
-    const rad = degToRad(deg);
-    rx *= 1.5 * Math.cos(rad);
-    ry *= 1.5 * Math.sin(rad);
-    const [x1,y1] = [x-rx, y-ry];
-    const [x2,y2] = [x+rx, y+ry];
+function findKeysUnderArea(x, y, rx, ry, a_deg) {
+    const a_rad = degToRad(a_deg);
+    const sin_a = Math.sin(a_rad);
+    const cos_a = Math.cos(a_rad);
+
+    // Vertices of the major axis
+    const [x1,y1] = (rx >= ry)
+        ? [x+(rx*cos_a), y+(rx*sin_a)]
+        : [x-(ry*sin_a), y+(ry*cos_a)];
+    const [x2,y2] = (rx >= ry)
+        ? [x-(rx*cos_a), y-(rx*sin_a)]
+        : [x+(ry*sin_a), y-(ry*cos_a)];
+    // Vertices of the minor axis
+    const [x3,y3] = (rx >= ry)
+        ? [x-(ry*sin_a), y+(ry*cos_a)]
+        : [x+(rx*cos_a), y+(rx*sin_a)];
+    const [x4,y4] = (rx >= ry)
+        ? [x+(ry*sin_a), y-(ry*cos_a)]
+        : [x-(rx*cos_a), y-(rx*sin_a)];
+
     const k1 = findKeyUnderPoint(x1, y1);
     const k2 = findKeyUnderPoint(x2, y2);
-    keys.add(k1).add(k2);
-    const span = Math.abs(k2-k1);
+    const k3 = findKeyUnderPoint(x3, y3);
+    const k4 = findKeyUnderPoint(x4, y4);
+    const keys = new Set([k1,k2,k3,k4]);
+    
+    const kmin = Math.min(k1,k2,k3,k4);
+    const kmax = Math.max(k1,k2,k3,k4);
+    const span = kmax-kmin;
+
+    // If vertices are more than one key apart, find
+    // other keys intersected by the axis
     if ( span > 1 ) {
-        const [xmin,ymin] = k1 < k2 ? [x1,y1] : [x2,y2];
-        const [xmax,ymax] = k1 > k2 ? [x1,y1] : [x2,y2];
+        const [xmin,ymin] = (kmin == k1) ? [x1,y1] : 
+                            (kmin == k2) ? [x2,y2] : 
+                            (kmin == k3) ? [x3,y3] : 
+                                           [x4,y4];
+        const [xmax,ymax] = (kmax == k1) ? [x1,y1] : 
+                            (kmax == k2) ? [x2,y2] : 
+                            (kmax == k3) ? [x3,y3] : 
+                                           [x4,y4];
         const step_x = (xmax - xmin) / span;
         const step_y = (ymax - ymin) / span;
         for ( let n = 0.5; n < span; n += 0.5 ) {
