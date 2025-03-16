@@ -26,20 +26,29 @@ const CC_ALL_NOTES_OFF = 123;
 
 export const Midi = {
 
+    /** @type {(key: number, velocity: number)=>void} */
     onKeyPress: null,
+    /** @type {(key: number, velocity: number, duration: number)=>void} */
     onKeyRelease: null,
+    /** @type {(pc: number)=>void} */
     onPitchClassOn: null,
+    /** @type {(pc: number)=>void} */
     onPitchClassOff: null,
 
+    /** @type {(controller: number, value: number)=>void} */
     onControlChange: null,
+    /** @type {(pressed: boolean, value: number)=>void} */
     onSustainPedal: null,
+    /** @type {(pressed: boolean, value: number)=>void} */
     onSostenutoPedal: null,
 
+    /** @type {()=>void} */
     onReset: null,
 
     /** @type {(Boolean, MIDIPort)} */
     onConnectionChange: null,
 
+    /** @returns {boolean} */
     get browserHasMidiSupport() {
         return navigator.requestMIDIAccess ? true : false;
     },
@@ -195,6 +204,7 @@ export const Midi = {
             ? midi_state.dev : null;
     },
 
+    /** @param {number} key 0-127 @returns {boolean} */
     isKeyPressed(key) {
         if ( key < 0 || key > 127 ) return false;
         return midi_state.keys[key];
@@ -248,23 +258,43 @@ export const Midi = {
         midi_state.reset();
     },
 
+    /** @param {number} value 0-127, default is 64. */
     setPedalThreshold(value) {
         midi_state.pedals.threshold = value;
     },
 
+    /** @returns {boolean} */
     get sustain_pressed() {
         return midi_state.pedals.sustain;
     },
 
+    /** @returns {boolean} */
     get sostenuto_pressed() {
         return midi_state.pedals.sostenuto;
     },
 
+    /** @returns {boolean} */
     get soft_pressed() {
         return midi_state.pedals.soft;
     },
 
+    /** @returns {number} 0-127 */
+    get sustain_pedal_value() {
+        return midi_state.cc[CC_SUSTAIN_PED];
+    },
+
+    /** @returns {number} 0-127 */
+    get sostenuto_pedal_value() {
+        return midi_state.cc[CC_SOSTENUTO_PED];
+    },
+
+    /** @returns {number} 0-127 */
+    get soft_pedal_value() {
+        return midi_state.cc[CC_SOFT_PED];
+    },
+
 }
+
 
 function onMidiPortStateChange(e) {
     if ( e.port.state == "disconnected" && midi_state.dev == e.port )
