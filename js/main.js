@@ -334,8 +334,10 @@ function drawKeyboard(svg, options = {}) {
     const key_rounding = white_key_width / 20;
     const white_key_highlight_inset = 2;
     const black_key_highlight_inset = 2;
+    const black_key_bottom_bevel = black_key_width/2.5;
 
     const stroke_width_half = STROKE_WIDTH/2;
+    const stroke_width_double = STROKE_WIDTH*2;
 
     svg.innerHTML = "";
 
@@ -349,7 +351,7 @@ function drawKeyboard(svg, options = {}) {
     function drawWhiteKey(key, note, offset, width, height, round) {
         const left = offset + STROKE_WIDTH;
         const right = left + width - (2*STROKE_WIDTH);
-        const cut_point = black_key_height + (3*STROKE_WIDTH);
+        const cut_point = black_key_height + (2.5*STROKE_WIDTH);
 
         const black_before = key > first_key && [2,4,7,9,11].includes(note);
         const black_after = key < last_key && [0,2,5,7,9].includes(note);
@@ -433,8 +435,8 @@ function drawKeyboard(svg, options = {}) {
     }
 
     function drawBlackKey(key, offset, width, height, round) {
-        const left = offset + STROKE_WIDTH;
-        const right = left + width - (2*STROKE_WIDTH);
+        const left = offset + stroke_width_half;
+        const right = left + width - STROKE_WIDTH;
 
         const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key black-key", value: key });
 
@@ -464,24 +466,26 @@ function drawKeyboard(svg, options = {}) {
         );
 
         const light_border = SvgTools.makePath([
-            'M', left, height-round,
-            'L', left+round, height,
+            'M', left+round, height,
             'H', right-round,
             'L', right, height-round,
-            'L', right-round-STROKE_WIDTH, height-20,
-            'H', left+round+STROKE_WIDTH,
+            'L', right-round, height,
+            'L', right-round-stroke_width_double, height-black_key_bottom_bevel,
+            'H', left+round+stroke_width_double,
             'Z'
         ], { class: "key-light-border" });
 
         const dark_border = SvgTools.makePath([
             'M', left, 0,
             'V', height-round,
-            'L', left+round+STROKE_WIDTH, height-20,
+            'L', left+round, height,
+            'L', left+round+stroke_width_double, height-black_key_bottom_bevel,
             'L', left+STROKE_WIDTH, 0,
             'Z',
             'M', right, 0,
             'V', height-round,
-            'L', right-round-STROKE_WIDTH, height-20,
+            'L', right-round, height,
+            'L', right-round-stroke_width_double, height-black_key_bottom_bevel,
             'L', right-STROKE_WIDTH, 0,
             'Z'
         ], { class: "key-dark-border" });
@@ -535,7 +539,7 @@ function drawKeyboard(svg, options = {}) {
         } else {
             const black_left = white_left - black_key_width_half + (BK_OFFSETS[note]*black_key_width);
             const black_key = drawBlackKey(key,
-                black_left, black_key_width, black_key_height, key_rounding
+                black_left, black_key_width, black_key_height, key_rounding/2
             );
             const black_key_label = createBlackKeyLabel(key, black_left);
             black_keys_g.appendChild(black_key);
