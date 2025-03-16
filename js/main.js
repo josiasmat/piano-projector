@@ -164,7 +164,7 @@ const sound = {
         if ( force 
              || ( !( Midi.isNoteOn(note, settings.pedals ? "both" : "none") 
                      || KbdNotes.isNoteSustained(note) ) )
-                  && !( this.type == "apiano" && note > 88 ) )
+                  && !( this.type == "apiano" && note+settings.transpose > 88 ) )
             this.player?.stop(note+settings.transpose);
     },
     stopAll(force) {
