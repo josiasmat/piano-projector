@@ -86,6 +86,11 @@ div.menu-msg {
     justify-content: space-between;
     flex-wrap: nowrap;
 
+    &>div {
+        flex-wrap: nowrap;
+        text-wrap: nowrap;
+    }
+
     & :not(:defined) { visibility: hidden; }
 
     &[hidden], *[hidden] { display: none; }
@@ -146,6 +151,8 @@ div.menu-msg {
 
     #dropdown-size { margin-left: 12px; }
 
+    #top-toolbar-right { margin-left: 15px; }
+
     sl-color-picker {
         margin: 20px 30px;
         &::part(input),
@@ -203,68 +210,6 @@ div.menu-msg {
             &#transpose-power-icon { color: #ff0; }
         }
     }
-
-    /* @media (max-width: 1167px) { */
-    @media (max-width: 1202px) {
-        #toolbar-title { display: none; }
-    }
-
-    @media (max-width: 998px) {
-        #btn-sound::part(label) {
-            content-visibility: hidden;
-            padding: 0px 5px;
-        }
-    }
-
-    @media (max-width: 944px) {
-        #btn-connect::part(label) {
-            content-visibility: hidden;
-            padding: 0px 5px;
-        }
-    }
-
-    @media (max-width: 885px) {
-        #btn-pedals::part(label) {
-            content-visibility: hidden;
-            padding: 0px 5px;
-        }
-    }
-
-    @media (max-width: 833px) {
-        #btn-transpose::part(label) {
-            content-visibility: hidden;
-            padding: 0px 5px;
-        }
-    }
-
-    @media (max-width: 756px) {
-        #dropdown-colors { display: none; }
-    }
-
-    @media (max-width: 625px) {
-        #dropdown-size { display: none; }
-    }
-
-    @media (max-width: 525px) {
-        #dropdown-sound { display: none; }
-    }
-
-    @media (max-width: 458px) {
-        #dropdown-labels { display: none; }
-    }
-
-    @media (max-width: 360px) {
-        #dropdown-pedals { display: none; }
-    }
-
-    @media (max-width: 265px) {
-        #btn-panic { display: none; }
-    }
-    
-}
-
-@media (max-width: 210px) {
-    #top-toolbar { display: none; }
 }
 
 #outer-main-area {
@@ -465,6 +410,15 @@ sl-dialog {
             padding-right: 2px;
         }
     } 
+}
+
+.condensed-toolbar-hidden-elm {
+    display: none;
+}
+
+.condensed-toolbar-hidden-label>sl-button::part(label) {
+    content-visibility: hidden;
+    padding: 0px 5px;
 }
 
 sl-dropdown {

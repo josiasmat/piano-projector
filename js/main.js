@@ -261,6 +261,8 @@ const touch = {
 
 
 const toolbar = {
+    self: document.getElementById("top-toolbar"),
+    title: document.getElementById("toolbar-title"),
     dropdowns: {
         connect: document.getElementById("dropdown-connect"),
         sound: document.getElementById("dropdown-sound"),
@@ -284,6 +286,13 @@ const toolbar = {
         }
     },
     buttons: {
+        connect: document.getElementById("btn-connect"),
+        sound: document.getElementById("btn-sound"),
+        transpose: document.getElementById("btn-transpose"),
+        size: document.getElementById("btn-size"),
+        colors: document.getElementById("btn-colors"),
+        labels: document.getElementById("btn-labels"),
+        pedals: document.getElementById("btn-pedals"),
         panic: document.getElementById("btn-panic"),
         hide_toolbar: document.getElementById("btn-hide-toolbar"),
         show_toolbar: document.getElementById("btn-show-toolbar")
@@ -301,6 +310,20 @@ const toolbar = {
     }
 }
 
+const toolbar_condensing_list = [
+    { elm: toolbar.title,               action: "hide-elm" },
+    { elm: toolbar.dropdowns.sound,     action: "hide-label" },
+    { elm: toolbar.dropdowns.connect,   action: "hide-label" },
+    { elm: toolbar.dropdowns.pedals,    action: "hide-label" },
+    { elm: toolbar.dropdowns.transpose, action: "hide-label" },
+    { elm: toolbar.dropdowns.colors,    action: "hide-elm" },
+    { elm: toolbar.dropdowns.size,      action: "hide-elm" },
+    { elm: toolbar.dropdowns.sound,     action: "hide-elm" },
+    { elm: toolbar.dropdowns.labels,    action: "hide-elm" },
+    { elm: toolbar.dropdowns.pedals,    action: "hide-elm" },
+    { elm: toolbar.buttons.panic,       action: "hide-elm" },
+    { elm: toolbar.self,                action: "hide-elm" }
+];
 
 const kbd_container = document.getElementById("main-area");
 const kbd = document.getElementById("kbd");
@@ -769,10 +792,31 @@ function updateToolbar() {
           || ( settings.device_name && Midi.getConnectedPort() )));
     changeLed("transpose-power-icon", ( settings.transpose != 0 ));
     changeLed("sound-power-icon", sound.led, (sound.led == 1 ? "red" : null));
-    document.getElementById("top-toolbar").toggleAttribute("hidden", !settings.toolbar);
+    toolbar.self.toggleAttribute("hidden", !settings.toolbar);
     toolbar.buttons.show_toolbar.toggleAttribute("hidden", settings.toolbar);
     toolbar.dropdowns.pedals.toggleAttribute("hidden", touch.enabled);
     updatePedalIcons();
+    updateToolbarBasedOnWidth();
+}
+
+
+function updateToolbarBasedOnWidth() {
+    // Reset all to know full width
+    for ( const item of toolbar_condensing_list ) {
+        if ( item.action == "hide-elm" )
+            item.elm.classList.toggle("condensed-toolbar-hidden-elm", false);
+        else if ( item.action == "hide-label" )
+            item.elm.classList.toggle("condensed-toolbar-hidden-label", false);
+    }
+    // Try to reduce toolbar elements as needed
+    for ( const item of toolbar_condensing_list ) {
+        if ( toolbar.self.scrollWidth <= toolbar.self.clientWidth )
+            break;
+        if ( item.action == "hide-elm" )
+            item.elm.classList.toggle("condensed-toolbar-hidden-elm", true);
+        else if ( item.action == "hide-label" )
+            item.elm.classList.toggle("condensed-toolbar-hidden-label", true);
+    }
 }
 
 
@@ -1393,10 +1437,13 @@ toolbar.buttons.panic.onclick = midiPanic;
 toolbar.buttons.hide_toolbar.onclick = toggleToolbarVisibility;
 toolbar.buttons.show_toolbar.onclick = toggleToolbarVisibility;
 
-document.getElementById("toolbar-title").onclick = 
+toolbar.title.onclick = 
     () => { document.getElementById("dialog-about").show() };
 
-window.addEventListener("resize", updateKeyboardPosition);
+window.addEventListener("resize", () => {
+    updateToolbarBasedOnWidth();
+    updateKeyboardPosition();
+});
 window.addEventListener("keydown", handleKeyDown);
 // window.onkeyup = handleKeyUp;
 
