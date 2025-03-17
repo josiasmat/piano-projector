@@ -204,39 +204,40 @@ div.menu-msg {
         }
     }
 
-    @media (max-width: 1167px) {
+    /* @media (max-width: 1167px) { */
+    @media (max-width: 1202px) {
         #toolbar-title { display: none; }
     }
 
-    @media (max-width: 963px) {
+    @media (max-width: 998px) {
         #btn-sound::part(label) {
             content-visibility: hidden;
             padding: 0px 5px;
         }
     }
 
-    @media (max-width: 909px) {
+    @media (max-width: 944px) {
         #btn-connect::part(label) {
             content-visibility: hidden;
             padding: 0px 5px;
         }
     }
 
-    @media (max-width: 850px) {
+    @media (max-width: 885px) {
         #btn-pedals::part(label) {
             content-visibility: hidden;
             padding: 0px 5px;
         }
     }
 
-    @media (max-width: 798px) {
+    @media (max-width: 833px) {
         #btn-transpose::part(label) {
             content-visibility: hidden;
             padding: 0px 5px;
         }
     }
 
-    @media (max-width: 721px) {
+    @media (max-width: 756px) {
         #dropdown-colors { display: none; }
     }
 

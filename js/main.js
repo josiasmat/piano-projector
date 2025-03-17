@@ -56,6 +56,7 @@ const settings = {
     zoom: 1.0,
     pedals: true,
     pedal_dim: true,
+    perspective: true,
     top_felt: true,
     toolbar: true,
     semitones: 0,
@@ -335,6 +336,8 @@ function drawKeyboard(svg, options = {}) {
     const key_rounding = white_key_width / 20;
     const white_key_highlight_inset = 2;
     const black_key_highlight_inset = 2;
+    const white_key_top = 2;
+    const black_key_top = -2;
     
     const stroke_width_half = STROKE_WIDTH/2;
 
@@ -367,8 +370,8 @@ function drawKeyboard(svg, options = {}) {
         const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key white-key", value: key });
 
         const key_fill = SvgTools.makePolygon([
-                {x:left_offset, y:0}, 
-                {x:right_offset, y:0},
+                {x:left_offset, y:white_key_top}, 
+                {x:right_offset, y:white_key_top},
                 black_after ? {x:right_offset, y:cut_point-round} : null,
                 black_after ? {x:right_offset+round, y:cut_point} : null,
                 black_after ? {x:right, y:cut_point} : null,
@@ -385,8 +388,8 @@ function drawKeyboard(svg, options = {}) {
 
         const inset = white_key_highlight_inset;
         const key_highlight = SvgTools.makePolygon([
-                {x:left_offset+inset, y:inset-stroke_width_half}, 
-                {x:right_offset-inset, y:inset-stroke_width_half},
+                {x:left_offset+inset, y:white_key_top-stroke_width_half}, 
+                {x:right_offset-inset, y:white_key_top-stroke_width_half},
                 black_after ? {x:right_offset-inset, y:cut_point+inset-round-stroke_width_half} : null,
                 black_after ? {x:right_offset-inset+round+stroke_width_half, y:cut_point+inset} : null,
                 black_after ? {x:right-inset, y:cut_point+inset} : null,
@@ -401,7 +404,7 @@ function drawKeyboard(svg, options = {}) {
             { class: "key-highlight", fill: 'url("#pressed-white-key-highlight-gradient")' }
         );
 
-        const light_array = ['M', left_offset, stroke_width_half,];
+        const light_array = ['M', left_offset, white_key_top+stroke_width_half,];
         if ( black_before ) 
             light_array.push(
                 'V', cut_point-round,
@@ -428,7 +431,7 @@ function drawKeyboard(svg, options = {}) {
                 'V', cut_point,
                 'M', right_offset, cut_point-round,
             );
-        dark_array.push('V', stroke_width_half);
+        dark_array.push('V', white_key_top+stroke_width_half);
         const dark_border = SvgTools.makePath(dark_array, { class: "key-dark-border" } );
 
         key_group.appendChild(key_fill);
@@ -442,12 +445,25 @@ function drawKeyboard(svg, options = {}) {
         const left = offset + stroke_width_half;
         const right = left + width - STROKE_WIDTH;
 
+        const perspective_factor = (key - first_key ) / (last_key - first_key) * 2;
+        const side_bevel = options.perspective ? {
+            left_top: black_key_bevel.side_width_top * perspective_factor,
+            left_bottom: black_key_bevel.side_width_bottom * perspective_factor,
+            right_top: black_key_bevel.side_width_top * (2-perspective_factor),
+            right_bottom: black_key_bevel.side_width_bottom * (2-perspective_factor),
+        } : {
+            left_top: black_key_bevel.side_width_top,
+            left_bottom: black_key_bevel.side_width_bottom,
+            right_top: black_key_bevel.side_width_top,
+            right_bottom: black_key_bevel.side_width_bottom,
+        };
+
         const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key black-key", value: key });
 
         const key_fill = SvgTools.makePolygon(
             [
-                {x:left, y:0}, 
-                {x:right, y:0},
+                {x:left, y:black_key_top}, 
+                {x:right, y:black_key_top},
                 {x:right, y:height-round},
                 {x:right-round, y:height},
                 {x:left+round, y:height},
@@ -459,8 +475,8 @@ function drawKeyboard(svg, options = {}) {
         const inset = black_key_highlight_inset;
         const key_highlight = SvgTools.makePolygon(
             [
-                {x:left+inset, y:inset}, 
-                {x:right-inset, y:inset},
+                {x:left+inset, y:black_key_top}, 
+                {x:right-inset, y:black_key_top},
                 {x:right-inset, y:height-inset-round+stroke_width_half},
                 {x:right-round-inset+stroke_width_half, y:height-inset},
                 {x:left+inset+round-stroke_width_half, y:height-inset},
@@ -474,23 +490,23 @@ function drawKeyboard(svg, options = {}) {
             'H', right-round,
             'L', right, height-round,
             'L', right-round, height,
-            'L', right-round-black_key_bevel.side_width_bottom, height-black_key_bevel.bottom_height,
-            'H', left+round+black_key_bevel.side_width_bottom,
+            'L', right-round-side_bevel.right_bottom, height-black_key_bevel.bottom_height,
+            'H', left+round+side_bevel.left_bottom,
             'Z'
         ], { class: "key-light-border" });
 
         const dark_border = SvgTools.makePath([
-            'M', left, 0,
+            'M', left, black_key_top,
             'V', height-round,
             'L', left+round, height,
-            'L', left+round+black_key_bevel.side_width_bottom, height-black_key_bevel.bottom_height,
-            'L', left+black_key_bevel.side_width_top, 0,
+            'L', left+round+side_bevel.left_bottom, height-black_key_bevel.bottom_height,
+            'L', left+side_bevel.left_top, black_key_top,
             'Z',
-            'M', right, 0,
+            'M', right, black_key_top,
             'V', height-round,
             'L', right-round, height,
-            'L', right-round-black_key_bevel.side_width_bottom, height-black_key_bevel.bottom_height,
-            'L', right-black_key_bevel.side_width_top, 0,
+            'L', right-round-side_bevel.right_bottom, height-black_key_bevel.bottom_height,
+            'L', right-side_bevel.right_top, black_key_top,
             'Z'
         ], { class: "key-dark-border" });
 
@@ -577,12 +593,10 @@ function drawKeyboard(svg, options = {}) {
         { offset: "0%", "stop-color": "var(--color-highlight)", "stop-opacity": "50%" },
         { offset: "50%", "stop-color": "var(--color-highlight)" }
     ], true));
-
-    if ( options.top_felt )
-        svg_defs.appendChild(makeGradient("top-felt-gradient", [
-            { offset: "50%", "stop-color": "var(--color-felt-top)" },
-            { offset: "100%", "stop-color": "var(--color-felt-bottom)" }
-        ], true));
+    svg_defs.appendChild(makeGradient("top-felt-gradient", [
+        { offset: "50%", "stop-color": "var(--color-felt-top)" },
+        { offset: "100%", "stop-color": "var(--color-felt-bottom)" }
+    ], true));
 
     svg.appendChild(svg_defs);
 
@@ -592,6 +606,7 @@ function drawKeyboard(svg, options = {}) {
 function createKeyboard() {
     const options = {
         height_factor: settings.height_factor,
+        perspective: settings.perspective,
         top_felt: settings.top_felt
     };
     switch ( settings.number_of_keys ) {
@@ -792,6 +807,7 @@ function updateColorsMenu() {
     document.getElementById("color-white").value = settings.color_white;
     document.getElementById("color-black").value = settings.color_black;
     document.getElementById("color-pressed").value = settings.color_highlight;
+    document.getElementById("menu-perspective").checked = settings.perspective;
     document.getElementById("menu-top-felt").checked = settings.top_felt;
 }
 
@@ -989,6 +1005,7 @@ function writeSettings() {
     settings_storage.writeString("labels-which", settings.labels.which);
     settings_storage.writeString("labels-type", settings.labels.type);
     settings_storage.writeBool("labels-octave", settings.labels.octave);
+    settings_storage.writeBool("perspective", settings.perspective);
     settings_storage.writeBool("top-felt", settings.top_felt);
     settings_storage.writeBool("pedals", settings.pedals);
     settings_storage.writeBool("pedal-dim", settings.pedal_dim);
@@ -1012,6 +1029,7 @@ function loadSettings() {
     settings.labels.which = settings_storage.readString("labels-which", settings.labels.which);
     settings.labels.type = settings_storage.readString("labels-type", settings.labels.type);
     settings.labels.octave = settings_storage.readBool("labels-octave", settings.labels.octave);
+    settings.perspective = settings_storage.readBool("perspective", settings.perspective);
     settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
     settings.pedals = settings_storage.readBool("pedals", settings.pedals);
     settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
@@ -1293,6 +1311,13 @@ toolbar.dropdowns.size.querySelectorAll(".btn-key-depth").forEach((item) => {
         setKeyDepth(parseFloat(e.currentTarget.value));
         if ( isMobile() ) toolbar.dropdowns.size.hide();
     });
+});
+
+document.getElementById("menu-perspective").addEventListener("click", () => {
+    settings.perspective = !settings.perspective;
+    createKeyboard();
+    writeSettings();
+    if ( isMobile() ) toolbar.dropdowns.colors.hide();
 });
 
 document.getElementById("menu-top-felt").addEventListener("click", () => {
