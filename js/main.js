@@ -1327,6 +1327,7 @@ function loadSound(name = null, menu_item = null) {
         }
         sound.player.load.then(() => { 
             onLoadFinished(true);
+            sound.audio_ctx.resume();
             writeSettings();
         }, (reason) => {
             sound.player = null;
@@ -1680,6 +1681,13 @@ function findKeysUnderArea(x, y, rx, ry, a_deg) {
     const sin_a = Math.sin(a_rad);
     const cos_a = Math.cos(a_rad);
 
+    // For some reason, Safari appears to
+    // inflate touch area
+    if ( isSafari() ) {
+        rx /= 10;
+        ry /= 10;
+    }
+
     // Vertices of the major axis
     const [x1,y1] = (rx >= ry)
         ? [x+(rx*cos_a), y+(rx*sin_a)]
@@ -1742,8 +1750,10 @@ function handlePianoPointerDown(e) {
 
 /** @param {PointerEvent} e */
 function handlePianoPointerUp(e) {
-    if ( e.pointerType != "touch" && touch.started(e.pointerId) && e.button === 0 )
+    if ( e.pointerType != "touch" && touch.started(e.pointerId) && e.button === 0 ) {
         touch.remove(e.pointerId);
+        e.preventDefault();
+    }
 }
 
 /** @param {PointerEvent} e */
@@ -1777,6 +1787,7 @@ function handlePianoTouchEnd(e) {
     for ( const t of e.changedTouches )
         if ( touch.started(t.identifier) ) {
             touch.remove(t.identifier);
+            e.preventDefault();
         }
 }
 
@@ -1796,10 +1807,10 @@ function handlePianoTouchMove(e) {
 
 kbd.addEventListener("pointerdown", handlePianoPointerDown, { capture: true, passive: false });
 kbd.addEventListener("touchstart", handlePianoTouchStart, { capture: true, passive: false });
-window.addEventListener("pointerup", handlePianoPointerUp, { capture: false, passive: true });
-window.addEventListener("pointercancel", handlePianoPointerUp, { capture: false, passive: true });
-window.addEventListener("touchend", handlePianoTouchEnd, { capture: false, passive: true });
-window.addEventListener("touchcancel", handlePianoTouchEnd, { capture: false, passive: true });
+window.addEventListener("pointerup", handlePianoPointerUp, { capture: false, passive: false });
+window.addEventListener("pointercancel", handlePianoPointerUp, { capture: false, passive: false });
+window.addEventListener("touchend", handlePianoTouchEnd, { capture: false, passive: false });
+window.addEventListener("touchcancel", handlePianoTouchEnd, { capture: false, passive: false });
 window.addEventListener("pointermove", handlePianoPointerMove, { capture: false, passive: false });
 window.addEventListener("touchmove", handlePianoTouchMove, { capture: false, passive: false });
 
