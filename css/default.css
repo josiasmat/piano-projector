@@ -445,7 +445,7 @@ div.menu-msg {
     }        
     .key-dark-border {
         fill: var(--color-key-dark-border);
-        fill-opacity: 30%;
+        fill-opacity: 40%;
     }
 }
 

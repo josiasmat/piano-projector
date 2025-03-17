@@ -335,11 +335,14 @@ function drawKeyboard(svg, options = {}) {
     const key_rounding = white_key_width / 20;
     const white_key_highlight_inset = 2;
     const black_key_highlight_inset = 2;
-    const black_key_bottom_bevel = black_key_width/2.5;
-
+    
     const stroke_width_half = STROKE_WIDTH/2;
-    const stroke_width_double = STROKE_WIDTH*2;
 
+    const black_key_bevel = {
+        bottom_height: black_key_width/2.5*(Math.max(height_factor-0.5,0)/2+0.75),
+        side_width_bottom: STROKE_WIDTH*4,
+        side_width_top: STROKE_WIDTH*2
+    }
     svg.innerHTML = "";
 
     for ( let key = 0; key < 128; key++ )
@@ -471,8 +474,8 @@ function drawKeyboard(svg, options = {}) {
             'H', right-round,
             'L', right, height-round,
             'L', right-round, height,
-            'L', right-round-stroke_width_double, height-black_key_bottom_bevel,
-            'H', left+round+stroke_width_double,
+            'L', right-round-black_key_bevel.side_width_bottom, height-black_key_bevel.bottom_height,
+            'H', left+round+black_key_bevel.side_width_bottom,
             'Z'
         ], { class: "key-light-border" });
 
@@ -480,14 +483,14 @@ function drawKeyboard(svg, options = {}) {
             'M', left, 0,
             'V', height-round,
             'L', left+round, height,
-            'L', left+round+stroke_width_double, height-black_key_bottom_bevel,
-            'L', left+STROKE_WIDTH, 0,
+            'L', left+round+black_key_bevel.side_width_bottom, height-black_key_bevel.bottom_height,
+            'L', left+black_key_bevel.side_width_top, 0,
             'Z',
             'M', right, 0,
             'V', height-round,
             'L', right-round, height,
-            'L', right-round-stroke_width_double, height-black_key_bottom_bevel,
-            'L', right-STROKE_WIDTH, 0,
+            'L', right-round-black_key_bevel.side_width_bottom, height-black_key_bevel.bottom_height,
+            'L', right-black_key_bevel.side_width_top, 0,
             'Z'
         ], { class: "key-dark-border" });
 
