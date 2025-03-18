@@ -373,7 +373,7 @@ function drawKeyboard(svg, options = {}) {
     const stroke_width_half = STROKE_WIDTH/2;
 
     const black_key_bevel = {
-        bottom_height: black_key_width/2.5*(Math.max(height_factor-0.5,0)/2+0.75),
+        bottom_height: black_key_width/2*(Math.max(height_factor-0.5,0)/2+0.75),
         side_width_bottom: STROKE_WIDTH*4,
         side_width_top: STROKE_WIDTH*2,
         side_width_min: 0,
