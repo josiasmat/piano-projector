@@ -349,6 +349,8 @@ function drawKeyboard(svg, options = {}) {
     const height_factor = options.height_factor ?? 1.0;
     const first_key = options.first_key ?? noteToMidi("a0");
     const last_key = options.last_key ?? noteToMidi("c8");
+    const keys_count = last_key - first_key;
+    const kbd_center = (first_key + last_key) / 2;
 
     const white_key_height = height * height_factor;
     const black_key_height = white_key_height * (0.14 * height_factor + 0.51);
@@ -480,7 +482,8 @@ function drawKeyboard(svg, options = {}) {
 
     function computeLateralDisplacement(key) {
         if ( !options.perspective || WHITE_NOTE[key%12] ) return 0;
-        const perspective_factor = (key - first_key ) / (last_key - first_key) * 2 - 1;
+        // Restrict maximum displacement based on number of keys
+        const perspective_factor = (key - kbd_center) / ((88 + keys_count) / 4);
         return perspective_factor * black_key_bevel.side_width_max;
     }
 
