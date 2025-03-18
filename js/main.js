@@ -607,7 +607,7 @@ function drawKeyboard(svg, options = {}) {
     }
 
     function createBlackKeyLabel(keynum, left) {
-        const center = left + black_key_width_half + computeLateralDisplacement(keynum)/4;
+        const center = left + black_key_width_half + computeLateralDisplacement(keynum)/2;
         const elm = SvgTools.createElement("text", {
             x: center, y: black_key_height - white_key_width_half,
             id: `keylabel${keynum}`, class: "key-label black-key-label"
