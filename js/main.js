@@ -479,6 +479,7 @@ function drawKeyboard(svg, options = {}) {
     }
 
     function computeLateralDisplacement(key) {
+        if ( !options.perspective || WHITE_NOTE[key%12] ) return 0;
         const perspective_factor = (key - first_key ) / (last_key - first_key) * 2 - 1;
         return perspective_factor * black_key_bevel.side_width_max;
     }
@@ -606,8 +607,7 @@ function drawKeyboard(svg, options = {}) {
     }
 
     function createBlackKeyLabel(keynum, left) {
-        const center = left + black_key_width_half 
-            + ( options.perspective ? computeLateralDisplacement(keynum)/4 : 0);
+        const center = left + black_key_width_half + computeLateralDisplacement(keynum)/4;
         const elm = SvgTools.createElement("text", {
             x: center, y: black_key_height - white_key_width_half,
             id: `keylabel${keynum}`, class: "key-label black-key-label"
