@@ -359,16 +359,30 @@ function drawKeyboard(svg, options = {}) {
     const key_rounding = white_key_width / 20;
     const white_key_highlight_inset = 2;
     const black_key_highlight_inset = 2;
-    const white_key_top = 2;
-    const black_key_top = -2;
+
+    const top_felt = {
+        top: -4,
+        height: 7,
+        get bottom() { return this.top + this.height }
+    }
     
+    const white_key_top = top_felt.bottom-1;
+    const black_key_top = top_felt.bottom-5;
+    const black_key_base_top = top_felt.bottom+1;
+
     const stroke_width_half = STROKE_WIDTH/2;
 
     const black_key_bevel = {
         bottom_height: black_key_width/2.5*(Math.max(height_factor-0.5,0)/2+0.75),
         side_width_bottom: STROKE_WIDTH*4,
-        side_width_top: STROKE_WIDTH*2
+        side_width_top: STROKE_WIDTH*2,
+        side_width_min: 0,
+        side_width_max: 0
     }
+    black_key_bevel.side_width_min = Math.min(black_key_bevel.side_width_top,
+                                              black_key_bevel.side_width_bottom);
+    black_key_bevel.side_width_max = Math.max(black_key_bevel.side_width_top,
+                                              black_key_bevel.side_width_bottom);
     svg.innerHTML = "";
 
     for ( let key = 0; key < 128; key++ )
@@ -464,33 +478,55 @@ function drawKeyboard(svg, options = {}) {
         return key_group;
     }
 
+    function computeLateralDisplacement(key) {
+        const perspective_factor = (key - first_key ) / (last_key - first_key) * 2 - 1;
+        return perspective_factor * black_key_bevel.side_width_max;
+    }
+
     function drawBlackKey(key, offset, width, height, round) {
         const left = offset + stroke_width_half;
         const right = left + width - STROKE_WIDTH;
 
-        const perspective_factor = (key - first_key ) / (last_key - first_key) * 2;
+        const lateral_displacement = computeLateralDisplacement(key) * 1.5;
+
         const side_bevel = options.perspective ? {
-            left_top: black_key_bevel.side_width_top * perspective_factor,
-            left_bottom: black_key_bevel.side_width_bottom * perspective_factor,
-            right_top: black_key_bevel.side_width_top * (2-perspective_factor),
-            right_bottom: black_key_bevel.side_width_bottom * (2-perspective_factor),
+            left_top: Math.max(0, black_key_bevel.side_width_top + lateral_displacement),
+            left_bottom: Math.max(0, black_key_bevel.side_width_bottom + lateral_displacement),
+            right_top: Math.max(0, black_key_bevel.side_width_top - lateral_displacement),
+            right_bottom: Math.max(0, black_key_bevel.side_width_bottom - lateral_displacement)
         } : {
             left_top: black_key_bevel.side_width_top,
             left_bottom: black_key_bevel.side_width_bottom,
             right_top: black_key_bevel.side_width_top,
-            right_bottom: black_key_bevel.side_width_bottom,
+            right_bottom: black_key_bevel.side_width_bottom
         };
+
+        const body = options.perspective ? {
+            left_top: Math.min(left, left + black_key_bevel.side_width_top + lateral_displacement),
+            left_bottom: Math.min(left, left + black_key_bevel.side_width_bottom + lateral_displacement),
+            right_top: Math.max(right, right - black_key_bevel.side_width_top + lateral_displacement),
+            right_bottom: Math.max(right, right - black_key_bevel.side_width_bottom + lateral_displacement)
+        } : {
+            left_top: left,
+            left_bottom: left,
+            right_top: right,
+            right_bottom: right
+        }
 
         const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key black-key", value: key });
 
         const key_fill = SvgTools.makePolygon(
             [
-                {x:left, y:black_key_top}, 
-                {x:right, y:black_key_top},
+                {x:body.left_top, y:black_key_base_top}, 
+                {x:body.left_top+side_bevel.left_top, y:black_key_top}, 
+                {x:body.right_top-side_bevel.right_top, y:black_key_top},
+                {x:body.right_top, y:black_key_base_top},
+                {x:body.right_bottom, y:height-black_key_bevel.bottom_height},
                 {x:right, y:height-round},
                 {x:right-round, y:height},
                 {x:left+round, y:height},
-                {x:left, y:height-round}
+                {x:left, y:height-round},
+                {x:body.left_bottom, y:height-black_key_bevel.bottom_height}
             ], 
             { class: "key-fill", fill: "var(--color-black-key)" }
         );
@@ -498,12 +534,22 @@ function drawKeyboard(svg, options = {}) {
         const inset = black_key_highlight_inset;
         const key_highlight = SvgTools.makePolygon(
             [
-                {x:left+inset, y:black_key_top}, 
-                {x:right-inset, y:black_key_top},
+                {x:body.left_top+inset, y:black_key_base_top}, 
+                {x:Math.max(
+                        body.left_top+inset,
+                        body.left_top+side_bevel.left_top
+                    ), y:black_key_top}, 
+                {x:Math.min(
+                        body.right_top-inset,
+                        body.right_top-side_bevel.right_top   
+                    ), y:black_key_top },
+                {x:body.right_top-inset, y:black_key_base_top},
+                {x:body.right_bottom-inset, y:height-inset-black_key_bevel.bottom_height},
                 {x:right-inset, y:height-inset-round+stroke_width_half},
                 {x:right-round-inset+stroke_width_half, y:height-inset},
                 {x:left+inset+round-stroke_width_half, y:height-inset},
-                {x:left+inset, y:height-inset-round+stroke_width_half}
+                {x:left+inset, y:height-inset-round+stroke_width_half},
+                {x:body.left_bottom+inset, y:height-inset-black_key_bevel.bottom_height}
             ], 
             { class: "key-highlight", fill: 'url("#pressed-black-key-highlight-gradient")'}
         );
@@ -513,29 +559,38 @@ function drawKeyboard(svg, options = {}) {
             'H', right-round,
             'L', right, height-round,
             'L', right-round, height,
-            'L', right-round-side_bevel.right_bottom, height-black_key_bevel.bottom_height,
-            'H', left+round+side_bevel.left_bottom,
+            'L', body.right_bottom-side_bevel.right_bottom, height-black_key_bevel.bottom_height,
+            'H', body.left_bottom+side_bevel.left_bottom,
             'Z'
         ], { class: "key-light-border" });
 
-        const dark_border = SvgTools.makePath([
-            'M', left, black_key_top,
-            'V', height-round,
-            'L', left+round, height,
-            'L', left+round+side_bevel.left_bottom, height-black_key_bevel.bottom_height,
-            'L', left+side_bevel.left_top, black_key_top,
-            'Z',
-            'M', right, black_key_top,
-            'V', height-round,
-            'L', right-round, height,
-            'L', right-round-side_bevel.right_bottom, height-black_key_bevel.bottom_height,
-            'L', right-side_bevel.right_top, black_key_top,
-            'Z'
-        ], { class: "key-dark-border" });
-
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
-        key_group.appendChild(dark_border);
+
+        if ( side_bevel.left_bottom > 0 || side_bevel.left_top > 0 ) {
+            const dark_border_left = SvgTools.makePath([
+                'M', body.left_top, black_key_base_top,
+                'L', body.left_bottom, height-round,
+                'L', body.left_bottom+round, height,
+                'L', body.left_bottom+side_bevel.left_bottom, height-black_key_bevel.bottom_height,
+                'L', body.left_top+side_bevel.left_top, black_key_top,
+                'Z'
+            ], { class: "key-dark-border" });
+            key_group.appendChild(dark_border_left);
+        }
+
+        if ( side_bevel.right_bottom > 0 || side_bevel.right_top > 0 ) {
+            const dark_border_right = SvgTools.makePath([
+                'M', body.right_top, black_key_base_top,
+                'L', body.right_bottom, height-round,
+                'L', body.right_bottom-round, height,
+                'L', body.right_bottom-side_bevel.right_bottom, height-black_key_bevel.bottom_height,
+                'L', body.right_top-side_bevel.right_top, black_key_top,
+                'Z'
+            ], { class: "key-dark-border" });
+            key_group.appendChild(dark_border_right);
+        }
+        
         key_group.appendChild(light_border);
         return key_group;
     }
@@ -551,7 +606,8 @@ function drawKeyboard(svg, options = {}) {
     }
 
     function createBlackKeyLabel(keynum, left) {
-        const center = left + black_key_width_half;
+        const center = left + black_key_width_half 
+            + ( options.perspective ? computeLateralDisplacement(keynum)/4 : 0);
         const elm = SvgTools.createElement("text", {
             x: center, y: black_key_height - white_key_width_half,
             id: `keylabel${keynum}`, class: "key-label black-key-label"
@@ -593,7 +649,10 @@ function drawKeyboard(svg, options = {}) {
     }
     
     svg.appendChild(white_keys_g);
-    svg.appendChild(SvgTools.makeRect(width, 7, 0, -4, null, null, { id: "top-felt" }));
+    svg.appendChild(SvgTools.makeRect(
+        width, top_felt.height, 0, top_felt.top, null, null, 
+        { id: "top-felt" })
+    );
     svg.appendChild(black_keys_g);
     svg.setAttribute("viewBox", `-2 -4 ${width+STROKE_WIDTH+2} ${white_key_height+STROKE_WIDTH+4}`);
 
