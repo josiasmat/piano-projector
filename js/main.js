@@ -358,7 +358,7 @@ function drawKeyboard(svg, options = {}) {
     const black_key_width = height * 1.45 / 15.5;
     const white_key_width_half = white_key_width / 2;
     const black_key_width_half = black_key_width / 2;
-    const key_rounding = white_key_width / 20;
+    const key_rounding = white_key_width / 18;
     const white_key_highlight_inset = 2;
     const black_key_highlight_inset = 2;
 
@@ -411,16 +411,14 @@ function drawKeyboard(svg, options = {}) {
         const key_fill = SvgTools.makePolygon([
                 {x:left_offset, y:white_key_top}, 
                 {x:right_offset, y:white_key_top},
-                black_after ? {x:right_offset, y:cut_point-round} : null,
-                black_after ? {x:right_offset+round, y:cut_point} : null,
+                black_after ? {x:right_offset, y:cut_point} : null,
                 black_after ? {x:right, y:cut_point} : null,
                 {x:right, y:height-round},
                 {x:right-round, y:height},
                 {x:left+round, y:height},
                 {x:left, y:height-round},
                 black_before ? {x:left, y:cut_point} : null,
-                black_before ? {x:left_offset-round, y:cut_point} : null,
-                black_before ? {x:left_offset, y:cut_point-round} : null
+                black_before ? {x:left_offset, y:cut_point} : null
             ], 
             { class: "key-fill", fill: "var(--color-white-key)" }
         );
@@ -429,33 +427,29 @@ function drawKeyboard(svg, options = {}) {
         const key_highlight = SvgTools.makePolygon([
                 {x:left_offset+inset, y:white_key_top-stroke_width_half}, 
                 {x:right_offset-inset, y:white_key_top-stroke_width_half},
-                black_after ? {x:right_offset-inset, y:cut_point+inset-round-stroke_width_half} : null,
-                black_after ? {x:right_offset-inset+round+stroke_width_half, y:cut_point+inset} : null,
+                black_after ? {x:right_offset-inset, y:cut_point+inset} : null,
                 black_after ? {x:right-inset, y:cut_point+inset} : null,
                 {x:right-inset, y:height-inset-round+stroke_width_half},
                 {x:right-round-inset+stroke_width_half, y:height-inset},
                 {x:left+inset+round-stroke_width_half, y:height-inset},
                 {x:left+inset, y:height-inset-round+stroke_width_half},
                 black_before ? {x:left+inset, y:cut_point+inset} : null,
-                black_before ? {x:left_offset+inset-round-stroke_width_half, y:cut_point+inset} : null,
-                black_before ? {x:left_offset+inset, y:cut_point+inset-round-stroke_width_half} : null
+                black_before ? {x:left_offset+inset, y:cut_point+inset} : null
             ], 
             { class: "key-highlight", fill: 'url("#pressed-white-key-highlight-gradient")' }
         );
 
-        const light_array = ['M', left_offset, white_key_top+stroke_width_half,];
+        const light_array = ['M', left_offset, white_key_top+stroke_width_half];
         if ( black_before ) 
             light_array.push(
-                'V', cut_point-round,
-                'L', left_offset-round, cut_point,
+                'V', cut_point,
                 'H', left
             );
         light_array.push('L', left, height-round-stroke_width_half);
         if ( black_after ) 
             light_array.push(
                 'M', right, cut_point,
-                'H', right_offset+round, 
-                'L', right_offset+STROKE_WIDTH/4, cut_point-round+STROKE_WIDTH/4
+                'H', right_offset
             );
         const light_border = SvgTools.makePath(light_array, { class: "key-light-border" } );
 
@@ -468,7 +462,7 @@ function drawKeyboard(svg, options = {}) {
         if ( black_after ) 
             dark_array.push(
                 'V', cut_point,
-                'M', right_offset, cut_point-round,
+                'M', right_offset, cut_point,
             );
         dark_array.push('V', white_key_top+stroke_width_half);
         const dark_border = SvgTools.makePath(dark_array, { class: "key-dark-border" } );
@@ -487,7 +481,7 @@ function drawKeyboard(svg, options = {}) {
         return perspective_factor * black_key_bevel.side_width_max;
     }
 
-    function drawBlackKey(key, offset, width, height, round) {
+    function drawBlackKey(key, offset, width, height) {
         const left = offset + stroke_width_half;
         const right = left + width - STROKE_WIDTH;
 
@@ -526,10 +520,8 @@ function drawKeyboard(svg, options = {}) {
                 {x:body.right_top-side_bevel.right_top, y:black_key_top},
                 {x:body.right_top, y:black_key_base_top},
                 {x:body.right_bottom, y:height-black_key_bevel.bottom_height},
-                {x:right, y:height-round},
-                {x:right-round, y:height},
-                {x:left+round, y:height},
-                {x:left, y:height-round},
+                {x:right, y:height},
+                {x:left, y:height},
                 {x:body.left_bottom, y:height-black_key_bevel.bottom_height}
             ], 
             { class: "key-fill", fill: "var(--color-black-key)" }
@@ -549,20 +541,16 @@ function drawKeyboard(svg, options = {}) {
                     ), y:black_key_top },
                 {x:body.right_top-inset, y:black_key_base_top},
                 {x:body.right_bottom-inset, y:height-inset-black_key_bevel.bottom_height},
-                {x:right-inset, y:height-inset-round+stroke_width_half},
-                {x:right-round-inset+stroke_width_half, y:height-inset},
-                {x:left+inset+round-stroke_width_half, y:height-inset},
-                {x:left+inset, y:height-inset-round+stroke_width_half},
+                {x:right-inset, y:height-inset},
+                {x:left+inset, y:height-inset},
                 {x:body.left_bottom+inset, y:height-inset-black_key_bevel.bottom_height}
             ], 
             { class: "key-highlight", fill: 'url("#pressed-black-key-highlight-gradient")'}
         );
 
         const light_border = SvgTools.makePath([
-            'M', left+round, height,
-            'H', right-round,
-            'L', right, height-round,
-            'L', right-round, height,
+            'M', left, height,
+            'H', right,
             'L', body.right_bottom-side_bevel.right_bottom, height-black_key_bevel.bottom_height,
             'H', body.left_bottom+side_bevel.left_bottom,
             'Z'
@@ -574,8 +562,7 @@ function drawKeyboard(svg, options = {}) {
         if ( side_bevel.left_bottom > 0 || side_bevel.left_top > 0 ) {
             const dark_border_left = SvgTools.makePath([
                 'M', body.left_top, black_key_base_top,
-                'L', body.left_bottom, height-round,
-                'L', body.left_bottom+round, height,
+                'L', body.left_bottom, height,
                 'L', body.left_bottom+side_bevel.left_bottom, height-black_key_bevel.bottom_height,
                 'L', body.left_top+side_bevel.left_top, black_key_top,
                 'Z'
@@ -586,8 +573,7 @@ function drawKeyboard(svg, options = {}) {
         if ( side_bevel.right_bottom > 0 || side_bevel.right_top > 0 ) {
             const dark_border_right = SvgTools.makePath([
                 'M', body.right_top, black_key_base_top,
-                'L', body.right_bottom, height-round,
-                'L', body.right_bottom-round, height,
+                'L', body.right_bottom, height,
                 'L', body.right_bottom-side_bevel.right_bottom, height-black_key_bevel.bottom_height,
                 'L', body.right_top-side_bevel.right_top, black_key_top,
                 'Z'
@@ -641,7 +627,7 @@ function drawKeyboard(svg, options = {}) {
         } else {
             const black_left = white_left - black_key_width_half + (BK_OFFSETS[note]*black_key_width);
             const black_key = drawBlackKey(key,
-                black_left, black_key_width, black_key_height, key_rounding/2
+                black_left, black_key_width, black_key_height
             );
             const black_key_label = createBlackKeyLabel(key, black_left);
             black_keys_g.appendChild(black_key);

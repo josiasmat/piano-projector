@@ -275,16 +275,6 @@ div.menu-msg {
             pointer-events: fill;
         }
 
-        .key-light-border {
-            pointer-events: stroke;
-            stroke-width: 1.5px;
-            stroke-linecap: square;
-        }
-
-        .key-dark-border {
-            pointer-events: fill;
-        }
-
         .key-highlight {
             pointer-events: none;
             will-change: opacity;
@@ -374,17 +364,24 @@ div.menu-msg {
 }
 
 .white-key {
+    .key-light-border, .key-dark-border {
+        stroke-width: 1.5px;
+        stroke-linecap: square;
+        fill: none;
+        pointer-events: stroke;
+    }
     .key-light-border {
         stroke: color-mix(in srgb, var(--color-key-light-border) 70%, var(--color-white-key));
-        fill: none;
     }        
     .key-dark-border {
         stroke: color-mix(in srgb, var(--color-key-dark-border) 70%, var(--color-white-key));
-        fill: none;
     }
 }
 
 .black-key {
+    .key-light-border, .key-dark-border {
+        pointer-events: fill;
+    }
     .key-light-border {
         fill: var(--color-key-light-border);
         fill-opacity: 30%;
