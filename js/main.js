@@ -1823,7 +1823,7 @@ function handlePianoTouchStart(e) {
                 );
                 if ( notes.size ) {
                     touch.add(t.identifier, notes);
-                    navigator.vibrate(-0.23*notes.values()[0]+60);
+                    navigator.vibrate(50);
                     e.preventDefault();
                 }
             }
@@ -1848,7 +1848,7 @@ function handlePianoTouchMove(e) {
                 t.clientX, t.clientY, t.radiusX, t.radiusY, t.rotationAngle
             );
             touch.change(t.identifier, notes) 
-                && navigator.vibrate(-0.23*notes.values()[0]+60);
+                && navigator.vibrate(50);
         }
 }
 
