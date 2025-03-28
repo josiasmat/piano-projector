@@ -1492,7 +1492,6 @@ function handlePianoTouchMove(e) {
             const notes = findKeysUnderArea(
                 t.clientX, t.clientY, t.radiusX, t.radiusY, t.rotationAngle
             );
-            console.log(notes);
             if ( touch.change(t.identifier, notes) == 1 )
                 navigator.vibrate(40);
         }
