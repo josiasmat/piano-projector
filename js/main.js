@@ -215,22 +215,25 @@ const touch = {
             updatePianoKeys(note, note);
         }
     },
-    /** @param {number} pointer_id @param {Set<number>} notes */
+    /** 
+     * @param {number} pointer_id 
+     * @param {Set<number>} notes 
+     * @returns {number} +1 if note(s) added; -1 if note(s) removed; 0 if no change */
     change(pointer_id, notes) {
-        let changed = false;
+        let changed = 0;
         const previous_notes = new Set().union(this.points.get(pointer_id));
         this.points.set(pointer_id, notes);
         for ( const old_note of previous_notes.values() )
             if ( !notes.has(old_note) ) {
                 sound.stop(old_note);
                 updatePianoKeys(old_note, old_note);
-                changed = true;
+                changed = -1;
             }
         for ( const new_note of notes.values() )
             if ( !previous_notes.has(new_note) ) {
                 sound.play(new_note);
                 updatePianoKeys(new_note, new_note);
-                changed = true;
+                changed = 1;
             }
         return changed;
     },
@@ -1421,6 +1424,7 @@ function findKeysUnderArea(x, y, rx, ry, a_deg) {
             keys.add(kn);
         }
     }
+    keys.delete(null);
     return keys;
 }
 
@@ -1464,7 +1468,7 @@ function handlePianoTouchStart(e) {
                 );
                 if ( notes.size ) {
                     touch.add(t.identifier, notes);
-                    navigator.vibrate(50);
+                    navigator.vibrate(40);
                     e.preventDefault();
                 }
             }
@@ -1488,8 +1492,9 @@ function handlePianoTouchMove(e) {
             const notes = findKeysUnderArea(
                 t.clientX, t.clientY, t.radiusX, t.radiusY, t.rotationAngle
             );
-            touch.change(t.identifier, notes) 
-                && navigator.vibrate(50);
+            console.log(notes);
+            if ( touch.change(t.identifier, notes) == 1 )
+                navigator.vibrate(40);
         }
 }
 
