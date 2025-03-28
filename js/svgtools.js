@@ -116,7 +116,7 @@ export const SvgTools = {
      * Creates a SVG polygon element.
      * @param {{x: Number, y: Number}[]} points - An array of objects with _x_ and _y_ properties.
      * @param {Object} attributes - Optional argument to pass additional attributes.
-     * @returns {SVGPolygonElement}
+     * @returns {SVGPathElement}
      */
     makePolygon(points, attributes = {}) {
         const count = points.length;
@@ -142,9 +142,13 @@ export const SvgTools = {
      */
     makePath(d, attributes = {}, x = null, y = null) {
         const path = this.createElement("path", attributes);
-        path.setAttribute("d", ( Array.isArray(d) ? d.join(" ") : d ));
-        if ( x != null ) path.setAttribute("x", x.toString());
-        if ( y != null ) path.setAttribute("y", y.toString());
+        if ( Array.isArray(d) ) 
+            d = d.filter((x) => x != null)
+                 .map((x) => Array.isArray(x) ? x.join(' ') : x)
+                 .join(' ');
+        path.setAttribute('d', d);
+        if ( x != null ) path.setAttribute('x', x.toString());
+        if ( y != null ) path.setAttribute('y', y.toString());
         return path;
     },
     

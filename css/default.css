@@ -26,6 +26,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     --color-background: black;
     --color-key-light-border: #999;
     --color-key-dark-border: #555;
+    --color-white-key-light-border: #999;
+    --color-white-key-dark-border:  #555;
+    --color-black-key-left-bevel:   color(from #999 srgb r g b / 35%);
+    --color-black-key-bottom-bevel: color(from #666 srgb r g b / 35%);
+    --color-black-key-right-bevel:  color(from #444 srgb r g b / 35%);
     --color-felt-top: #920;
     --color-felt-bottom: color-mix(in hsl, var(--color-felt-top) 30%, #000 45%);
     --key-transition-duration: 0.05s;
@@ -364,30 +369,41 @@ div.menu-msg {
 }
 
 .white-key {
-    .key-light-border, .key-dark-border {
+    .white-key-border {
         stroke-width: 1.5px;
         stroke-linecap: square;
         fill: none;
         pointer-events: stroke;
     }
     .key-light-border {
-        stroke: color-mix(in srgb, var(--color-key-light-border) 70%, var(--color-white-key));
+        stroke: color-mix(in srgb, var(--color-white-key-light-border) 70%, var(--color-white-key));
     }        
     .key-dark-border {
-        stroke: color-mix(in srgb, var(--color-key-dark-border) 70%, var(--color-white-key));
+        stroke: color-mix(in srgb, var(--color-white-key-dark-border) 70%, var(--color-white-key));
     }
 }
 
 .black-key {
-    .key-light-border, .key-dark-border {
+    .black-key-bevel {
         pointer-events: fill;
     }
-    .key-light-border {
-        fill: var(--color-key-light-border);
-        fill-opacity: 30%;
+    .key-left-bevel {
+        fill: var(--color-black-key-left-bevel);
     }        
-    .key-dark-border {
-        fill: var(--color-key-dark-border);
+    .key-right-bevel {
+        fill: var(--color-black-key-right-bevel);
+    }        
+    .key-bottom-bevel {
+        fill: var(--color-black-key-bottom-bevel);
+    }
+    .key-left-round-bevel {
+        fill: color-mix(in srgb, var(--color-black-key-left-bevel), var(--color-black-key-bottom-bevel) 60%);
+    }
+    .key-right-round-bevel {
+        fill: color-mix(in srgb, var(--color-black-key-right-bevel), var(--color-black-key-bottom-bevel) 60%);
+    }
+    .gap-reflection {
+        fill: url("#gap-reflection-gradient");
         fill-opacity: 40%;
     }
 }

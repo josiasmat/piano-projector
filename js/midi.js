@@ -454,4 +454,16 @@ export function noteToMidi(note_str) {
 }
 
 
+/**
+ * Converts a MIDI note number to frequency.
+ * @param {number} midi_note - 0-127
+ * @param {number} a4 - Default is 440.
+ * @returns {number}
+ */
+export function midiToFreq(midi_note, a4=440) {
+    const n = midi_note - 69; // Distance from A4
+    return 2**(n/12)*a4;
+}
+
+
 export default Midi;

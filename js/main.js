@@ -16,10 +16,9 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-const KBD_HEIGHT = 500;
-
-import SvgTools from "./svgtools.js";
-import { Midi, noteToMidi } from "./midi.js";
+import { clamp, degToRad, nextOf, cloneTemplate, isMobile, isSafari } from "./utils.js";
+import { Midi, noteToMidi, midiToFreq } from "./midi.js";
+import { drawPianoKeyboard } from "./piano.js";
 import { KbdNotes } from "./kbdnotes.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
 import KbdNav from "./kbdnav.js";
@@ -213,7 +212,7 @@ const touch = {
         this.points.set(pointer_id, notes);
         for ( const note of notes.values() ) {
             sound.play(note);
-            updateKeyboardKeys(note, note);
+            updatePianoKeys(note, note);
         }
     },
     /** @param {number} pointer_id @param {Set<number>} notes */
@@ -224,13 +223,13 @@ const touch = {
         for ( const old_note of previous_notes.values() )
             if ( !notes.has(old_note) ) {
                 sound.stop(old_note);
-                updateKeyboardKeys(old_note, old_note);
+                updatePianoKeys(old_note, old_note);
                 changed = true;
             }
         for ( const new_note of notes.values() )
             if ( !previous_notes.has(new_note) ) {
                 sound.play(new_note);
-                updateKeyboardKeys(new_note, new_note);
+                updatePianoKeys(new_note, new_note);
                 changed = true;
             }
         return changed;
@@ -241,7 +240,7 @@ const touch = {
         this.points.delete(pointer_id);
         for ( const note of notes.values() ) {
             if ( !this.has_note(note) ) sound.stop(note);
-            updateKeyboardKeys(note, note);
+            updatePianoKeys(note, note);
         }
     },
     reset() {
@@ -250,12 +249,12 @@ const touch = {
     },
     enable() {
         this.enabled = true;
-        kbd.style.cursor = "pointer";
+        piano.svg.style.cursor = "pointer";
     },
     disable() {
         this.reset();
         this.enabled = false;
-        kbd.style.removeProperty("cursor");
+        piano.svg.style.removeProperty("cursor");
     },
 }
 
@@ -325,399 +324,41 @@ const toolbar_condensing_list = [
     { elm: toolbar.self,                action: "hide-elm" }
 ];
 
-const kbd_container = document.getElementById("main-area");
-const kbd = document.getElementById("kbd");
-/** @type {[SVGElement?]} */
-const keys = Array(128).fill(null);
-/** @type {[SVGElement?]} */
-const key_labels = Array(128).fill(null);
-
-
-/**
- * @param {SVGElement} svg 
- * @param {Object} options
- */
-function drawKeyboard(svg, options = {}) {
-
-    const STROKE_WIDTH = 1.5;
-    const BK_OFFSET = 0.13;
-
-    const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
-    const BK_OFFSETS = [,-BK_OFFSET,,+BK_OFFSET,,,-1.4*BK_OFFSET,,0,,+1.4*BK_OFFSET,];
-
-    const height = KBD_HEIGHT;
-    const height_factor = options.height_factor ?? 1.0;
-    const first_key = options.first_key ?? noteToMidi("a0");
-    const last_key = options.last_key ?? noteToMidi("c8");
-    const keys_count = last_key - first_key;
-    const kbd_center = (first_key + last_key) / 2;
-
-    const white_key_height = height * height_factor;
-    const black_key_height = white_key_height * (0.14 * height_factor + 0.51);
-    const white_key_width = height * 2.2 / 15.5;
-    const black_key_width = height * 1.45 / 15.5;
-    const white_key_width_half = white_key_width / 2;
-    const black_key_width_half = black_key_width / 2;
-    const key_rounding = white_key_width / 18;
-    const white_key_highlight_inset = 2;
-    const black_key_highlight_inset = 2;
-
-    const top_felt = {
-        top: -4,
-        height: 7,
-        get bottom() { return this.top + this.height }
-    }
-    
-    const white_key_top = top_felt.bottom-1;
-    const black_key_top = top_felt.bottom-5;
-    const black_key_base_top = top_felt.bottom+1;
-
-    const stroke_width_half = STROKE_WIDTH/2;
-
-    const black_key_bevel = {
-        bottom_height: black_key_width/2*(Math.max(height_factor-0.5,0)/2+0.75),
-        side_width_bottom: STROKE_WIDTH*4,
-        side_width_top: STROKE_WIDTH*2,
-        side_width_min: 0,
-        side_width_max: 0
-    }
-    black_key_bevel.side_width_min = Math.min(black_key_bevel.side_width_top,
-                                              black_key_bevel.side_width_bottom);
-    black_key_bevel.side_width_max = Math.max(black_key_bevel.side_width_top,
-                                              black_key_bevel.side_width_bottom);
-    svg.innerHTML = "";
-
-    for ( let key = 0; key < 128; key++ )
-        if ( key < first_key || key > last_key )
-            keys[key] = null;
-
-    const white_keys_g = SvgTools.createGroup();
-    const black_keys_g = SvgTools.createGroup();
-
-    function drawWhiteKey(key, note, offset, width, height, round) {
-        const left = offset + STROKE_WIDTH;
-        const right = left + width - (2*STROKE_WIDTH);
-        const cut_point = black_key_height + (2.5*STROKE_WIDTH);
-
-        const black_before = key > first_key && [2,4,7,9,11].includes(note);
-        const black_after = key < last_key && [0,2,5,7,9].includes(note);
-        const left_offset = left + ( black_before 
-            ? black_key_width_half + (black_key_width * BK_OFFSETS[note-1]) + STROKE_WIDTH : 0);
-        const right_offset = right - ( black_after 
-            ? black_key_width_half - (black_key_width * BK_OFFSETS[note+1]) + STROKE_WIDTH : 0);
-
-        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key white-key", value: key });
-
-        const key_fill = SvgTools.makePolygon([
-                {x:left_offset, y:white_key_top}, 
-                {x:right_offset, y:white_key_top},
-                black_after ? {x:right_offset, y:cut_point} : null,
-                black_after ? {x:right, y:cut_point} : null,
-                {x:right, y:height-round},
-                {x:right-round, y:height},
-                {x:left+round, y:height},
-                {x:left, y:height-round},
-                black_before ? {x:left, y:cut_point} : null,
-                black_before ? {x:left_offset, y:cut_point} : null
-            ], 
-            { class: "key-fill", fill: "var(--color-white-key)" }
-        );
-
-        const inset = white_key_highlight_inset;
-        const key_highlight = SvgTools.makePolygon([
-                {x:left_offset+inset, y:white_key_top-stroke_width_half}, 
-                {x:right_offset-inset, y:white_key_top-stroke_width_half},
-                black_after ? {x:right_offset-inset, y:cut_point+inset} : null,
-                black_after ? {x:right-inset, y:cut_point+inset} : null,
-                {x:right-inset, y:height-inset-round+stroke_width_half},
-                {x:right-round-inset+stroke_width_half, y:height-inset},
-                {x:left+inset+round-stroke_width_half, y:height-inset},
-                {x:left+inset, y:height-inset-round+stroke_width_half},
-                black_before ? {x:left+inset, y:cut_point+inset} : null,
-                black_before ? {x:left_offset+inset, y:cut_point+inset} : null
-            ], 
-            { class: "key-highlight", fill: 'url("#pressed-white-key-highlight-gradient")' }
-        );
-
-        const light_array = ['M', left_offset, white_key_top+stroke_width_half];
-        if ( black_before ) 
-            light_array.push(
-                'V', cut_point,
-                'H', left
-            );
-        light_array.push('L', left, height-round-stroke_width_half);
-        if ( black_after ) 
-            light_array.push(
-                'M', right, cut_point,
-                'H', right_offset
-            );
-        const light_border = SvgTools.makePath(light_array, { class: "key-light-border" } );
-
-        const dark_array = [
-            'M', left, height-round,
-            'L', left+round, height,
-            'H', right-round,
-            'L', right, height-round
-        ];
-        if ( black_after ) 
-            dark_array.push(
-                'V', cut_point,
-                'M', right_offset, cut_point,
-            );
-        dark_array.push('V', white_key_top+stroke_width_half);
-        const dark_border = SvgTools.makePath(dark_array, { class: "key-dark-border" } );
-
-        key_group.appendChild(key_fill);
-        key_group.appendChild(key_highlight);
-        key_group.appendChild(dark_border);
-        key_group.appendChild(light_border);
-        return key_group;
-    }
-
-    function computeLateralDisplacement(key) {
-        if ( !options.perspective || WHITE_NOTE[key%12] ) return 0;
-        // Restrict maximum displacement based on number of keys
-        const perspective_factor = (key - kbd_center) / ((88 + keys_count) / 4);
-        return perspective_factor * black_key_bevel.side_width_max;
-    }
-
-    function drawBlackKey(key, offset, width, height) {
-        const left = offset + stroke_width_half;
-        const right = left + width - STROKE_WIDTH;
-
-        const lateral_displacement = computeLateralDisplacement(key) * 1.5;
-
-        const side_bevel = options.perspective ? {
-            left_top: Math.max(0, black_key_bevel.side_width_top + lateral_displacement),
-            left_bottom: Math.max(0, black_key_bevel.side_width_bottom + lateral_displacement),
-            right_top: Math.max(0, black_key_bevel.side_width_top - lateral_displacement),
-            right_bottom: Math.max(0, black_key_bevel.side_width_bottom - lateral_displacement)
-        } : {
-            left_top: black_key_bevel.side_width_top,
-            left_bottom: black_key_bevel.side_width_bottom,
-            right_top: black_key_bevel.side_width_top,
-            right_bottom: black_key_bevel.side_width_bottom
-        };
-
-        const body = options.perspective ? {
-            left_top: Math.min(left, left + black_key_bevel.side_width_top + lateral_displacement),
-            left_bottom: Math.min(left, left + black_key_bevel.side_width_bottom + lateral_displacement),
-            right_top: Math.max(right, right - black_key_bevel.side_width_top + lateral_displacement),
-            right_bottom: Math.max(right, right - black_key_bevel.side_width_bottom + lateral_displacement)
-        } : {
-            left_top: left,
-            left_bottom: left,
-            right_top: right,
-            right_bottom: right
-        }
-
-        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key black-key", value: key });
-
-        const key_fill = SvgTools.makePolygon(
-            [
-                {x:body.left_top, y:black_key_base_top}, 
-                {x:body.left_top+side_bevel.left_top, y:black_key_top}, 
-                {x:body.right_top-side_bevel.right_top, y:black_key_top},
-                {x:body.right_top, y:black_key_base_top},
-                {x:body.right_bottom, y:height-black_key_bevel.bottom_height},
-                {x:right, y:height},
-                {x:left, y:height},
-                {x:body.left_bottom, y:height-black_key_bevel.bottom_height}
-            ], 
-            { class: "key-fill", fill: "var(--color-black-key)" }
-        );
-
-        const inset = black_key_highlight_inset;
-        const key_highlight = SvgTools.makePolygon(
-            [
-                {x:body.left_top+inset, y:black_key_base_top}, 
-                {x:Math.max(
-                        body.left_top+inset,
-                        body.left_top+side_bevel.left_top
-                    ), y:black_key_top}, 
-                {x:Math.min(
-                        body.right_top-inset,
-                        body.right_top-side_bevel.right_top   
-                    ), y:black_key_top },
-                {x:body.right_top-inset, y:black_key_base_top},
-                {x:body.right_bottom-inset, y:height-inset-black_key_bevel.bottom_height},
-                {x:right-inset, y:height-inset},
-                {x:left+inset, y:height-inset},
-                {x:body.left_bottom+inset, y:height-inset-black_key_bevel.bottom_height}
-            ], 
-            { class: "key-highlight", fill: 'url("#pressed-black-key-highlight-gradient")'}
-        );
-
-        const light_border = SvgTools.makePath([
-            'M', left, height,
-            'H', right,
-            'L', body.right_bottom-side_bevel.right_bottom, height-black_key_bevel.bottom_height,
-            'H', body.left_bottom+side_bevel.left_bottom,
-            'Z'
-        ], { class: "key-light-border" });
-
-        key_group.appendChild(key_fill);
-        key_group.appendChild(key_highlight);
-
-        if ( side_bevel.left_bottom > 0 || side_bevel.left_top > 0 ) {
-            const dark_border_left = SvgTools.makePath([
-                'M', body.left_top, black_key_base_top,
-                'L', body.left_bottom, height,
-                'L', body.left_bottom+side_bevel.left_bottom, height-black_key_bevel.bottom_height,
-                'L', body.left_top+side_bevel.left_top, black_key_top,
-                'Z'
-            ], { class: "key-dark-border" });
-            key_group.appendChild(dark_border_left);
-        }
-
-        if ( side_bevel.right_bottom > 0 || side_bevel.right_top > 0 ) {
-            const dark_border_right = SvgTools.makePath([
-                'M', body.right_top, black_key_base_top,
-                'L', body.right_bottom, height,
-                'L', body.right_bottom-side_bevel.right_bottom, height-black_key_bevel.bottom_height,
-                'L', body.right_top-side_bevel.right_top, black_key_top,
-                'Z'
-            ], { class: "key-dark-border" });
-            key_group.appendChild(dark_border_right);
-        }
-        
-        key_group.appendChild(light_border);
-        return key_group;
-    }
-
-    function createWhiteKeyLabel(keynum, left) {
-        const center = left + white_key_width_half;
-        const elm = SvgTools.createElement("text", {
-            x: center, y: white_key_height - white_key_width_half,
-            id: `keylabel${keynum}`, class: "key-label white-key-label"
-        });
-        elm.appendChild(SvgTools.createElement("tspan", { x: center }));
-        return elm;
-    }
-
-    function createBlackKeyLabel(keynum, left) {
-        const center = left + black_key_width_half + computeLateralDisplacement(keynum)/2;
-        const elm = SvgTools.createElement("text", {
-            x: center, y: black_key_height - white_key_width_half,
-            id: `keylabel${keynum}`, class: "key-label black-key-label"
-        });
-        elm.appendChild(SvgTools.createElement("tspan", { x: center }));
-        elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-0.9lh" }));
-        elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-1.0lh" }));
-        return elm;
-    }
-
-    let width = 0;
-    let white_left = 0;
-
-    for ( let key = first_key; key <= last_key; key++ ) {
-        const note = key % 12;
-
-        if ( WHITE_NOTE[note] ) {
-            const white_key = drawWhiteKey(key, note,
-                white_left, white_key_width, white_key_height, key_rounding
-            );
-            const white_key_label = createWhiteKeyLabel(key, white_left);
-            white_keys_g.appendChild(white_key);
-            white_key.appendChild(white_key_label);
-            keys[key] = white_key;
-            key_labels[key] = white_key_label;
-            width += white_key_width;
-            white_left += white_key_width;
-        } else {
-            const black_left = white_left - black_key_width_half + (BK_OFFSETS[note]*black_key_width);
-            const black_key = drawBlackKey(key,
-                black_left, black_key_width, black_key_height
-            );
-            const black_key_label = createBlackKeyLabel(key, black_left);
-            black_keys_g.appendChild(black_key);
-            black_key.appendChild(black_key_label);
-            keys[key] = black_key;
-            key_labels[key] = black_key_label;
-        }
-    }
-    
-    svg.appendChild(white_keys_g);
-    svg.appendChild(SvgTools.makeRect(
-        width, top_felt.height, 0, top_felt.top, null, null, 
-        { id: "top-felt" })
-    );
-    svg.appendChild(black_keys_g);
-    svg.setAttribute("viewBox", `-2 -4 ${width+STROKE_WIDTH+2} ${white_key_height+STROKE_WIDTH+4}`);
-
-    function makeGradient(id, stops, vertical=false, attrs={}) {
-        const grad = SvgTools.createElement("linearGradient", 
-            vertical ? { id: id, x2: "0%", y2: "100%" } : { id: id });
-        for ( const stop_attr of stops )
-            grad.appendChild(SvgTools.createElement("stop", stop_attr));
-        for ( const [k,v] of Object.entries(attrs) )
-            grad.setAttribute(k, v);
-        return grad;
-    }
-
-    const svg_defs = SvgTools.createElement("defs");
-    svg_defs.appendChild(makeGradient("pressed-white-key-highlight-gradient", [
-        { offset: "0%", "stop-color": "var(--color-highlight)", "stop-opacity": "50%" },
-        { offset: "40%", "stop-color": "var(--color-highlight)" }
-    ], true));
-    svg_defs.appendChild(makeGradient("pressed-black-key-highlight-gradient", [
-        { offset: "0%", "stop-color": "var(--color-highlight)", "stop-opacity": "50%" },
-        { offset: "50%", "stop-color": "var(--color-highlight)" }
-    ], true));
-    svg_defs.appendChild(makeGradient("top-felt-gradient", [
-        { offset: "50%", "stop-color": "var(--color-felt-top)" },
-        { offset: "100%", "stop-color": "var(--color-felt-bottom)" }
-    ], true));
-
-    svg.appendChild(svg_defs);
-
+const piano = {
+    svg: document.getElementById("kbd"),
+    container: document.getElementById("main-area"),
+    /** @type {[SVGElement?]} */
+    keys: Array(128).fill(null),
+    /** @type {[SVGElement?]} */
+    labels: Array(128).fill(null)
 }
 
 
-function createKeyboard() {
+function createPianoKeyboard() {
+    const first_last_notes = new Map([
+        [88, ["a0", "c8"]],
+        [61, ["c2", "c7"]],
+        [49, ["c2", "c6"]],
+        [37, ["c3", "c6"]],
+        [25, ["c3", "c5"]],
+        [20, ["f3", "c5"]]
+    ]).get(settings.number_of_keys);
     const options = {
         height_factor: settings.height_factor,
         perspective: settings.perspective,
-        top_felt: settings.top_felt
+        top_felt: settings.top_felt,
+        first_key: noteToMidi(first_last_notes[0]),
+        last_key: noteToMidi(first_last_notes[1])
     };
-    switch ( settings.number_of_keys ) {
-        case 88:
-            options.first_key = noteToMidi("a0");
-            options.last_key = noteToMidi("c8");
-            break;
-        case 61:
-            options.first_key = noteToMidi("c2");
-            options.last_key = noteToMidi("c7");
-            break;
-        case 49:
-            options.first_key = noteToMidi("c2");
-            options.last_key = noteToMidi("c6");
-            break;
-        case 37:
-            options.first_key = noteToMidi("c3");
-            options.last_key = noteToMidi("c6");
-            break;
-        case 25:
-            options.first_key = noteToMidi("c3");
-            options.last_key = noteToMidi("c5");
-            break;
-        case 20:
-            options.first_key = noteToMidi("f3");
-            options.last_key = noteToMidi("c5");
-            break;
-        default:
-            options.first_key = noteToMidi("e4") - Math.trunc(settings.number_of_keys / 2);
-            options.last_key = noteToMidi("e4") + Math.ceil(settings.number_of_keys / 2) - 1;
-    }
-    drawKeyboard(kbd, options);
-    updateKeyboardPosition();
-    updateKeyboardKeys();
+    drawPianoKeyboard(piano.svg, piano.keys, piano.labels, options);
+    updatePianoPosition();
+    updatePianoKeys();
 }
 
 
-function updateKeyboardKeys(first_key=0, last_key=127) {
+function updatePianoKeys(first_key=0, last_key=127) {
     for ( let i = first_key; i <= last_key; i++ ) {
-        const key = keys[i];
+        const key = piano.keys[i];
         if ( key ) {
             const j = i-settings.transpose;
             const touched = touch.has_note(i);
@@ -746,7 +387,7 @@ function updateKeyboardLabel(key, is_on) {
     const GERMAN_NAMES_2 = [   ,'Dis',   ,'Eis',   ,   ,'Gis',    ,'Ais',   ,'B',   ];
     const ITALIAN_NAMES_1 = ['do','do♯','re','re♯','mi','fa','fa♯','sol','sol♯','la','la♯','si'];
     const ITALIAN_NAMES_2 = [    ,'re♭',    ,'mi♭',    ,    ,'sol♭',     ,'la♭',    ,'si♭',    ];
-    const label = key_labels[key];
+    const label = piano.labels[key];
 
     if ( label ) {
         const pc = key%12;
@@ -786,7 +427,7 @@ function updateKeyboardLabel(key, is_on) {
                     : `${ITALIAN_NAMES_2[pc]}\n${ITALIAN_NAMES_1[pc]}\n${it_oct}`;
                 break;
             case "freq":
-                const freq = midiFreq(touch.enabled ? key+settings.transpose : key);
+                const freq = midiToFreq(touch.enabled ? key+settings.transpose : key);
                 text = `${freq.toFixed(freq<1000 ? 1 : 0)}`;
                 break;
             default: 
@@ -933,24 +574,24 @@ function updateTransposeMenuAndButton() {
 }
 
 
-function updateKeyboardPosition() {
-    const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
+function updatePianoPosition() {
+    const max_zoom = piano.container.clientHeight / piano.svg.clientHeight;
     if ( settings.zoom > 1 ) {
         if ( settings.zoom > max_zoom ) settings.zoom = max_zoom;
-        kbd.style.transform = `scale(${settings.zoom}, ${settings.zoom})`;
+        piano.svg.style.transform = `scale(${settings.zoom}, ${settings.zoom})`;
     } else
-        kbd.style.removeProperty("transform");
+        piano.svg.style.removeProperty("transform");
 
-    const kbd_rect = kbd.getBoundingClientRect();
-    const cnt_rect = kbd_container.getBoundingClientRect();
+    const kbd_rect = piano.svg.getBoundingClientRect();
+    const cnt_rect = piano.container.getBoundingClientRect();
 
     // compute vertical position
     const py = (cnt_rect.height - kbd_rect.height) * settings.offset.y;
-    kbd.style.top = `${py}px`;
+    piano.svg.style.top = `${py}px`;
 
     // compute horizontal position
     const px = Math.round((kbd_rect.width - cnt_rect.width) * settings.offset.x);
-    kbd_container.scroll(px, 0);
+    piano.container.scroll(px, 0);
 
     document.getElementById("keyboard-navigator").toggleAttribute("position-top", settings.offset.y > 0.5);
 }
@@ -959,14 +600,14 @@ function updateKeyboardPosition() {
 function updateNote(note) {
     const key = note+settings.transpose;
     if ( key >= 0 && key < 128 )
-        updateKeyboardKeys(key, key);
+        updatePianoKeys(key, key);
 }
 
 
 function toggleToolbarVisibility() {
     settings.toolbar = !settings.toolbar;
     updateToolbar();
-    updateKeyboardPosition();
+    updatePianoPosition();
     writeSettings();
 }
 
@@ -976,7 +617,7 @@ function midiPanic() {
     Midi.reset();
     touch.reset();
     KbdNotes.resetState();
-    createKeyboard();
+    createPianoKeyboard();
     updatePedalIcons();
     toolbar.buttons.panic.setAttribute("variant", "danger");
     setTimeout(() => { toolbar.buttons.panic.removeAttribute("variant"); }, 1000);
@@ -1011,7 +652,7 @@ function transpose(params={}) {
     if ( previous_transpose != settings.transpose ) 
         sound.stopAll(true);
     updateTransposeMenuAndButton();
-    updateKeyboardKeys();
+    updatePianoKeys();
     writeSettings();
 }
 
@@ -1020,7 +661,7 @@ function setNumberOfKeys(value) {
     settings.number_of_keys = value;
     settings.zoom = 1.0;
     updateSizeMenu();
-    createKeyboard();
+    createPianoKeyboard();
     writeSettings();
 }
 
@@ -1032,7 +673,7 @@ function switchNumberOfKeys() {
 function setKeyDepth(value) {
     settings.height_factor = value;
     updateSizeMenu();
-    createKeyboard();
+    createPianoKeyboard();
     writeSettings();
 }
 
@@ -1044,7 +685,7 @@ function switchKeyDepth() {
 function setLabelsWhich(value) {
     settings.labels.which = value;
     updateLabelsMenu();
-    updateKeyboardKeys();
+    updatePianoKeys();
     writeSettings();
 }
 
@@ -1052,7 +693,7 @@ function setLabelsWhich(value) {
 function setLabelsType(value) {
     settings.labels.type = value;
     updateLabelsMenu();
-    updateKeyboardKeys();
+    updatePianoKeys();
     writeSettings();
 }
 
@@ -1062,7 +703,7 @@ function toggleLabelsOctave(value = undefined) {
         ? !settings.labels.octave 
         : value;
     updateLabelsMenu();
-    updateKeyboardKeys();
+    updatePianoKeys();
     writeSettings();
 }
 
@@ -1072,7 +713,7 @@ function togglePedalsFollow(value = undefined) {
         ? !settings.pedals
         : value;
     updatePedalsMenu();
-    updateKeyboardKeys();
+    updatePianoKeys();
     writeSettings();
 }
 
@@ -1082,7 +723,7 @@ function togglePedalsDim(value = undefined) {
         ? !settings.pedal_dim
         : value;
     updatePedalsMenu();
-    updateKeyboardKeys();
+    updatePianoKeys();
     writeSettings();
 }
 
@@ -1181,7 +822,7 @@ function connectInput(name, save=false) {
             touch.disable();
             settings.device_name = "pckbd";
             updateToolbar();
-            updateKeyboardKeys();
+            updatePianoKeys();
             if ( save ) writeSettings();
             break;
         case "touch":
@@ -1189,7 +830,7 @@ function connectInput(name, save=false) {
             touch.enable();
             settings.device_name = "touch";
             updateToolbar();
-            updateKeyboardKeys();
+            updatePianoKeys();
             if ( save ) writeSettings();
             break;
         default:
@@ -1197,7 +838,7 @@ function connectInput(name, save=false) {
             touch.disable();
             settings.device_name = null;
             updateToolbar();
-            updateKeyboardKeys();
+            updatePianoKeys();
             Midi.connectByPortName(name, () => {
                 settings.device_name = name;
                 updateToolbar();
@@ -1214,7 +855,7 @@ function disconnectInput(save=false) {
     touch.disable();
     settings.device_name = null;
     updateToolbar();
-    updateKeyboardKeys();
+    updatePianoKeys();
     if ( save ) writeSettings();
 }
 
@@ -1408,14 +1049,14 @@ toolbar.dropdowns.size.querySelectorAll(".btn-key-depth").forEach((item) => {
 
 document.getElementById("menu-perspective").addEventListener("click", () => {
     settings.perspective = !settings.perspective;
-    createKeyboard();
+    createPianoKeyboard();
     writeSettings();
     if ( isMobile() ) toolbar.dropdowns.colors.hide();
 });
 
 document.getElementById("menu-top-felt").addEventListener("click", () => {
     settings.top_felt = !settings.top_felt;
-    updateKeyboardKeys();
+    updatePianoKeys();
     writeSettings();
     if ( isMobile() ) toolbar.dropdowns.colors.hide();
 });
@@ -1460,7 +1101,7 @@ toolbar.menus.pedals.addEventListener("sl-select", (e) => {
     document.getElementById("menu-pedal-dim").toggleAttribute(
         "disabled", !settings.pedals);
     updatePedalIcons();
-    updateKeyboardKeys();
+    updatePianoKeys();
     writeSettings();
     if ( isMobile() ) toolbar.dropdowns.pedals.hide();
 });
@@ -1491,7 +1132,7 @@ toolbar.title.onclick =
 
 window.addEventListener("resize", () => {
     updateToolbarBasedOnWidth();
-    updateKeyboardPosition();
+    updatePianoPosition();
 });
 window.addEventListener("keydown", handleKeyDown);
 // window.onkeyup = handleKeyUp;
@@ -1597,12 +1238,12 @@ kbdnav.onhide = () => midi.setWatchdog(2000);
 
 // Pointer move events
 
-kbd.oncontextmenu = (e) => {
+piano.svg.oncontextmenu = (e) => {
     if ( drag.state > 0 ) e.preventDefault();
     drag.state = 0;
 };
 
-kbd.addEventListener("pointerdown", (e) => {
+piano.svg.addEventListener("pointerdown", (e) => {
     toolbar.dropdowns.closeAll();
     if ( e.pointerType != "touch" && e.button != 0 || !touch.enabled ) {
         drag.state = 1;
@@ -1610,28 +1251,28 @@ kbd.addEventListener("pointerdown", (e) => {
         drag.origin.y = e.screenY;
         drag.previous_offset.x = settings.offset.x;
         drag.previous_offset.y = settings.offset.y;
-        kbd.toggleAttribute("grabbing", true);
-        kbd.setPointerCapture(e.pointerId);
+        piano.svg.toggleAttribute("grabbing", true);
+        piano.svg.setPointerCapture(e.pointerId);
     }
 }, { capture: true, passive: false });
 
-kbd.addEventListener("pointerup", (e) => {
+piano.svg.addEventListener("pointerup", (e) => {
     if ( e.pointerType != "touch" && drag.state ) {
         drag.state = ( drag.state == 2 && e.button == 2 ) ? 3 : 0;
-        kbd.toggleAttribute("grabbing", false);
-        kbd.releasePointerCapture(e.pointerId);
-        updateKeyboardPosition();
+        piano.svg.toggleAttribute("grabbing", false);
+        piano.svg.releasePointerCapture(e.pointerId);
+        updatePianoPosition();
         writeSettings();
     }
 }, { capture: true, passive: false });
 
-kbd.addEventListener("pointermove", (e) => {
+piano.svg.addEventListener("pointermove", (e) => {
     if ( e.pointerType != "touch" && drag.state ) {
 
         const SNAP_THRESHOLD = 0.06;
 
-        const kbd_rect = kbd.getBoundingClientRect();
-        const cnt_rect = kbd_container.getBoundingClientRect();
+        const kbd_rect = piano.svg.getBoundingClientRect();
+        const cnt_rect = piano.container.getBoundingClientRect();
 
         drag.state = 2;
 
@@ -1641,7 +1282,7 @@ kbd.addEventListener("pointermove", (e) => {
         settings.offset.x = clamp(drag.previous_offset.x - ratio_x, 0.0, 1.0);
 
         // Y-axis - move keyboard (only if not almost maximally zoomed in)
-        const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
+        const max_zoom = piano.container.clientHeight / piano.svg.clientHeight;
         if ( settings.zoom < max_zoom - ((max_zoom - 1.0) / 10) ) {
             const offset_y = e.screenY - drag.origin.y;
             const ratio_y = offset_y / (cnt_rect.height - kbd_rect.height);
@@ -1655,20 +1296,20 @@ kbd.addEventListener("pointermove", (e) => {
             }
         }
 
-        updateKeyboardPosition();
+        updatePianoPosition();
     }
 }, { capture: false, passive: true });
 
-kbd_container.addEventListener("wheel", (e) => {
+piano.container.addEventListener("wheel", (e) => {
     e.preventDefault();
     if ( !drag.state && !touch.started() && !e.ctrlKey ) {
         // make zoom out faster than zoom in
         const amount = -e.deltaY / (e.deltaY <= 0 ? 1000 : 500);
-        const max_zoom = kbd_container.clientHeight / kbd.clientHeight;
+        const max_zoom = piano.container.clientHeight / piano.svg.clientHeight;
         const new_zoom = clamp(settings.zoom + amount, 1.0, max_zoom);
         if ( settings.zoom != new_zoom ) {
-            const kbd_rect = kbd.getBoundingClientRect();
-            const cnt_rect = kbd_container.getBoundingClientRect();
+            const kbd_rect = piano.svg.getBoundingClientRect();
+            const cnt_rect = piano.container.getBoundingClientRect();
             const new_width = Math.round(cnt_rect.width * new_zoom);
             settings.offset.x = 
                 (e.clientX - (e.clientX - kbd_rect.left) / kbd_rect.width * new_width - cnt_rect.left) 
@@ -1679,23 +1320,23 @@ kbd_container.addEventListener("wheel", (e) => {
         if ( scroll_amount ) {
             settings.offset.x = clamp(settings.offset.x - scroll_amount, 0.0, 1.0);
         }
-        updateKeyboardPosition();
+        updatePianoPosition();
     }
 }, { capture: false, passive: false });
 
 if ( !isMobile() ) {
     var btn_show_toolbar_timeout = null;
-    kbd_container.addEventListener("pointermove", (e) => {
+    piano.container.addEventListener("pointermove", (e) => {
         if ( e.pointerType == "touch" ) return;
         if ( btn_show_toolbar_timeout ) clearTimeout(btn_show_toolbar_timeout);
         toolbar.buttons.show_toolbar.toggleAttribute("visible", true);
-        kbd_container.toggleAttribute("cursor-hidden", false);
-        kbd.toggleAttribute("cursor-hidden", false);
+        piano.container.toggleAttribute("cursor-hidden", false);
+        piano.svg.toggleAttribute("cursor-hidden", false);
         btn_show_toolbar_timeout = setTimeout(() => {
             toolbar.buttons.show_toolbar.toggleAttribute("visible", false);
             if ( !touch.enabled ) {
-                kbd_container.toggleAttribute("cursor-hidden", true);
-                kbd.toggleAttribute("cursor-hidden", true);
+                piano.container.toggleAttribute("cursor-hidden", true);
+                piano.svg.toggleAttribute("cursor-hidden", true);
             }
         }, 4000);
     }, { capture: false, passive: true });
@@ -1853,8 +1494,8 @@ function handlePianoTouchMove(e) {
 }
 
 
-kbd.addEventListener("pointerdown", handlePianoPointerDown, { capture: true, passive: false });
-kbd.addEventListener("touchstart", handlePianoTouchStart, { capture: true, passive: false });
+piano.svg.addEventListener("pointerdown", handlePianoPointerDown, { capture: true, passive: false });
+piano.svg.addEventListener("touchstart", handlePianoTouchStart, { capture: true, passive: false });
 window.addEventListener("pointerup", handlePianoPointerUp, { capture: false, passive: false });
 window.addEventListener("pointercancel", handlePianoPointerUp, { capture: false, passive: false });
 window.addEventListener("touchend", handlePianoTouchEnd, { capture: false, passive: false });
@@ -1882,27 +1523,27 @@ function handleKeyRelease(key, vel, duration) {
 }
 
 function handleSustainChange() {
-    updateKeyboardKeys();
+    updatePianoKeys();
     sound.stopAll(false);
     updatePedalIcons();
 }
 
 function handleControlChange(num) {
     if ( num > 63 && num < 68 ) {
-        updateKeyboardKeys();
+        updatePianoKeys();
         sound.stopAll(false);
         updatePedalIcons();
     }
 }
 
 function handleResetMsg() {
-    updateKeyboardKeys();
+    updatePianoKeys();
     sound.stopAll(true);
     updatePedalIcons();
 }
 
 Midi.onConnectionChange = () => {
-    updateKeyboardKeys();
+    updatePianoKeys();
     updateToolbar();
 }
 
@@ -1995,126 +1636,14 @@ function handleKeyDown(e) {
 }
 
 
-// Auxiliary functions
-
-/** 
- * @param {number} value
- * @param {number} min
- * @param {number} max
- * @returns {number}
- */
-function clamp(value, min, max) {
-    return (value < min) ? min : ( (value > max) ? max : value );
-}
-
-/** 
- * @param {number} value
- * @param {number} div
- * @param {boolean} allow_negative
- * @returns {number}
- */
-function mod(value, div, allow_negative=true) {
-    return (allow_negative || value >= 0) ? value%div : (value%div)+div;
-}
-
-/**
- * Creates a new HTML element.
- * @param {string} type - Tag name
- * @param {object} attrs 
- * @returns {HTMLElement}
- */
-function newElement(type, attrs={}, inner_text=null) {
-    const elm = document.createElement(type);
-    for ( const [key,val] of Object.entries(attrs) ) {
-        if ( typeof(val) === "boolean" )
-            elm.toggleAttribute(key, val);
-        else
-            elm.setAttribute(key, val);
-    }
-    if ( inner_text )
-        elm.innerText = inner_text;
-    return elm;
-}
-
-
-/**
- * Clones an HTML element.
- * @param {HTMLElement} template
- * @param {object} attrs 
- * @returns {HTMLElement}
- */
-function cloneTemplate(template, attrs={}, inner_text=null) {
-    const cloned = template.cloneNode(true).content.children[0];
-    for ( const [key,val] of Object.entries(attrs) ) {
-        if ( typeof(val) === "boolean" )
-            cloned.toggleAttribute(key, val);
-        else
-            cloned.setAttribute(key, val);
-    }
-    if ( inner_text !== null )
-        cloned.children[0].innerText = inner_text;
-    return cloned;
-}
-
-
-/** @returns {boolean} */
-function isMobile() {
-    if ( !!navigator.userAgentData ) 
-        return navigator.userAgentData.mobile;
-    else
-        return ( /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) );
-}
-
-
-/** @returns {boolean} */
-function isSafari() {
-    return ( /^((?!chrome|android).)*safari/i.test(navigator.userAgent) );
-}
-
-
-/**
- * Converts a MIDI note number to frequency.
- * @param {number} midi_note 
- * @returns {number}
- */
-function midiFreq(midi_note) {
-    const n = midi_note - 69; // Distance from A4
-    return 2**(n/12)*440;
-}
-
-
-/**
- * Returns the value that comes after a given value in an array. If the value
- * doesn't exist in the array, returns the first one.
- * @param {any} value 
- * @param {Array} array 
- * @returns {any}
- */
-function nextOf(value, array) {
-    let i = array.indexOf(value) + 1;
-    if ( i == array.length ) i = 0;
-    return array[i];
-}
-
-
-/**
- * Convert an angle in degrees to radians.
- * @param {Number} deg 
- * @returns {Number}
- */
-function degToRad(deg) {
-    return deg*(Math.PI/180);
-}
-
-
 // Initialize
 
 loadSettings();
 
 window.addEventListener("load", () => {
-    updateKeyboardPosition();
+    updatePianoPosition();
     // Sometimes the window.load event fires too early
-    setTimeout(() => { updateKeyboardPosition() }, 500);
+    setTimeout(() => { updatePianoPosition() }, 500);
 });
 
 await Promise.allSettled([
@@ -2127,7 +1656,7 @@ await Promise.allSettled([
 ]);
 
 updateToolbar();
-createKeyboard();
+createPianoKeyboard();
 
 if ( isMobile() ) {
     document.documentElement.classList.add("mobile");
