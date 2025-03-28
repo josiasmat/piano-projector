@@ -312,6 +312,9 @@ div.menu-msg {
             .key-label {
                 fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
             }
+            .gap-reflection {
+                fill-opacity: 10%;
+            }
         }
     }
 
@@ -404,7 +407,7 @@ div.menu-msg {
     }
     .gap-reflection {
         fill: url("#gap-reflection-gradient");
-        fill-opacity: 40%;
+        fill-opacity: 30%;
     }
 }
 
