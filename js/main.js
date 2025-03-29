@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { clamp, degToRad, nextOf, cloneTemplate, isMobile, isSafari } from "./utils.js";
+import { clamp, degToRad, nextOf, range, cloneTemplate, isMobile, isSafari } from "./utils.js";
 import { Midi, noteToMidi, midiToFreq } from "./midi.js";
 import { drawPianoKeyboard } from "./piano.js";
 import { KbdNotes } from "./kbdnotes.js";
@@ -212,7 +212,7 @@ const touch = {
         this.points.set(pointer_id, notes);
         for ( const note of notes.values() ) {
             sound.play(note);
-            updatePianoKeys(note, note);
+            updatePianoKey(note);
         }
     },
     /** 
@@ -226,13 +226,13 @@ const touch = {
         for ( const old_note of previous_notes.values() )
             if ( !notes.has(old_note) ) {
                 sound.stop(old_note);
-                updatePianoKeys(old_note, old_note);
+                updatePianoKey(old_note);
                 changed = -1;
             }
         for ( const new_note of notes.values() )
             if ( !previous_notes.has(new_note) ) {
                 sound.play(new_note);
-                updatePianoKeys(new_note, new_note);
+                updatePianoKey(new_note);
                 changed = 1;
             }
         return changed;
@@ -243,7 +243,7 @@ const touch = {
         this.points.delete(pointer_id);
         for ( const note of notes.values() ) {
             if ( !this.has_note(note) ) sound.stop(note);
-            updatePianoKeys(note, note);
+            updatePianoKey(note);
         }
     },
     reset() {
@@ -356,26 +356,40 @@ function createPianoKeyboard() {
     drawPianoKeyboard(piano.svg, piano.keys, piano.labels, options);
     updatePianoPosition();
     updatePianoKeys();
+    updatePianoTopFelt();
 }
 
 
-function updatePianoKeys(first_key=0, last_key=127) {
-    for ( let i = first_key; i <= last_key; i++ ) {
-        const key = piano.keys[i];
-        if ( key ) {
-            const j = i-settings.transpose;
-            const touched = touch.has_note(i);
-            const key_pressed = touched || Midi.isKeyPressed(j) || KbdNotes.isNotePressed(j);
-            const note_on = key_pressed 
-                            || Midi.isNoteOn(j, (settings.pedals ? "both" : "none"))
-                            || KbdNotes.isNoteSustained(j);
-            key.classList.toggle("active", note_on);
-            key.classList.toggle("pressed", key_pressed);
-            key.classList.toggle("dim", settings.pedal_dim && note_on && (!key_pressed));
-            updateKeyboardLabel(i, note_on);
-        }
-    }
+function updatePianoTopFelt() {
     document.getElementById("top-felt").toggleAttribute("hidden", !settings.top_felt);
+}
+
+
+/** @param {number} key - Key index */
+function updatePianoKey(key) {
+    const elm = piano.keys[key];
+    if ( elm ) {
+        const j = key-settings.transpose;
+        const touched = touch.has_note(key);
+        const key_pressed = touched || Midi.isKeyPressed(j) || KbdNotes.isNotePressed(j);
+        const note_on = key_pressed 
+                        || Midi.isNoteOn(j, (settings.pedals ? "both" : "none"))
+                        || KbdNotes.isNoteSustained(j);
+        elm.classList.toggle("active", note_on);
+        elm.classList.toggle("pressed", key_pressed);
+        elm.classList.toggle("dim", settings.pedal_dim && note_on && (!key_pressed));
+        const dn = key_pressed ? "d1" : "d0";
+        for ( const child of elm.children )
+            if ( child.hasAttribute(dn) )
+                child.setAttribute("d", child.getAttribute(dn));
+        updateKeyboardLabel(key, note_on);
+    }
+}
+
+
+/** @param {[number]} keys */
+function updatePianoKeys(keys=range(0,128)) {
+    for ( const key of keys ) updatePianoKey(key);
 }
 
 
@@ -603,7 +617,7 @@ function updatePianoPosition() {
 function updateNote(note) {
     const key = note+settings.transpose;
     if ( key >= 0 && key < 128 )
-        updatePianoKeys(key, key);
+        updatePianoKey(key);
 }
 
 
@@ -1059,7 +1073,7 @@ document.getElementById("menu-perspective").addEventListener("click", () => {
 
 document.getElementById("menu-top-felt").addEventListener("click", () => {
     settings.top_felt = !settings.top_felt;
-    updatePianoKeys();
+    updatePianoTopFelt();
     writeSettings();
     if ( isMobile() ) toolbar.dropdowns.colors.hide();
 });

@@ -313,7 +313,7 @@ div.menu-msg {
                 fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
             }
             .gap-reflection {
-                fill-opacity: 10%;
+                fill-opacity: 5%;
             }
         }
     }
@@ -372,6 +372,12 @@ div.menu-msg {
 }
 
 .white-key {
+    .key-fill {
+         fill: var(--color-white-key);
+    }
+    &:not(.pressed) path {
+        transition: d 0.08s ease-in;
+    }
     .white-key-border {
         stroke-width: 1.5px;
         stroke-linecap: square;
@@ -387,6 +393,12 @@ div.menu-msg {
 }
 
 .black-key {
+    .key-fill {
+        fill: var(--color-black-key);
+    }
+    &:not(.pressed) path {
+        transition: d 0.08s ease-in;
+    }
     .black-key-bevel {
         pointer-events: fill;
     }
@@ -407,12 +419,12 @@ div.menu-msg {
     }
     .gap-reflection {
         fill: url("#gap-reflection-gradient");
-        fill-opacity: 30%;
+        fill-opacity: 20%;
     }
 }
 
 sl-dialog {
-    font-family: var(--sl-font-sans);
+    font-family: var(--sl-font-sans), sans-serif;
     color: var(--sl-color-neutral-700);
     --width: 45ch;
     &::part(panel) {
