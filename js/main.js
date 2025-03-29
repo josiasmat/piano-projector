@@ -66,7 +66,6 @@ const settings = {
     },
     set highlight_opacity(value) {
         document.documentElement.style.setProperty('--highlight-opacity', value);
-        document.documentElement.style.setProperty('--highlight-opacity-dim', value);
     },
     get color_highlight() {
         return getComputedStyle(document.documentElement).getPropertyValue("--color-highlight");
