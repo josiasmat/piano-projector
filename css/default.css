@@ -35,6 +35,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     --color-felt-bottom: color-mix(in hsl, var(--color-felt-top) 30%, #000 45%);
     --highlight-transition-duration: 0.05s;
     --unpress-transition-duration: 0.1s;
+    --highlight-opacity: 100%;
+    --highlight-opacity-dim: 70%;
 
     touch-action: none;
 
@@ -305,10 +307,10 @@ div.menu-msg {
 
         &.active {
             .key-highlight {
-                opacity: 100%;
+                opacity: var(--highlight-opacity);
             }
             &.dim .key-highlight {
-                opacity: 70%;
+                opacity: var(--highlight-opacity-dim);
             }
             &:not(.pressed) .key-highlight {
                 transition-duration: var(--unpress-transition-duration);

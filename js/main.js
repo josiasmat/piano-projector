@@ -61,6 +61,13 @@ const settings = {
     semitones: 0,
     octaves: 0,
     get transpose() { return this.semitones + (this.octaves*12); },
+    get highlight_opacity() {
+        return getComputedStyle(document.documentElement).getPropertyValue("--highlight-opacity");
+    },
+    set highlight_opacity(value) {
+        document.documentElement.style.setProperty('--highlight-opacity', value);
+        document.documentElement.style.setProperty('--highlight-opacity-dim', value);
+    },
     get color_highlight() {
         return getComputedStyle(document.documentElement).getPropertyValue("--color-highlight");
     },
@@ -303,6 +310,10 @@ const toolbar = {
         connect: document.getElementById("midi-connection-menu"),
         sound: document.getElementById("menu-sound"),
         size: document.getElementById("menu-size"),
+        colors: {
+            top: document.getElementById("menu-colors"),
+            highlight_opacity: document.getElementById("menu-highlight-opacity"),
+        },
         labels: {
             top: document.getElementById("menu-labels-top"),
             which: document.getElementById("menu-labels-which"),
@@ -559,6 +570,9 @@ function updateColorsMenu() {
     document.getElementById("color-pressed").value = settings.color_highlight;
     document.getElementById("menu-perspective").checked = settings.perspective;
     document.getElementById("menu-top-felt").checked = settings.top_felt;
+    for ( const item of toolbar.menus.colors.highlight_opacity.children ) {
+        item.checked = ( item.value == settings.highlight_opacity.toString() );
+    }
 }
 
 
@@ -757,6 +771,7 @@ function writeSettings() {
     settings_storage.writeBool("labels-octave", settings.labels.octave);
     settings_storage.writeBool("perspective", settings.perspective);
     settings_storage.writeBool("top-felt", settings.top_felt);
+    settings_storage.writeString("highlight-opacity", settings.highlight_opacity);
     settings_storage.writeBool("pedals", settings.pedals);
     settings_storage.writeBool("pedal-dim", settings.pedal_dim);
     settings_storage.writeNumber("offset-y", settings.offset.y);
@@ -781,6 +796,7 @@ function loadSettings() {
     settings.labels.octave = settings_storage.readBool("labels-octave", settings.labels.octave);
     settings.perspective = settings_storage.readBool("perspective", settings.perspective);
     settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
+    settings.highlight_opacity = settings_storage.readString("highlight-opacity", settings.highlight_opacity);
     settings.pedals = settings_storage.readBool("pedals", settings.pedals);
     settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
     settings.offset.y = settings_storage.readNumber("offset-y", settings.offset.y);
@@ -1062,6 +1078,12 @@ toolbar.dropdowns.size.querySelectorAll(".btn-key-depth").forEach((item) => {
         setKeyDepth(parseFloat(e.currentTarget.value));
         if ( isMobile() ) toolbar.dropdowns.size.hide();
     });
+});
+
+toolbar.menus.colors.highlight_opacity.addEventListener("sl-select", (e) => {
+    settings.highlight_opacity = e.detail.item.value;
+    writeSettings();
+    updateColorsMenu();
 });
 
 document.getElementById("menu-perspective").addEventListener("click", () => {
