@@ -33,7 +33,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     --color-black-key-right-bevel:  color(from #444 srgb r g b / 35%);
     --color-felt-top: #920;
     --color-felt-bottom: color-mix(in hsl, var(--color-felt-top) 30%, #000 45%);
-    --key-transition-duration: 0.05s;
+    --highlight-transition-duration: 0.05s;
+    --unpress-transition-duration: 0.1s;
 
     touch-action: none;
 
@@ -283,19 +284,22 @@ div.menu-msg {
         .key-highlight {
             pointer-events: none;
             will-change: opacity;
+            transition-property: opacity, fill, d;
+            transition-timing-function: ease-out, ease-out, ease-in;
         }
 
         &:not(.active) {
             .key-highlight {
                 opacity: 0%;
-                transition-property: opacity;
-                transition-duration: var(--key-transition-duration);
-                transition-timing-function: ease-out;
+                transition-duration: var(--highlight-transition-duration),
+                                     var(--highlight-transition-duration),
+                                     var(--unpress-transition-duration);
+                
             }
             .key-label.fixed-visibility.visible {
-                transition-property: fill;
-                transition-timing-function: ease-out;
-                transition-duration: var(--key-transition-duration);
+                transition-duration: var(--highlight-transition-duration), 
+                                     var(--highlight-transition-duration), 
+                                     var(--unpress-transition-duration);
             }
         }
 
@@ -305,9 +309,9 @@ div.menu-msg {
             }
             &.dim .key-highlight {
                 opacity: 70%;
-                transition-property: opacity;
-                transition-duration: var(--key-transition-duration);
-                transition-timing-function: ease-out;
+            }
+            &:not(.pressed) .key-highlight {
+                transition-duration: var(--unpress-transition-duration);
             }
             .key-label {
                 fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
@@ -355,7 +359,7 @@ div.menu-msg {
                 opacity: 0%;
                 transition-property: opacity;
                 transition-timing-function: ease-out;
-                transition-duration: var(--key-transition-duration);
+                transition-duration: var(--highlight-transition-duration);
             }
         }
         &.white-key-label {
@@ -376,7 +380,7 @@ div.menu-msg {
          fill: var(--color-white-key);
     }
     &:not(.pressed) path {
-        transition: d 0.08s ease-in;
+        transition: d var(--unpress-transition-duration) ease-in;
     }
     .white-key-border {
         stroke-width: 1.5px;
@@ -397,7 +401,7 @@ div.menu-msg {
         fill: var(--color-black-key);
     }
     &:not(.pressed) path {
-        transition: d 0.08s ease-in;
+        transition: d var(--unpress-transition-duration) ease-in;
     }
     .black-key-bevel {
         pointer-events: fill;
