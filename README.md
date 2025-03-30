@@ -12,6 +12,8 @@ The user interface is mostly self-explanatory. The browser will ask for MIDI acc
 
 You can change the keyboard position by dragging it with the mouse. When touch/mouse input is selected, it is yet possible to move the keyboard using the right or middle mouse buttons. Rotate the mouse wheel over the keyboard to zoom in and out.
 
+Click on a piano key while pressing **SHIFT** to toggle a visual marker on the key.
+
 Pressing the **ALT** key will open a keyboard navigation menu; press the underlined characters to navigate, while holding **ALT**.
 
 **ESC** triggers the MIDI Panic button. This is useful mainly for resetting stuck keys.

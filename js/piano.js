@@ -253,10 +253,29 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
             { class: "key-dark-border white-key-border" }
         );
 
+        const marker_inset = white_key_highlight_inset*5;
+        const marker_height = white_key_highlight_inset*4;
+        const marker = makeDualPath([
+                'M', left+marker_inset, height-marker_inset,
+                'H', right-marker_inset,
+                'v', -marker_height,
+                'H', left+marker_inset,
+                'Z'
+            ], [
+                'M', left+marker_inset, height1-marker_inset,
+                'H', right-marker_inset,
+                'v', -marker_height,
+                'H', left+marker_inset,
+                'Z'
+            ],
+            { class: "key-marker white-key-marker" }
+        );
+
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
         key_group.appendChild(dark_border);
         key_group.appendChild(light_border);
+        key_group.appendChild(marker);
         return key_group;
     }
 
@@ -481,6 +500,25 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
         );
         key_group.appendChild(bottom_reflection);
 
+        const marker_inset = black_key_highlight_inset*2;
+        const marker_height = black_key_highlight_inset*2.5;
+        const marker = makeDualPath([
+                'M', left+side_bevel.left_bottom+marker_inset, height-black_key_bevel.bottom_height-marker_inset,
+                'H', right-side_bevel.right_bottom-marker_inset,
+                'v', -marker_height,
+                'H', left+side_bevel.left_bottom+marker_inset,
+                'Z'
+            ], [
+                'M', left+side_bevel.left_bottom1+marker_inset, height-black_key_bevel.bottom_height1-marker_inset,
+                'H', right-side_bevel.right_bottom1-marker_inset,
+                'v', -marker_height,
+                'H', left+side_bevel.left_bottom1+marker_inset,
+                'Z'
+            ],
+            { class: "key-marker white-key-marker" }
+        );
+        key_group.appendChild(marker);
+
         return key_group;
     }
 
@@ -497,7 +535,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     function createBlackKeyLabel(keynum, left) {
         const center = left + black_key_width_half + computeLateralDisplacement(keynum)/2;
         const elm = SvgTools.createElement("text", {
-            x: center, y: black_key_height - white_key_width_half,
+            x: center, y: black_key_height - white_key_width_half*1.3,
             id: `keylabel${keynum}`, class: "key-label black-key-label"
         });
         elm.appendChild(SvgTools.createElement("tspan", { x: center }));
@@ -698,8 +736,21 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
             { class: "key-highlight lowperf" }
         );
 
+        const marker_inset = white_key_highlight_inset*5;
+        const marker_height = white_key_highlight_inset*4;
+        const marker = SvgTools.makePath([
+                'M', left+marker_inset, height-marker_inset,
+                'H', right-marker_inset,
+                'v', -marker_height,
+                'H', left+marker_inset,
+                'Z'
+            ], 
+            { class: "key-marker white-key-marker lowperf" }
+        );
+        
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
+        key_group.appendChild(marker);
         return key_group;
     }
 
@@ -730,8 +781,21 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
             { class: "key-highlight lowperf" }
         );
 
+        const marker_inset = black_key_highlight_inset*4;
+        const marker_height = black_key_highlight_inset*3;
+        const marker = SvgTools.makePath([
+                'M', left+marker_inset, height-marker_inset,
+                'H', right-marker_inset,
+                'v', -marker_height,
+                'H', left+marker_inset,
+                'Z'
+            ],
+            { class: "key-marker white-key-marker lowperf" }
+        );
+        
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
+        key_group.appendChild(marker);
 
         return key_group;
     }

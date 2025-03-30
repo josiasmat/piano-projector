@@ -37,6 +37,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     --unpress-transition-duration: 0.1s;
     --highlight-opacity: 100%;
     --color-highlight-alpha: color(from var(--color-highlight) srgb r g b / var(--highlight-opacity));
+    --stroke-width: 1.3px;
 
     touch-action: none;
 
@@ -281,6 +282,10 @@ div.menu-msg {
         cursor: grabbing !important;
     }
 
+    &.marking-mode {
+        cursor: crosshair !important;
+    }
+
     .key {
         transform-origin: center top 0px;
 
@@ -335,6 +340,10 @@ div.menu-msg {
             .gap-reflection {
                 fill-opacity: 5%;
             }
+        }
+
+        &:not(.marked) .key-marker {
+            display: none;
         }
     }
 
@@ -410,7 +419,7 @@ div.menu-msg {
         transition: d var(--unpress-transition-duration) ease-in;
     }
     .white-key-border {
-        stroke-width: 1.3px;
+        stroke-width: var(--stroke-width);
         stroke-linecap: square;
         fill: none;
         pointer-events: stroke;
@@ -420,6 +429,15 @@ div.menu-msg {
     }        
     .key-dark-border {
         stroke: color-mix(in srgb, var(--color-white-key-dark-border) 70%, var(--color-white-key));
+    }
+    .key-marker {
+        fill: var(--color-highlight);
+        paint-order: stroke;
+        opacity: 90%;
+    }
+    &.active .key-marker {
+        stroke: var(--color-white-key);
+        stroke-width: calc(var(--stroke-width) * 3);
     }
 }
 
@@ -460,6 +478,15 @@ div.menu-msg {
     .gap-reflection {
         fill: url("#gap-reflection-gradient");
         fill-opacity: 20%;
+    }
+    .key-marker {
+        fill: var(--color-highlight);
+        paint-order: stroke;
+        opacity: 90%;
+    }
+    &.active .key-marker {
+        stroke: var(--color-black-key);
+        stroke-width: calc(var(--stroke-width) * 3);
     }
 }
 
