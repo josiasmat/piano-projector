@@ -18,6 +18,14 @@ Pressing the **ALT** key will open a keyboard navigation menu; press the underli
 
 **F9** toggles the toolbar visibility.
 
+## Low performance mode
+
+Append `/?mode=lp` to the URL to enable low-performance mode, with simplified graphics.
+
+To switch back to normal mode, append `/?mode=hp` to the URL.
+
+The mode setting is saved, so it is not necessary to always change the URL.
+
 ## More info
 
 Contact me: josiasmatschulat@outlook.com
