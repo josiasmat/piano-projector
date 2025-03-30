@@ -823,5 +823,6 @@ function makeDualPath(d0, d1, attributes = {}) {
            .join(' ');
     path.setAttribute('d0', d0);
     path.setAttribute('d1', d1);
+    path.setAttribute('d', d0);
     return path;
 }
