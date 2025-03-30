@@ -28,9 +28,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     --color-key-dark-border: #555;
     --color-white-key-light-border: #999;
     --color-white-key-dark-border:  #555;
-    --color-black-key-left-bevel:   color(from #999 srgb r g b / 35%);
-    --color-black-key-bottom-bevel: color(from #666 srgb r g b / 35%);
-    --color-black-key-right-bevel:  color(from #444 srgb r g b / 35%);
+    --color-black-key-left-bevel:   color(from #999 srgb r g b / 37%);
+    --color-black-key-bottom-bevel: color(from #666 srgb r g b / 37%);
+    --color-black-key-right-bevel:  color(from #444 srgb r g b / 37%);
     --color-felt-top: #920;
     --color-felt-bottom: color-mix(in hsl, var(--color-felt-top) 30%, #000 45%);
     --highlight-transition-duration: 0.05s;
