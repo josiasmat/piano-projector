@@ -403,8 +403,11 @@ div.menu-msg {
 }
 
 .white-key {
-    .key-fill {
-         fill: var(--color-white-key);
+    .key-fill:not(.lowperf) {
+        fill: url(#white-key-gradient);
+    }
+    .key-fill.lowperf {
+        fill: var(--color-white-key);
     }
     .key-highlight {
         &.lowperf {
@@ -442,7 +445,10 @@ div.menu-msg {
 }
 
 .black-key {
-    .key-fill {
+    .key-fill:not(.lowperf) {
+        fill: url(#black-key-gradient);
+    }
+    .key-fill.lowperf {
         fill: var(--color-black-key);
     }
     .key-highlight {

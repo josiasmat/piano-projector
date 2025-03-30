@@ -601,6 +601,14 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     }
 
     const svg_defs = SvgTools.createElement("defs");
+    svg_defs.appendChild(makeGradient("white-key-gradient", [
+        { offset: "10%", "stop-color": "color-mix(in srgb, var(--color-white-key), white 5%)" },
+        { offset: "90%", "stop-color": "color-mix(in srgb, var(--color-white-key), black 10%)" }
+    ], false, { gradientTransform: "rotate(45)" }));
+    svg_defs.appendChild(makeGradient("black-key-gradient", [
+        { offset: "0%", "stop-color": "color-mix(in srgb, var(--color-black-key), white 10%)" },
+        { offset: "100%", "stop-color": "color-mix(in srgb, var(--color-black-key), black 10%)" }
+    ], false, { gradientTransform: "rotate(45)" }));
     svg_defs.appendChild(makeGradient("pressed-white-key-highlight-gradient", [
         { offset: "0%", "stop-color": "var(--color-highlight-alpha)", "stop-opacity": "50%" },
         { offset: "40%", "stop-color": "var(--color-highlight-alpha)" }
