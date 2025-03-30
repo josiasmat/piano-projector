@@ -268,8 +268,13 @@ div.menu-msg {
     * { image-rendering: optimizeSpeed; }
 
     #top-felt {
-        fill: url("#top-felt-gradient");
         &[hidden] { display: none; }
+        &.lowperf {
+            fill: var(--color-felt-top);
+        }
+        &:not(lowperf) {
+            fill: url("#top-felt-gradient");
+        }
     }
 
     &[grabbing] {
@@ -285,20 +290,24 @@ div.menu-msg {
 
         .key-highlight {
             pointer-events: none;
-            will-change: opacity;
-            transition-property: opacity, fill, d;
-            transition-timing-function: ease-out, ease-out, ease-in;
+            &:not(.lowperf) {
+                will-change: opacity;
+                transition-property: opacity, fill, d;
+                transition-timing-function: ease-out, ease-out, ease-in;
+            }
         }
 
         &:not(.active) {
             .key-highlight {
                 opacity: 0%;
-                transition-duration: var(--highlight-transition-duration),
-                                     var(--highlight-transition-duration),
-                                     var(--unpress-transition-duration);
+                &:not(.lowperf) {
+                    transition-duration: var(--highlight-transition-duration),
+                                         var(--highlight-transition-duration),
+                                         var(--unpress-transition-duration);
+                }
                 
             }
-            .key-label.fixed-visibility.visible {
+            .key-label.fixed-visibility.visible:not(.lowperf) {
                 transition-duration: var(--highlight-transition-duration), 
                                      var(--highlight-transition-duration), 
                                      var(--unpress-transition-duration);
@@ -312,7 +321,7 @@ div.menu-msg {
             &.dim .key-highlight {
                 opacity: 70%;
             }
-            &:not(.pressed) .key-highlight {
+            &:not(.pressed):not(.lowperf) .key-highlight {
                 transition-duration: var(--unpress-transition-duration);
             }
             .white-key-label {
@@ -364,9 +373,11 @@ div.menu-msg {
             &.hidden {
                 fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
                 opacity: 0%;
-                transition-property: opacity;
-                transition-timing-function: ease-out;
-                transition-duration: var(--highlight-transition-duration);
+                &:not(.lowperf) {
+                    transition-property: opacity;
+                    transition-timing-function: ease-out;
+                    transition-duration: var(--highlight-transition-duration);
+                }
             }
         }
         &.white-key-label {
@@ -386,7 +397,16 @@ div.menu-msg {
     .key-fill {
          fill: var(--color-white-key);
     }
-    &:not(.pressed) path {
+    .key-highlight {
+        &.lowperf {
+            fill: var(--color-highlight);
+            fill-opacity: var(--highlight-opacity);
+        }
+        &:not(.lowperf) {
+            fill: url(#pressed-white-key-highlight-gradient);
+        }
+    }
+    &:not(.pressed):not(.lowperf) path {
         transition: d var(--unpress-transition-duration) ease-in;
     }
     .white-key-border {
@@ -407,7 +427,16 @@ div.menu-msg {
     .key-fill {
         fill: var(--color-black-key);
     }
-    &:not(.pressed) path {
+    .key-highlight {
+        &.lowperf {
+            fill: var(--color-highlight);
+            fill-opacity: var(--highlight-opacity);
+        }
+        &:not(.lowperf) {
+            fill: url(#pressed-black-key-highlight-gradient);
+        }
+    }
+    &:not(.pressed):not(.lowperf) path {
         transition: d var(--unpress-transition-duration) ease-in;
     }
     .black-key-bevel {

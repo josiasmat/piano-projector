@@ -196,7 +196,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
                 ] : null,
                 'Z'
             ],
-            { class: "key-highlight", fill: 'url("#pressed-white-key-highlight-gradient")' }
+            { class: "key-highlight" }
         );
 
         const light_border = makeDualPath([
@@ -373,7 +373,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
                 'L', body.left_bottom1+inset, height-inset-black_key_bevel.bottom_height1-round_half,
                 'Z'
             ],
-            { class: "key-highlight", fill: 'url("#pressed-black-key-highlight-gradient")'}
+            { class: "key-highlight" }
         );
 
         key_group.appendChild(key_fill);
@@ -577,6 +577,228 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     ], true));
 
     svg.appendChild(svg_defs);
+
+}
+
+
+/**
+ * @param {SVGElement} svg - SVG element where to draw the piano keyboard
+ * @param {[SVGElement?]} keys - Array of keys
+ * @param {[SVGElement?]} labels - Array of labels
+ * @param {Object} options - Object that acceps the following properties:
+ *      - first_key (integer)
+ *      - last_key (integer)
+ *      - height_factor (float)
+ *      - perspective (boolean)
+ *      - top_felt (boolean)
+ */
+export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
+
+    const height = KBD_HEIGHT;
+    const height_factor = options.height_factor ?? 1.0;
+
+    const first_key = options.first_key ?? noteToMidi("a0");
+    const last_key = options.last_key ?? noteToMidi("c8");
+
+    const white_key_height = height * height_factor;
+    const black_key_height = white_key_height * (0.14 * height_factor + 0.51);
+
+    const stroke_width_half = STROKE_WIDTH / 2;
+    const white_key_gap_half = WHITE_KEY_GAP / 2;
+    
+    const white_key_width = height * 2.2 / 15.5;
+    const black_key_width = height * 1.4 / 15.5;
+    const white_key_width_half = white_key_width / 2;
+    const black_key_width_half = black_key_width / 2;
+
+    const white_key_rounding = white_key_width / 17;
+
+    const white_key_highlight_inset = 2;
+    const black_key_highlight_inset = 2;
+
+    const top_felt = {
+        top: -4,
+        height: 7,
+        get bottom() { return this.top + this.height }
+    }
+    
+    const white_key_top = top_felt.bottom-1;
+    const black_key_top = top_felt.bottom-5;
+
+    svg.innerHTML = "";
+
+    for ( let key = 0; key < 128; key++ )
+        if ( key < first_key || key > last_key )
+            keys[key] = null;
+
+    const white_keys_g = SvgTools.createGroup();
+    const black_keys_g = SvgTools.createGroup();
+
+    function drawWhiteKey(key, note, offset, width, height, round) {
+        const left = offset + stroke_width_half + white_key_gap_half;
+        const right = offset + width - stroke_width_half - white_key_gap_half;
+        const cut_point = black_key_height + stroke_width_half + BLACK_KEY_GAP;
+
+        const black_before = key > first_key && [2,4,7,9,11].includes(note);
+        const black_after = key < last_key && [0,2,5,7,9].includes(note);
+        
+        const left_offset = offset + stroke_width_half + ( black_before 
+            ? black_key_width_half + (black_key_width * BK_OFFSETS[note-1]) + BLACK_KEY_GAP 
+            : white_key_gap_half );
+        const right_offset = offset + width - stroke_width_half - ( black_after 
+            ? black_key_width_half - (black_key_width * BK_OFFSETS[note+1]) + BLACK_KEY_GAP 
+            : white_key_gap_half );
+
+        const key_group = SvgTools.createGroup(
+            { id: `key${key}`, class: "key white-key lowperf", value: key }
+        );
+
+        const key_fill = SvgTools.makePath([
+                'M', left_offset, white_key_top,
+                'H', right_offset,
+                black_after ? [
+                    'V', cut_point,
+                    'H', right
+                ] : null,
+                'V', height-round,
+                'L', right-round, height,
+                'H', left+round,
+                'L', left, height-round,
+                black_before ? [
+                    'V', cut_point,
+                    'H', left_offset
+                ] : null,
+                'Z'
+            ],
+            { class: "key-fill lowperf" }
+        );
+
+        const inset = white_key_highlight_inset;
+        const key_highlight = SvgTools.makePath([
+                'M', left_offset+inset, white_key_top-stroke_width_half,
+                'H', right_offset-inset, 
+                black_after ? [
+                    'V', cut_point+inset,
+                    'H', right-inset
+                ] : null,
+                'V', height-inset-round+stroke_width_half,
+                'L', right-round-inset+stroke_width_half, height-inset,
+                'H', left+inset+round-stroke_width_half,
+                'L', left+inset, height-inset-round+stroke_width_half,
+                black_before ? [
+                    'V', cut_point+inset,
+                    'H', left_offset+inset
+                ] : null,
+                'Z'
+            ],
+            { class: "key-highlight lowperf" }
+        );
+
+        key_group.appendChild(key_fill);
+        key_group.appendChild(key_highlight);
+        return key_group;
+    }
+
+    function drawBlackKey(key, offset, width, height) {
+        const left = offset;
+        const right = left + width;
+
+        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key black-key lowperf", value: key });
+
+        const key_fill = SvgTools.makePath([
+                'M', left, black_key_top,
+                'H', right,
+                'V', height,
+                'H', left,
+                'Z'
+            ],
+            { class: "key-fill lowperf" }
+        );
+
+        const inset = black_key_highlight_inset;
+        const key_highlight = SvgTools.makePath([
+                'M', left+inset, black_key_top+inset,
+                'H', right-inset,
+                'V', height-inset,
+                'H', left+inset,
+                'Z'
+            ],
+            { class: "key-highlight lowperf" }
+        );
+
+        key_group.appendChild(key_fill);
+        key_group.appendChild(key_highlight);
+
+        return key_group;
+    }
+
+    function createWhiteKeyLabel(keynum, left) {
+        const center = left + white_key_width_half;
+        const elm = SvgTools.createElement("text", {
+            x: center, y: white_key_height - white_key_width_half,
+            id: `keylabel${keynum}`, class: "key-label white-key-label lowperf"
+        });
+        elm.appendChild(SvgTools.createElement("tspan", { x: center }));
+        return elm;
+    }
+
+    function createBlackKeyLabel(keynum, left) {
+        const center = left + black_key_width_half;
+        const elm = SvgTools.createElement("text", {
+            x: center, y: black_key_height - white_key_width_half,
+            id: `keylabel${keynum}`, class: "key-label black-key-label lowperf"
+        });
+        elm.appendChild(SvgTools.createElement("tspan", { x: center }));
+        elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-0.9lh" }));
+        elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-1.0lh" }));
+        return elm;
+    }
+
+    let width = 0;
+    let white_left = 0;
+
+    for ( let key = first_key; key <= last_key; key++ ) {
+        const note = key % 12;
+
+        if ( WHITE_NOTE[note] ) {
+            const white_key = drawWhiteKey(key, note,
+                white_left, white_key_width, white_key_height, white_key_rounding
+            );
+            const white_key_label = createWhiteKeyLabel(key, white_left);
+            white_keys_g.appendChild(white_key);
+            white_key.appendChild(white_key_label);
+            keys[key] = white_key;
+            labels[key] = white_key_label;
+            width += white_key_width;
+            white_left += white_key_width;
+        } else {
+            const black_left = white_left - black_key_width_half + (BK_OFFSETS[note]*black_key_width);
+            const black_key = drawBlackKey(key,
+                black_left, black_key_width, black_key_height
+            );
+            const black_key_label = createBlackKeyLabel(key, black_left);
+            black_keys_g.appendChild(black_key);
+            black_key.appendChild(black_key_label);
+            keys[key] = black_key;
+            labels[key] = black_key_label;
+        }
+    }
+    
+    svg.appendChild(white_keys_g);
+    svg.appendChild(SvgTools.makeRect(
+        width, top_felt.height, 0, top_felt.top, null, null, 
+        { id: "top-felt", class: "lowperf" })
+    );
+    svg.appendChild(black_keys_g);
+
+    const viewbox = {
+        left: -2,
+        top: -4,
+        width: width+STROKE_WIDTH+2,
+        height: (white_key_height * WHITE_KEY_PRESSED_FACTOR) + STROKE_WIDTH + 4
+    }
+
+    svg.setAttribute("viewBox", `${viewbox.left} ${viewbox.top} ${viewbox.width} ${viewbox.height}`);
 
 }
 

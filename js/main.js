@@ -16,9 +16,12 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { clamp, degToRad, nextOf, range, cloneTemplate, isMobile, isSafari } from "./utils.js";
+import { 
+    clamp, degToRad, nextOf, range, cloneTemplate, 
+    isMobile, isSafari, getUrlQueryValue 
+} from "./utils.js";
 import { Midi, noteToMidi, midiToFreq } from "./midi.js";
-import { drawPianoKeyboard } from "./piano.js";
+import { drawPianoKeyboard, drawPianoKeyboardLP } from "./piano.js";
 import { KbdNotes } from "./kbdnotes.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
 import KbdNav from "./kbdnav.js";
@@ -29,6 +32,7 @@ const session_storage = new SessionStorageHandler("piano-projector-session");
 
 const settings = {
     first_time: true,
+    lowperf: false,
     number_of_keys: 88,
     height_factor: 1,
     device_name: null,
@@ -312,6 +316,11 @@ const toolbar = {
         colors: {
             top: document.getElementById("menu-colors"),
             highlight_opacity: document.getElementById("menu-highlight-opacity"),
+            picker_color_white: document.getElementById("color-white"),
+            picker_color_black: document.getElementById("color-black"),
+            picker_color_pressed: document.getElementById("color-pressed"),
+            item_perspective: document.getElementById("menu-perspective"),
+            item_top_felt: document.getElementById("menu-top-felt"),
         },
         labels: {
             top: document.getElementById("menu-labels-top"),
@@ -363,7 +372,10 @@ function createPianoKeyboard() {
         first_key: noteToMidi(first_last_notes[0]),
         last_key: noteToMidi(first_last_notes[1])
     };
-    drawPianoKeyboard(piano.svg, piano.keys, piano.labels, options);
+    if ( settings.lowperf )
+        drawPianoKeyboardLP(piano.svg, piano.keys, piano.labels, options);
+    else
+        drawPianoKeyboard(piano.svg, piano.keys, piano.labels, options);
     updatePianoPosition();
     updatePianoKeys();
     updatePianoTopFelt();
@@ -564,11 +576,12 @@ function updateSizeMenu() {
 
 
 function updateColorsMenu() {
-    document.getElementById("color-white").value = settings.color_white;
-    document.getElementById("color-black").value = settings.color_black;
-    document.getElementById("color-pressed").value = settings.color_highlight;
-    document.getElementById("menu-perspective").checked = settings.perspective;
-    document.getElementById("menu-top-felt").checked = settings.top_felt;
+    toolbar.menus.colors.picker_color_white.value = settings.color_white;
+    toolbar.menus.colors.picker_color_black.value = settings.color_black;
+    toolbar.menus.colors.picker_color_pressed.value = settings.color_highlight;
+    toolbar.menus.colors.item_perspective.checked = settings.perspective;
+    toolbar.menus.colors.item_top_felt.checked = settings.top_felt;
+    toolbar.menus.colors.item_perspective.hidden = settings.lowperf;
     for ( const item of toolbar.menus.colors.highlight_opacity.children ) {
         item.checked = ( item.value == settings.highlight_opacity.toString() );
     }
@@ -785,6 +798,7 @@ function writeSettings() {
 
 function loadSettings() {
     settings.first_time = settings_storage.readBool("first-time", true);
+    settings.lowperf = settings_storage.readBool("lowperf", settings.lowperf);
     settings.height_factor = settings_storage.readNumber("height-factor", isMobile() ? 0.75 : settings.height_factor);
     settings.number_of_keys = settings_storage.readNumber("number-of-keys", isMobile() ? 20 : settings.number_of_keys);
     settings.color_white = settings_storage.readString("color-white", settings.color_white);
@@ -804,6 +818,19 @@ function loadSettings() {
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
     settings.toolbar = session_storage.readBool("toolbar", settings.toolbar);
+}
+
+
+function checkUrlQueryStrings() {
+    const perf_mode = getUrlQueryValue("mode").toLowerCase();
+    if ( ["lp","lowperf"].includes(perf_mode) ) {
+        settings.lowperf = true;
+        settings_storage.writeBool("lowperf", true);
+    }
+    else if ( ["hp","highperf"].includes(perf_mode) ) {
+        settings.lowperf = false;
+        settings_storage.writeBool("lowperf", false);
+    }
 }
 
 
@@ -1678,6 +1705,7 @@ function handleKeyDown(e) {
 // Initialize
 
 loadSettings();
+checkUrlQueryStrings();
 
 window.addEventListener("load", () => {
     updatePianoPosition();
