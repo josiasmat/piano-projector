@@ -410,7 +410,7 @@ div.menu-msg {
         transition: d var(--unpress-transition-duration) ease-in;
     }
     .white-key-border {
-        stroke-width: 1.5px;
+        stroke-width: 1.3px;
         stroke-linecap: square;
         fill: none;
         pointer-events: stroke;

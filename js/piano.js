@@ -17,11 +17,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 const KBD_HEIGHT = 500;
-const STROKE_WIDTH = 1.5;
-const WHITE_KEY_GAP = 1.5;
+const STROKE_WIDTH = 1.3;
+
+const WHITE_KEY_GAP = 1.8;
 const BLACK_KEY_GAP = 2.5;
+
 const BK_OFFSET = 0.13;
 const WHITE_KEY_PRESSED_FACTOR = 1.01;
+
+const BLACK_KEY_SIDE_BEVEL = 3.0;
 
 import SvgTools from "./svgtools.js";
 
@@ -81,8 +85,8 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     const black_key_bevel = {
         bottom_height: black_key_width/1.8*(Math.max(height_factor-0.5,0)/2+0.75),
         bottom_height1: 0,
-        side_width_bottom: STROKE_WIDTH*4,
-        side_width_top: STROKE_WIDTH*2,
+        side_width_bottom: BLACK_KEY_SIDE_BEVEL*2,
+        side_width_top: BLACK_KEY_SIDE_BEVEL,
         side_width_min: 0,
         side_width_max: 0
     }
