@@ -23,7 +23,7 @@ const WHITE_KEY_GAP = 1.8;
 const BLACK_KEY_GAP = 2.5;
 
 const BK_OFFSET = 0.13;
-const WHITE_KEY_PRESSED_FACTOR = 1.01;
+const WHITE_KEY_PRESSED_FACTOR = 1.007;
 
 const BLACK_KEY_SIDE_BEVEL = 3.0;
 
@@ -122,40 +122,95 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
             ? black_key_width_half - (black_key_width * BK_OFFSETS[note+1]) + BLACK_KEY_GAP 
             : white_key_gap_half );
 
+        const press_h_shrink = width * 0.02;
+        const press_h_shrink_cut_point = press_h_shrink * cut_point / height;
+
+        //   a----b
+        //   |    |
+        //   |    |
+        // g-h    c-d
+        // |        |
+        // |        |
+        // f--------e
+
+        const normal = {
+            ax: left_offset, ay: white_key_top,
+            bx: right_offset, by: white_key_top,
+            cx: right_offset, cy: cut_point,
+            dx: right, dy: cut_point,
+            ex: right, ey: height,
+            fx: left, fy: height,
+            gx: left, gy: cut_point,
+            hx: left_offset, hy: cut_point
+        }
+
+        const pressed = {
+            ax: normal.ax, ay: normal.ay,
+            bx: normal.bx, by: normal.by,
+            cx: right_offset, cy: cut_point1,
+            dx: right - press_h_shrink_cut_point, dy: cut_point1,
+            ex: right - press_h_shrink, ey: height1,
+            fx: left + press_h_shrink, fy: height1,
+            gx: left + press_h_shrink_cut_point, gy: cut_point1,
+            hx: left_offset, hy: cut_point1,
+        }
+
         const round_quarter = round/4;
 
         const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key white-key", value: key });
 
-        const key_fill = makeDualPath([
-                'M', left_offset, white_key_top,
-                'H', right_offset,
+        const key_touch_area = SvgTools.makePath([
+                'M', normal.ax, normal.ay,
+                'H', normal.bx,
                 black_after ? [
-                    'V', cut_point,
-                    'H', right
+                    'V', normal.cy,
+                    'H', normal.dx
                 ] : null,
-                'V', height-round,
-                'Q', right-round_quarter, height-round_quarter, right-round, height,
-                'H', left+round,
-                'Q', left+round_quarter, height-round_quarter, left, height-round,
+                'V', normal.ey,
+                'H', normal.fx,
                 black_before ? [
-                    'V', cut_point,
-                    'H', left_offset
+                    'V', normal.gy,
+                    'H', normal.hx
+                ] : null,
+                'Z'
+            ],
+            { class: "key-touch-area invisible", value: key }
+        );
+
+        const key_fill = makeDualPath([
+                'M', normal.ax, normal.ay,
+                'H', normal.bx,
+                black_after ? [
+                    'L', normal.cx, normal.cy,
+                    'H', normal.dx
+                ] : null,
+                'L', normal.ex, normal.ey-round,
+                'Q', normal.ex-round_quarter, normal.ey-round_quarter, 
+                    normal.ex-round, normal.ey,
+                'H', normal.fx+round,
+                'Q', normal.fx+round_quarter, normal.fy-round_quarter, 
+                    normal.fx, normal.fy-round,
+                black_before ? [
+                    'L', normal.gx, normal.gy,
+                    'H', normal.hx
                 ] : null,
                 'Z'
             ], [
-                'M', left_offset, white_key_top,
-                'H', right_offset,
+                'M', pressed.ax, pressed.ay,
+                'H', pressed.bx,
                 black_after ? [
-                    'V', cut_point1,
-                    'H', right
+                    'L', pressed.cx, pressed.cy,
+                    'H', pressed.dx
                 ] : null,
-                'V', height1-round,
-                'Q', right-round_quarter, height1-round_quarter, right-round, height1,
-                'H', left+round,
-                'Q', left+round_quarter, height1-round_quarter, left, height1-round,
+                'L', pressed.ex, pressed.ey-round,
+                'Q', pressed.ex-round_quarter, pressed.ey-round_quarter, 
+                     pressed.ex-round, pressed.ey,
+                'H', pressed.fx+round,
+                'Q', pressed.fx+round_quarter, pressed.fy-round_quarter, 
+                     pressed.fx, pressed.fy-round,
                 black_before ? [
-                    'V', cut_point1,
-                    'H', left_offset
+                    'L', pressed.gx, pressed.gy,
+                    'H', pressed.hx
                 ] : null,
                 'Z'
             ],
@@ -164,39 +219,39 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
 
         const inset = white_key_highlight_inset;
         const key_highlight = makeDualPath([
-                'M', left_offset+inset, white_key_top-stroke_width_half,
-                'H', right_offset-inset, 
+                'M', normal.ax+inset, normal.ay-stroke_width_half,
+                'H', normal.bx-inset, 
                 black_after ? [
-                    'V', cut_point+inset,
-                    'H', right-inset
+                    'L', normal.cx-inset, normal.cy+inset,
+                    'H', normal.dx-inset
                 ] : null,
-                'V', height-inset-round+stroke_width_half,
-                'Q', right-round_quarter-inset+stroke_width_half, height-round_quarter-inset,
-                     right-round-inset+stroke_width_half, height-inset,
-                'H', left+inset+round-stroke_width_half,
-                'Q', left+round_quarter+inset, height-inset-round_quarter+stroke_width_half,
-                     left+inset, height-inset-round+stroke_width_half,
+                'L', normal.ex-inset, normal.ey-inset-round+stroke_width_half,
+                'Q', normal.ex-round_quarter-inset+stroke_width_half, normal.ey-round_quarter-inset,
+                     normal.ex-round-inset+stroke_width_half, normal.ey-inset,
+                'H', normal.fx+inset+round-stroke_width_half,
+                'Q', normal.fx+round_quarter+inset, normal.fy-inset-round_quarter+stroke_width_half,
+                     normal.fx+inset, normal.fy-inset-round+stroke_width_half,
                 black_before ? [
-                    'V', cut_point+inset,
-                    'H', left_offset+inset
+                    'L', normal.gx+inset, normal.gy+inset,
+                    'H', normal.hx+inset
                 ] : null,
                 'Z'
             ], [
-                'M', left_offset+inset, white_key_top-stroke_width_half,
-                'H', right_offset-inset, 
+                'M', pressed.ax+inset, pressed.ay-stroke_width_half,
+                'H', pressed.bx-inset, 
                 black_after ? [
-                    'V', cut_point1+inset,
-                    'H', right-inset
+                    'L', pressed.cx-inset, pressed.cy+inset,
+                    'H', pressed.dx-inset
                 ] : null,
-                'V', height1-inset-round+stroke_width_half,
-                'Q', right-round_quarter-inset+stroke_width_half, height1-round_quarter-inset,
-                     right-round-inset+stroke_width_half, height1-inset,
-                'H', left+inset+round-stroke_width_half,
-                'Q', left+round_quarter+inset, height1-inset-round_quarter+stroke_width_half,
-                     left+inset, height1-inset-round+stroke_width_half,
+                'L', pressed.ex-inset, pressed.ey-inset-round+stroke_width_half,
+                'Q', pressed.ex-round_quarter-inset+stroke_width_half, pressed.ey-round_quarter-inset,
+                     pressed.ex-round-inset+stroke_width_half, pressed.ey-inset,
+                'H', pressed.fx+inset+round-stroke_width_half,
+                'Q', pressed.fx+round_quarter+inset, pressed.fy-inset-round_quarter+stroke_width_half,
+                     pressed.fx+inset, pressed.fy-inset-round+stroke_width_half,
                 black_before ? [
-                    'V', cut_point1+inset,
-                    'H', left_offset+inset
+                    'L', pressed.gx+inset, pressed.gy+inset,
+                    'H', pressed.hx+inset
                 ] : null,
                 'Z'
             ],
@@ -204,51 +259,55 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
         );
 
         const light_border = makeDualPath([
-                'M', left_offset, white_key_top+stroke_width_half,
+                'M', normal.ax, normal.ay+stroke_width_half,
                 black_before ? [
-                    'V', cut_point,
-                    'H', left
+                    'L', normal.hx, normal.hy,
+                    'H', normal.gx
                 ] : null,
-                'L', left, height-round-stroke_width_half,
+                'L', normal.fx, normal.fy-round-stroke_width_half,
                 black_after ? [
-                    'M', right, cut_point,
-                    'H', right_offset
+                    'M', normal.cx, normal.cy,
+                    'H', normal.dx
                 ] : null
             ], [
-                'M', left_offset, white_key_top+stroke_width_half,
+                'M', pressed.ax, pressed.ay+stroke_width_half,
                 black_before ? [
-                    'V', cut_point1,
-                    'H', left
+                    'L', pressed.hx, pressed.hy,
+                    'H', pressed.gx
                 ] : null,
-                'L', left, height1-round-stroke_width_half,
+                'L', pressed.fx, pressed.fy-round-stroke_width_half,
                 black_after ? [
-                    'M', right, cut_point1,
-                    'H', right_offset
+                    'M', pressed.cx, pressed.cy,
+                    'H', pressed.dx
                 ] : null
             ],
             { class: "key-light-border white-key-border" }
         );
 
         const dark_border = makeDualPath([
-                'M', left, height-round,
-                'Q', left+round_quarter, height-round_quarter, left+round, height,
-                'H', right-round,
-                'Q', right-round_quarter, height-round_quarter, right, height-round,
+                'M', normal.fx, normal.fy-round,
+                'Q', normal.fx+round_quarter, normal.fy-round_quarter, 
+                     normal.fx+round, normal.fy,
+                'H', normal.ex-round,
+                'Q', normal.ex-round_quarter, normal.ey-round_quarter, 
+                     normal.ex, normal.ey-round,
                 black_after ? [
-                    'V', cut_point,
-                    'M', right_offset, cut_point,
+                    'L', normal.dx, normal.dy,
+                    'M', normal.cx, normal.cy,
                 ] : null,
-                'V', white_key_top+stroke_width_half
+                'L', normal.bx, normal.by+stroke_width_half
             ], [
-                'M', left, height1-round,
-                'Q', left+round_quarter, height1-round_quarter, left+round, height1,
-                'H', right-round,
-                'Q', right-round_quarter, height1-round_quarter, right, height1-round,
+                'M', pressed.fx, pressed.fy-round,
+                'Q', pressed.fx+round_quarter, pressed.fy-round_quarter, 
+                     pressed.fx+round, pressed.fy,
+                'H', pressed.ex-round,
+                'Q', pressed.ex-round_quarter, pressed.ey-round_quarter, 
+                     pressed.ex, pressed.ey-round,
                 black_after ? [
-                    'V', cut_point1,
-                    'M', right_offset, cut_point1,
+                    'L', pressed.dx, pressed.dy,
+                    'M', pressed.cx, pressed.cy,
                 ] : null,
-                'V', white_key_top+stroke_width_half
+                'L', pressed.bx, pressed.by+stroke_width_half
             ],
             { class: "key-dark-border white-key-border" }
         );
@@ -276,6 +335,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
         key_group.appendChild(dark_border);
         key_group.appendChild(light_border);
         key_group.appendChild(marker);
+        key_group.appendChild(key_touch_area);
         return key_group;
     }
 
@@ -359,7 +419,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
                 'L', body.left_bottom1, height-black_key_bevel.bottom_height1-round,
                 'Z'
             ],
-            { class: "key-fill" }
+            { class: "key-fill key-touch-area" }
         );
 
         const inset = black_key_highlight_inset;
@@ -720,7 +780,7 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
                 ] : null,
                 'Z'
             ],
-            { class: "key-fill lowperf" }
+            { class: "key-fill key-touch-area lowperf" }
         );
 
         const inset = white_key_highlight_inset;
@@ -775,7 +835,7 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
                 'H', left,
                 'Z'
             ],
-            { class: "key-fill lowperf" }
+            { class: "key-fill key-touch-area lowperf" }
         );
 
         const inset = black_key_highlight_inset;

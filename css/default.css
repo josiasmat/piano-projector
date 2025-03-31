@@ -289,8 +289,18 @@ div.menu-msg {
     .key {
         transform-origin: center top 0px;
 
-        .key-fill {
-            pointer-events: fill;
+        .invisible {
+            fill: none;
+            stroke: none;
+            visibility: hidden;
+        }
+
+        .key-touch-area {
+            pointer-events: all;
+        }
+
+        :not(.key-touch-area), & {
+            pointer-events: none;
         }
 
         .key-highlight {
