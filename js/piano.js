@@ -108,6 +108,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     function drawWhiteKey(key, note, offset, width, height, round) {
         const left = offset + stroke_width_half + white_key_gap_half;
         const right = offset + width - stroke_width_half - white_key_gap_half;
+        const center = left + (right-left)/2;
         const height1 = height * WHITE_KEY_PRESSED_FACTOR;
         const cut_point = black_key_height + stroke_width_half + BLACK_KEY_GAP;
         const cut_point1 = cut_point * WHITE_KEY_PRESSED_FACTOR;
@@ -121,9 +122,12 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
         const right_offset = offset + width - stroke_width_half - ( black_after 
             ? black_key_width_half - (black_key_width * BK_OFFSETS[note+1]) + BLACK_KEY_GAP 
             : white_key_gap_half );
-
+            
         const press_h_shrink = width * 0.02;
         const press_h_shrink_cut_point = press_h_shrink * cut_point / height;
+        
+        const left_offset1 = left_offset + ((center - left_offset)/width*press_h_shrink_cut_point);
+        const right_offset1 = right_offset - ((right_offset - center)/width*press_h_shrink_cut_point);
 
         //   a----b
         //   |    |
@@ -147,12 +151,12 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
         const pressed = {
             ax: normal.ax, ay: normal.ay,
             bx: normal.bx, by: normal.by,
-            cx: right_offset, cy: cut_point1,
+            cx: right_offset1, cy: cut_point1,
             dx: right - press_h_shrink_cut_point, dy: cut_point1,
             ex: right - press_h_shrink, ey: height1,
             fx: left + press_h_shrink, fy: height1,
             gx: left + press_h_shrink_cut_point, gy: cut_point1,
-            hx: left_offset, hy: cut_point1,
+            hx: left_offset1, hy: cut_point1,
         }
 
         const round_quarter = round/4;
@@ -315,16 +319,16 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
         const marker_inset = white_key_highlight_inset*5;
         const marker_height = white_key_highlight_inset*4;
         const marker = makeDualPath([
-                'M', left+marker_inset, height-marker_inset,
-                'H', right-marker_inset,
+                'M', normal.fx+marker_inset, normal.fy-marker_inset,
+                'H', normal.ex-marker_inset,
                 'v', -marker_height,
-                'H', left+marker_inset,
+                'H', normal.fx+marker_inset,
                 'Z'
             ], [
-                'M', left+marker_inset, height1-marker_inset,
-                'H', right-marker_inset,
+                'M', pressed.fx+marker_inset, pressed.fy-marker_inset,
+                'H', pressed.ex-marker_inset,
                 'v', -marker_height,
-                'H', left+marker_inset,
+                'H', pressed.fx+marker_inset,
                 'Z'
             ],
             { class: "key-marker white-key-marker" }
@@ -645,7 +649,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
         left: -2,
         top: -4,
         width: width+STROKE_WIDTH+2,
-        height: (white_key_height * WHITE_KEY_PRESSED_FACTOR) + STROKE_WIDTH + 4
+        height: (white_key_height * Math.max(WHITE_KEY_PRESSED_FACTOR, 1.0)) + STROKE_WIDTH + 4
     }
 
     svg.setAttribute("viewBox", `${viewbox.left} ${viewbox.top} ${viewbox.width} ${viewbox.height}`);
