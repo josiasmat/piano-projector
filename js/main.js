@@ -1580,7 +1580,7 @@ window.addEventListener("touchmove", handlePianoTouchMove, { capture: false, pas
 
 /** @param {PointerEvent} e */
 function handlePianoClick(e) {
-    if ( e.button === 0 && e.shiftKey ) {
+    if ( e.button === 0 && e.ctrlKey ) {
         const note = findKeyUnderPoint(e.clientX, e.clientY);
         if ( note ) {
             piano.marks[note] = !piano.marks[note];
@@ -1695,7 +1695,7 @@ function handleKeyDown(e) {
         }
     }
 
-    if ( e.key == "Shift" ) {
+    if ( e.key == "Control" ) {
         piano.marking_mode = true;
         piano.svg.classList.toggle("marking-mode", true);
     }
@@ -1731,7 +1731,7 @@ function handleKeyDown(e) {
 
 /** @param {KeyboardEvent} e */
 function handleKeyUp(e) {
-    if ( e.key == "Shift" ) {
+    if ( e.key == "Control" ) {
         piano.marking_mode = false;
         piano.svg.classList.toggle("marking-mode", false);
     }
