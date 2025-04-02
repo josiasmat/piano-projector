@@ -334,7 +334,7 @@ div.menu-msg {
                 opacity: 100%;
             }
             &.dim .key-highlight {
-                opacity: 70%;
+                opacity: 55%;
             }
             &:not(.pressed):not(.lowperf) .key-highlight {
                 transition-duration: var(--unpress-transition-duration);
