@@ -21,7 +21,7 @@ import {
     isMobile, isSafari, getUrlQueryValue 
 } from "./utils.js";
 import { Midi, noteToMidi, midiToFreq } from "./midi.js";
-import { drawPianoKeyboard, drawPianoKeyboardLP } from "./piano.js";
+import { drawPianoKeyboard, drawPianoKeyboardLP, isWhiteKey } from "./piano.js";
 import { KbdNotes } from "./kbdnotes.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
 import KbdNav from "./kbdnav.js";
@@ -39,21 +39,70 @@ const settings = {
     sound: null,
     offset: { x: 0.5, y: 0.5 },
     labels: {
-        /** @type {string} "none", "played", "cs", "white", "all" */
-        which: "none",
         /** @type {string} "english", "german", "italian", "pc", "midi", "freq" */
         type: "english",
         octave: true,
-        get which_badge() {
-            return {
-                none: "None", played: "Played", cs: "C's", white: "White", all: "All"
-            }[this.which];
+        played: false,
+        /** @type {Set<number>} */
+        keys: new Set(),
+        toggleKey(key) {
+            if ( this.keys.has(key) )
+                this.keys.delete(key);
+            else
+                this.keys.add(key);
+            updatePianoKey(key);
+            writeSettings();
+        },
+        keysToStr() {
+            return [...this.keys].join(',');
+        },
+        /** @param {string} s */
+        strToKeys(s) {
+            console.log(s);
+            this.keys.clear();
+            if ( s )
+                for ( const item of s.split(',') ) {
+                    const key = parseInt(item);
+                    if ( Number.isInteger(key) )
+                        this.keys.add(key);
+                }
         },
         get type_badge() {
             return {
                 english: "English", german: "German", italian: "Italian",
                 pc: "Pitch-class", midi: "MIDI", freq: "Frequency"
             }[this.type];
+        }
+    },
+    stickers: {
+        color: "red",
+        /** @type {Map<number,string>} */
+        keys: new Map(),
+        toggleSticker(key) {
+            if ( this.keys.has(key) && this.keys.get(key) == this.color )
+                this.keys.delete(key);
+            else
+                this.keys.set(key,this.color);
+            updatePianoKey(key);
+            writeSettings();
+        },
+        keysToStr() {
+            let items = [];
+            for ( const [k,v] of this.keys.entries() ) 
+                items.push(`${k}:${v}`);
+            return items.join(',');
+        },
+        /** @param {string} s */
+        strToKeys(s) {
+            console.log(s);
+            this.keys.clear();
+            if ( s )
+                for ( const item of s.split(',') ) {
+                    const [k,v] = item.split(':');
+                    const kn = parseInt(k);
+                    if ( Number.isInteger(kn) )
+                        this.keys.set(kn, v);
+                }
         }
     },
     zoom: 1.0,
@@ -281,12 +330,14 @@ const toolbar = {
         transpose: document.getElementById("dropdown-transpose"),
         size: document.getElementById("dropdown-size"),
         colors: document.getElementById("dropdown-colors"),
-        labels: document.getElementById("dropdown-labels"),
         pedals: document.getElementById("dropdown-pedals"),
+        labels: document.getElementById("dropdown-labels"),
+        stickers: document.getElementById("dropdown-stickers"),
         get all() {
             return [
                 this.connect, this.sound, this.transpose,
-                this.size, this.colors, this.labels, this.pedals
+                this.size, this.colors, this.pedals, 
+                this.labels, this.stickers
             ];
         },
         closeAll() {
@@ -303,8 +354,9 @@ const toolbar = {
         transpose: document.getElementById("btn-transpose"),
         size: document.getElementById("btn-size"),
         colors: document.getElementById("btn-colors"),
-        labels: document.getElementById("btn-labels"),
         pedals: document.getElementById("btn-pedals"),
+        labels: document.getElementById("btn-labels"),
+        stickers: document.getElementById("btn-stickers"),
         panic: document.getElementById("btn-panic"),
         hide_toolbar: document.getElementById("btn-hide-toolbar"),
         show_toolbar: document.getElementById("btn-show-toolbar")
@@ -324,19 +376,27 @@ const toolbar = {
         },
         labels: {
             top: document.getElementById("menu-labels-top"),
-            which: document.getElementById("menu-labels-which"),
+            labeling_mode: document.getElementById("menu-labeling-mode"),
+            played: document.getElementById("menu-labels-played-keys"),
+            presets: document.getElementById("menu-labels-which"),
             type: document.getElementById("menu-labels-type"),
+            octave: document.getElementById("menu-item-labels-octave"),
+        },
+        stickers: {
+            top: document.getElementById("menu-stickers-top"),
+            clear: document.getElementById("menu-stickers-clear")
         },
         pedals: document.getElementById("pedal-menu")
     }
 }
 
-const toolbar_condensing_list = [
+const toolbar_shrink_list = [
     { elm: toolbar.title,               action: "hide-elm" },
     { elm: toolbar.dropdowns.sound,     action: "hide-label" },
     { elm: toolbar.dropdowns.connect,   action: "hide-label" },
     { elm: toolbar.dropdowns.pedals,    action: "hide-label" },
     { elm: toolbar.dropdowns.transpose, action: "hide-label" },
+    { elm: toolbar.dropdowns.labels,    action: "hide-label" },
     { elm: toolbar.dropdowns.colors,    action: "hide-elm" },
     { elm: toolbar.dropdowns.size,      action: "hide-elm" },
     { elm: toolbar.dropdowns.sound,     action: "hide-elm" },
@@ -354,8 +414,43 @@ const piano = {
     /** @type {[SVGElement?]} */
     labels: Array(128).fill(null),
     /** @type {[Boolean]} */
-    marks: Array(128).fill(false),
-    marking_mode: false,
+}
+
+/** @type {string?} "label" or "sticker" or null */
+let marking_mode = null;
+
+
+function buildLabelsPreset(value) {
+    const preset = new Set();
+    switch ( value ) {
+        case "mc":
+            preset.add(60);
+            break;
+        case "cs":
+            for ( const key of range(0,128,12) )
+                preset.add(key);
+            break;
+        case "white":
+            for ( const key of range(0,128) )
+                if ( isWhiteKey(key) )
+                    preset.add(key);
+            break;
+        case "all":
+            for ( const key of range(0,128) )
+                preset.add(key);
+            break;
+    }
+    return preset;
+}
+
+
+function getLabelsCurrentPresetOption() {
+    for ( const option of ["none","mc","cs","white","all"] ) {
+        const preset = buildLabelsPreset(option);
+        if ( settings.labels.keys.symmetricDifference(preset).size == 0 )
+            return option;
+    }
+    return "custom";
 }
 
 
@@ -403,12 +498,12 @@ function updatePianoKey(key) {
         elm.classList.toggle("active", note_on);
         elm.classList.toggle("pressed", key_pressed);
         elm.classList.toggle("dim", settings.pedal_dim && note_on && (!key_pressed));
-        elm.classList.toggle("marked", piano.marks[key]);
         const dn = key_pressed ? "d1" : "d0";
         for ( const child of elm.children )
             if ( child.hasAttribute(dn) )
                 child.setAttribute("d", child.getAttribute(dn));
-        updateKeyboardLabel(key, note_on);
+        updatePianoKeyLabel(key, note_on);
+        updatePianoKeySticker(key);
     }
 }
 
@@ -419,7 +514,7 @@ function updatePianoKeys(keys=range(0,128)) {
 }
 
 
-function updateKeyboardLabel(key, is_on) {
+function updatePianoKeyLabel(key, is_on) {
     //const OCTAVES_SUP_EN = ['⁻¹','⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
     const OCTAVES_SUB_EN = ['₋₁','₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'];
     const OCTAVES_SUP_IT = ['⁻²','⁻¹','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹','¹⁰'];
@@ -480,34 +575,29 @@ function updateKeyboardLabel(key, is_on) {
         for ( const [i,tspan] of Array.from(label.children).entries() )
             tspan.textContent = lines[i] ?? '';
 
-        let visible, temporary; 
-        switch ( settings.labels.which ) {
-            case "all": 
-                visible = true; 
-                temporary = false; 
-                break;
-            case "played": 
-                visible = is_on; 
-                temporary = true; 
-                break;
-            case "cs": 
-                visible = ( pc == 0 ); 
-                temporary = false; 
-                break;
-            case "white": 
-                visible = is_white_key; 
-                temporary = false; 
-                break;
-            default: 
-                visible = false; 
-                temporary = false; 
-        }
+        const has_fixed_label = settings.labels.keys.has(key);
+        const visible = has_fixed_label || ( settings.labels.played && is_on );
+        const temporary = settings.labels.played && is_on && !has_fixed_label;
+
         label.classList.toggle("may-change-visibility", temporary);
         label.classList.toggle("fixed-visibility", !temporary);
         label.classList.toggle("visible", visible);
         label.classList.toggle("hidden", !visible);
         label.classList.toggle("rotated", settings.labels.type == "freq");
     }
+}
+
+
+function updatePianoKeySticker(key) {
+    const elm = piano.keys[key];
+    const has_sticker = settings.stickers.keys.has(key);
+    const sticker_color = has_sticker ? settings.stickers.keys.get(key) : null;
+    elm.classList.toggle("sticker", has_sticker);
+    elm.classList.toggle("sticker-red", sticker_color == "red");
+    elm.classList.toggle("sticker-yellow", sticker_color == "yellow");
+    elm.classList.toggle("sticker-green", sticker_color == "green");
+    elm.classList.toggle("sticker-blue", sticker_color == "blue");
+    elm.classList.toggle("sticker-violet", sticker_color == "violet");
 }
 
 
@@ -524,6 +614,10 @@ function updateToolbar() {
           || ( settings.device_name && Midi.getConnectedPort() )));
     changeLed("transpose-power-icon", ( settings.transpose != 0 ));
     changeLed("sound-power-icon", sound.led, (sound.led == 1 ? "red" : null));
+    changeLed("labels-power-icon", ( marking_mode == "label" ));
+    changeLed("stickers-power-icon", ( marking_mode == "sticker" ), {
+        red: "red", yellow: "yellow", green: "#0b0", blue: "blue", violet: "violet"
+    }[settings.stickers.color]);
     toolbar.self.toggleAttribute("hidden", !settings.toolbar);
     toolbar.buttons.show_toolbar.toggleAttribute("hidden", settings.toolbar);
     toolbar.dropdowns.pedals.toggleAttribute("hidden", touch.enabled);
@@ -534,14 +628,14 @@ function updateToolbar() {
 
 function updateToolbarBasedOnWidth() {
     // Reset all to know full width
-    for ( const item of toolbar_condensing_list ) {
+    for ( const item of toolbar_shrink_list ) {
         if ( item.action == "hide-elm" )
             item.elm.classList.toggle("condensed-toolbar-hidden-elm", false);
         else if ( item.action == "hide-label" )
             item.elm.classList.toggle("condensed-toolbar-hidden-label", false);
     }
     // Try to reduce toolbar elements as needed
-    for ( const item of toolbar_condensing_list ) {
+    for ( const item of toolbar_shrink_list ) {
         if ( toolbar.self.scrollWidth <= toolbar.self.clientWidth )
             break;
         if ( item.action == "hide-elm" )
@@ -601,15 +695,34 @@ function updatePedalsMenu() {
 
 
 function updateLabelsMenu() {
-    for ( const item of toolbar.menus.labels.which.children ) 
-        item.checked = ( item.value === settings.labels.which );
-    toolbar.menus.labels.which.nextElementSibling.innerText = settings.labels.which_badge;
+    toolbar.menus.labels.labeling_mode.checked = ( marking_mode == "label" );
+    toolbar.menus.labels.played.checked = settings.labels.played;
+    const preset_name = getLabelsCurrentPresetOption();
+    for ( const item of toolbar.menus.labels.presets.children ) 
+        item.checked = ( item.value === preset_name );
+    toolbar.menus.labels.presets.nextElementSibling.innerText = {
+            none: "None", mc: "Middle-C", cs: "C's", 
+            white: "White", all: "All", custom: "Custom"
+        }[preset_name];
     for ( const item of toolbar.menus.labels.type.children )
-        item.checked = ( item.value === settings.labels.type );
+        if ( item.value != "octave" )
+            item.checked = ( item.value === settings.labels.type );
     toolbar.menus.labels.type.nextElementSibling.innerText = settings.labels.type_badge;
-    const menu_labels_octave = document.getElementById("menu-item-labels-octave");
-    menu_labels_octave.disabled = ["pc","midi","freq"].includes(settings.labels.type);
-    menu_labels_octave.checked = settings.labels.octave;
+    toolbar.menus.labels.octave.disabled = ["pc","midi","freq"].includes(settings.labels.type);
+    toolbar.menus.labels.octave.checked = settings.labels.octave;
+}
+
+
+function updateStickersMenu() {
+    const sticker_mode_on = ( marking_mode == "sticker" );
+    for ( const item of toolbar.menus.stickers.top.children )
+        if ( item.getAttribute("type") == "checkbox" ) {
+            const is_current_color = ( item.value == settings.stickers.color );
+            item.checked = ( sticker_mode_on && is_current_color );
+            item.querySelector(".menu-keyboard-shortcut")
+                .classList.toggle("invisible", !is_current_color);
+        }
+    toolbar.menus.stickers.clear.disabled = settings.stickers.keys.size == 0;
 }
 
 
@@ -729,8 +842,8 @@ function switchKeyDepth() {
 }
 
 /** @param {string} value */
-function setLabelsWhich(value) {
-    settings.labels.which = value;
+function setLabelsPreset(value) {
+    settings.labels.keys = buildLabelsPreset(value);
     updateLabelsMenu();
     updatePianoKeys();
     writeSettings();
@@ -739,6 +852,47 @@ function setLabelsWhich(value) {
 /** @param {string} value */
 function setLabelsType(value) {
     settings.labels.type = value;
+    updateLabelsMenu();
+    updatePianoKeys();
+    writeSettings();
+}
+
+/** @param {string} value - "label", "sticker" or _null_ */
+function setMarkingMode(value) {
+    marking_mode = value ? value : null;
+    piano.svg.classList.toggle("marking-mode", Boolean(value));
+    updateToolbar();
+}
+
+/** @param {boolean} value */
+function toggleLabelingMode(value = undefined) {
+    if ( value === undefined )
+        value = !(marking_mode == "label");
+    setMarkingMode(value ? "label" : null)
+    updateLabelsMenu();
+}
+
+/** @param {boolean} enabled @param {string} color */
+function toggleStickerMode(enabled = undefined, color = settings.stickers.color) {
+    if ( enabled === undefined )
+        enabled = !(marking_mode == "sticker") || (color != settings.stickers.color);
+    settings.stickers.color = color;
+    setMarkingMode(enabled ? "sticker" : null)
+    updateStickersMenu();
+}
+
+function clearStickers() {
+    settings.stickers.keys.clear();
+    updatePianoKeys();
+    updateStickersMenu();
+    writeSettings();
+}
+
+/** @param {boolean} value */
+function toggleLabelsPlayed(value = undefined) {
+    settings.labels.played = ( value === undefined )
+        ? !settings.labels.played 
+        : value;
     updateLabelsMenu();
     updatePianoKeys();
     writeSettings();
@@ -782,9 +936,12 @@ function writeSettings() {
     settings_storage.writeString("color-pressed", settings.color_highlight);
     settings_storage.writeString("color-white", settings.color_white);
     settings_storage.writeString("color-black", settings.color_black);
-    settings_storage.writeString("labels-which", settings.labels.which);
     settings_storage.writeString("labels-type", settings.labels.type);
     settings_storage.writeBool("labels-octave", settings.labels.octave);
+    settings_storage.writeBool("labels-played", settings.labels.played);
+    settings_storage.writeString("labels-keys", settings.labels.keysToStr());
+    settings_storage.writeString("sticker-color", settings.stickers.color);
+    settings_storage.writeString("stickers-keys", settings.stickers.keysToStr());
     settings_storage.writeBool("perspective", settings.perspective);
     settings_storage.writeBool("top-felt", settings.top_felt);
     settings_storage.writeString("highlight-opacity", settings.highlight_opacity);
@@ -808,9 +965,12 @@ function loadSettings() {
     settings.color_white = settings_storage.readString("color-white", settings.color_white);
     settings.color_black = settings_storage.readString("color-black", settings.color_black);
     settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight);
-    settings.labels.which = settings_storage.readString("labels-which", settings.labels.which);
     settings.labels.type = settings_storage.readString("labels-type", settings.labels.type);
     settings.labels.octave = settings_storage.readBool("labels-octave", settings.labels.octave);
+    settings.labels.played = settings_storage.readBool("labels-played", settings.labels.played);
+    settings.labels.strToKeys(settings_storage.readString("labels-keys", ''));
+    settings.stickers.color = settings_storage.readString("sticker-color", settings.stickers.color);
+    settings.stickers.strToKeys(settings_storage.readString("stickers-keys", ''));
     settings.perspective = settings_storage.readBool("perspective", settings.perspective);
     settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
     settings.highlight_opacity = settings_storage.readString("highlight-opacity", settings.highlight_opacity);
@@ -1008,6 +1168,7 @@ toolbar.dropdowns.size.addEventListener("sl-show", updateSizeMenu);
 toolbar.dropdowns.colors.addEventListener("sl-show", updateColorsMenu);
 toolbar.dropdowns.pedals.addEventListener("sl-show", updatePedalsMenu);
 toolbar.dropdowns.labels.addEventListener("sl-show", updateLabelsMenu);
+toolbar.dropdowns.stickers.addEventListener("sl-show", updateStickersMenu);
 toolbar.dropdowns.transpose.addEventListener("sl-show", updateTransposeMenuAndButton);
 
 for ( const dropdown of toolbar.dropdowns.all ) {
@@ -1145,20 +1306,39 @@ document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
     writeSettings();
 });
 
-toolbar.menus.labels.which.addEventListener("sl-select", (e) => {
-    setLabelsWhich(e.detail.item.value);
+toolbar.menus.labels.presets.addEventListener("sl-select", (e) => {
+    setLabelsPreset(e.detail.item.value);
     if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
 toolbar.menus.labels.type.addEventListener("sl-select", (e) => {
-    setLabelsType(e.detail.item.value);
+    if ( e.detail.item.value == toolbar.menus.labels.octave.value )
+        toggleLabelsOctave(e.detail.item.checked);
+    else
+        setLabelsType(e.detail.item.value);
     if ( isMobile() ) toolbar.dropdowns.labels.hide();
 });
 
 toolbar.menus.labels.top.addEventListener("sl-select", (e) => {
-    if ( e.detail.item.id === "menu-item-labels-octave" )
-        toggleLabelsOctave(e.detail.item.checked);
-    if ( isMobile() ) toolbar.dropdowns.labels.hide();
+    if ( e.detail.item.id == toolbar.menus.labels.labeling_mode.id ) {
+        toggleLabelingMode(e.detail.item.checked);
+        toolbar.dropdowns.labels.hide();
+    } else if ( e.detail.item.id == toolbar.menus.labels.played.id ) {
+        toggleLabelsPlayed(e.detail.item.checked);
+        if ( isMobile() ) toolbar.dropdowns.labels.hide();
+    }
+});
+
+toolbar.menus.stickers.top.addEventListener("sl-select", (e) => {
+    if ( e.detail.item.getAttribute("type") == "checkbox" ) {
+        toggleStickerMode(undefined, e.detail.item.value);
+        toolbar.dropdowns.stickers.hide();
+    }
+    writeSettings();
+});
+
+toolbar.menus.stickers.clear.addEventListener("click", (e) => {
+    clearStickers();
 });
 
 toolbar.menus.pedals.addEventListener("sl-select", (e) => {
@@ -1204,7 +1384,6 @@ window.addEventListener("resize", () => {
     updatePianoPosition();
 });
 window.addEventListener("keydown", handleKeyDown);
-window.addEventListener("keyup", handleKeyUp);
 
 
 // Keyboard navigator
@@ -1237,6 +1416,7 @@ function buildKbdNavStructure() {
     function getKeyDepthStr() {
         return settings.height_factor == 1.0 ? "Full" : settings.height_factor == 0.5 ? "1/2" : "3/4";
     }
+    const labels_preset = getLabelsCurrentPresetOption();
     return [
         ['', [
             ["&Control", populateControlNav()],
@@ -1263,27 +1443,37 @@ function buildKbdNavStructure() {
                 ["&25 keys", () => setNumberOfKeys(25), {noindex: true, checked: (settings.number_of_keys == 25)}],
                 [`Change key &depth (current: ${getKeyDepthStr()})`, () => switchKeyDepth(), {noindex: true}]
             ]],
+            ["&Pedals", [
+                ["&Follow pedals", () => togglePedalsFollow(), {checked: settings.pedals}],
+                ["&Dim pedalized notes", () => togglePedalsDim(), {checked: settings.pedal_dim}]
+            ]],
             ["&Labels", [
-                ["&Which keys", [
-                    ["&None", () => setLabelsWhich("none"), {checked: settings.labels.which == "none"}],
-                    ["&Played keys", () => setLabelsWhich("played"), {checked: settings.labels.which == "played"}],
-                    ["&C-keys", () => setLabelsWhich("cs"), {checked: settings.labels.which == "cs"}],
-                    ["&White keys", () => setLabelsWhich("white"), {checked: settings.labels.which == "white"}],
-                    ["&All keys", () => setLabelsWhich("all"), {checked: settings.labels.which == "all"}],
+                ["Toggle &Labeling mode (F2)", () => toggleLabelingMode(), {checked: (marking_mode == "label")}],
+                ["Show on &played keys", () => toggleLabelsPlayed(), {checked: settings.labels.played}],
+                ["&Presets", [
+                    ["&None", () => setLabelsPreset("none"), {checked: labels_preset == "none"}],
+                    ["&Middle-C", () => setLabelsPreset("mc"), {checked: labels_preset == "mc"}],
+                    ["&C-keys", () => setLabelsPreset("cs"), {checked: labels_preset == "cs"}],
+                    ["&White keys", () => setLabelsPreset("white"), {checked: labels_preset == "white"}],
+                    ["&All keys", () => setLabelsPreset("all"), {checked: labels_preset == "all"}],
                 ]],
-                ["&Type", [
+                ["&Format", [
                     ["&English", () => setLabelsType("english"), {checked: settings.labels.type == "english"}],
                     ["&German", () => setLabelsType("german"), {checked: settings.labels.type == "german"}],
                     ["&Italian", () => setLabelsType("italian"), {checked: settings.labels.type == "italian"}],
                     ["&Pitch-class", () => setLabelsType("pc"), {checked: settings.labels.type == "pc"}],
                     ["&MIDI value", () => setLabelsType("midi"), {checked: settings.labels.type == "midi"}],
                     ["&Frequency", () => setLabelsType("freq"), {checked: settings.labels.type == "freq"}],
+                    ["Show &octave", () => toggleLabelsOctave(), {checked: settings.labels.octave}]
                 ]],
-                ["Show &octave", () => toggleLabelsOctave(), {checked: settings.labels.octave}]
             ]],
-            ["&Pedals", [
-                ["&Follow pedals", () => togglePedalsFollow(), {checked: settings.pedals}],
-                ["&Dim pedalized notes", () => togglePedalsDim(), {checked: settings.pedal_dim}]
+            ["Stic&kers", [
+                ["&Red", () => toggleStickerMode(undefined, "red"), {checked: marking_mode == "sticker" && settings.stickers.color == "red"}],
+                ["&Yellow", () => toggleStickerMode(undefined, "yellow"), {checked: marking_mode == "sticker" && settings.stickers.color == "yellow"}],
+                ["&Green", () => toggleStickerMode(undefined, "green"), {checked: marking_mode == "sticker" && settings.stickers.color == "green"}],
+                ["&Blue", () => toggleStickerMode(undefined, "blue"), {checked: marking_mode == "sticker" && settings.stickers.color == "blue"}],
+                ["&Violet", () => toggleStickerMode(undefined, "violet"), {checked: marking_mode == "sticker" && settings.stickers.color == "violet"}],
+                ["&Clear", () => clearStickers()],
             ]],
             ["Panic!", midiPanic],
             [`${settings.toolbar ? "Hide" : "Show"} toolbar [<u>F9</u>]`, toggleToolbarVisibility, {key: "f9"}]
@@ -1315,7 +1505,7 @@ piano.svg.oncontextmenu = (e) => {
 piano.svg.addEventListener("pointerdown", (e) => {
     toolbar.dropdowns.closeAll();
     if ( e.pointerType != "touch" && e.button != 0 || !touch.enabled ) {
-        if ( !piano.marking_mode || e.button != 0 ) {
+        if ( !marking_mode || e.button != 0 ) {
             drag.state = 1;
             drag.origin.x = e.screenX;
             drag.origin.y = e.screenY;
@@ -1499,7 +1689,7 @@ function findKeysUnderArea(x, y, rx, ry, a_deg) {
 /** @param {PointerEvent} e */
 function handlePianoPointerDown(e) {
     toolbar.dropdowns.closeAll();
-    if ( e.pointerType != "touch" && touch.enabled 
+    if ( e.pointerType != "touch" && touch.enabled && !marking_mode
          && e.button === 0 && !touch.started(e.pointerId)) {
         const note = findKeyUnderPoint(e.clientX, e.clientY);
         if ( note ) { 
@@ -1528,7 +1718,7 @@ function handlePianoPointerMove(e) {
 
 /** @param {TouchEvent} e */
 function handlePianoTouchStart(e) {
-    if ( touch.enabled ) {
+    if ( touch.enabled && !marking_mode ) {
         for ( const t of e.changedTouches )
             if ( !touch.started(t.identifier) ) {
                 const notes = findKeysUnderArea(
@@ -1576,15 +1766,17 @@ window.addEventListener("pointermove", handlePianoPointerMove, { capture: false,
 window.addEventListener("touchmove", handlePianoTouchMove, { capture: false, passive: false });
 
 
-// Adding and removing markers with pointer
+// Adding and removing labels or markers with pointer
 
 /** @param {PointerEvent} e */
 function handlePianoClick(e) {
-    if ( e.button === 0 && e.ctrlKey ) {
+    if ( e.button === 0 ) {
         const note = findKeyUnderPoint(e.clientX, e.clientY);
         if ( note ) {
-            piano.marks[note] = !piano.marks[note];
-            updatePianoKey(note);
+            if ( marking_mode == "label" )
+                settings.labels.toggleKey(note);
+            else if ( marking_mode == "sticker" )
+                settings.stickers.toggleSticker(note);
         }
     }
 }
@@ -1695,18 +1887,17 @@ function handleKeyDown(e) {
         }
     }
 
-    if ( e.key == "Control" ) {
-        piano.marking_mode = true;
-        piano.svg.classList.toggle("marking-mode", true);
-    }
-
     const kbd_shortcuts = new Map([
+        ["f2", toggleLabelingMode],
+        ["f3", toggleStickerMode],
         ["f9", toggleToolbarVisibility],
         ["escape", () => { 
             const open_dropdown = toolbar.dropdowns.getOpen();
             if ( open_dropdown ) {
                 open_dropdown.hide();
                 open_dropdown.querySelector("sl-button[slot=trigger]").blur();
+            } else if ( marking_mode ) {
+                setMarkingMode(null);
             } else
                 midiPanic();
         }],
@@ -1725,15 +1916,6 @@ function handleKeyDown(e) {
     if ( kbd_shortcuts.has(k) ) {
         e.preventDefault();
         kbd_shortcuts.get(k)();
-    }
-}
-
-
-/** @param {KeyboardEvent} e */
-function handleKeyUp(e) {
-    if ( e.key == "Control" ) {
-        piano.marking_mode = false;
-        piano.svg.classList.toggle("marking-mode", false);
     }
 }
 

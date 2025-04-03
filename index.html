@@ -149,7 +149,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
-                <sl-dropdown id="dropdown-size" stay-open-on-select>
+                <sl-dropdown id="dropdown-size" class="space-before" stay-open-on-select>
                     <sl-button id="btn-size" slot="trigger" caret>Size</sl-button>
                     <div id="menu-size" class="custom-dropdown-panel">
                         <div id="menu-group-number-of-keys" class="custom-menu-item">
@@ -224,40 +224,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
-                <sl-dropdown id="dropdown-labels" stay-open-on-select>
-                    <sl-button id="btn-labels" slot="trigger" caret>
-                        <span data-nosnippet>Labels</span>
-                    </sl-button>
-                    <sl-menu id="menu-labels-top">
-                        <sl-menu-item>
-                            <span data-nosnippet>Keys</span>
-                            <sl-menu id="menu-labels-which" slot="submenu">
-                                <sl-menu-item type="checkbox" value="none" checked>None</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="played">Played keys</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="cs">C-keys</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="white">White keys</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="all">All keys</sl-menu-item>
-                            </sl-menu>
-                            <sl-badge slot="suffix" variant="neutral" pill>None</sl-badge>
-                        </sl-menu-item>
-                        <sl-menu-item>
-                            <span data-nosnippet>Format</span>
-                            <sl-menu id="menu-labels-type" slot="submenu">
-                                <sl-menu-item type="checkbox" value="english" checked>English</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="german">German</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="italian">Italian</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="pc">Pitch class</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="midi">MIDI value</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="freq">Frequency</sl-menu-item>
-                            </sl-menu>
-                            <sl-badge slot="suffix" variant="neutral" pill>English</sl-badge>
-                        </sl-menu-item>
-                        <sl-divider></sl-divider>
-                        <sl-menu-item id="menu-item-labels-octave" type="checkbox" value="octave" checked>
-                            <span data-nosnippet>Show octave</span>
-                        </sl-menu-item>
-                    </sl-menu>
-                </sl-dropdown>
                 <sl-dropdown id="dropdown-pedals" stay-open-on-select>
                     <sl-button id="btn-pedals" slot="trigger" caret>
                         <span data-nosnippet>Pedals</span>
@@ -273,6 +239,87 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         </sl-menu-item>
                         <sl-menu-item id="menu-pedal-dim" type="checkbox" checked>
                             <span data-nosnippet>Dim pedalized notes</span>
+                        </sl-menu-item>
+                    </sl-menu>
+                </sl-dropdown>
+                <sl-dropdown id="dropdown-labels" class="space-before" stay-open-on-select>
+                    <sl-button id="btn-labels" slot="trigger" caret>
+                        <span data-nosnippet>Labels</span>
+                        <sl-icon id="labels-power-icon" slot="prefix" name="pencil-fill" class="led-strong"></sl-icon>
+                    </sl-button>
+                    <sl-menu id="menu-labels-top">
+                        <sl-menu-item id="menu-labeling-mode" type="checkbox" value="labeling-mode">
+                            Labeling mode
+                            <span slot="suffix" class="menu-keyboard-shortcut">F2</span>
+                        </sl-menu-item>
+                        <sl-divider></sl-divider>
+                        <sl-menu-item>
+                            <span data-nosnippet>Presets</span>
+                            <sl-menu id="menu-labels-which" slot="submenu">
+                                <sl-menu-item type="checkbox" value="none">None</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="mc">Middle-C</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="cs">C-keys</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="white">White keys</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="all">All keys</sl-menu-item>
+                            </sl-menu>
+                            <sl-badge slot="suffix" variant="neutral" pill></sl-badge>
+                        </sl-menu-item>
+                        <sl-menu-item id="menu-labels-played-keys" type="checkbox" value="played-keys">
+                            Show on played keys
+                        </sl-menu-item>
+                        <sl-divider></sl-divider>
+                        <sl-menu-item>
+                            <span data-nosnippet>Format</span>
+                            <sl-menu id="menu-labels-type" slot="submenu">
+                                <sl-menu-item type="checkbox" value="english" checked><span data-nosnippet>English</span></sl-menu-item>
+                                <sl-menu-item type="checkbox" value="german"><span data-nosnippet>German</span></sl-menu-item>
+                                <sl-menu-item type="checkbox" value="italian"><span data-nosnippet>Italian</span></sl-menu-item>
+                                <sl-menu-item type="checkbox" value="pc"><span data-nosnippet>Pitch clas</span>s</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="midi"><span data-nosnippet>MIDI value</span></sl-menu-item>
+                                <sl-menu-item type="checkbox" value="freq"><span data-nosnippet>Frequency</span></sl-menu-item>
+                                <sl-divider></sl-divider>
+                                <sl-menu-item id="menu-item-labels-octave" type="checkbox" value="octave" checked>
+                                    <span data-nosnippet>Show octave</span>
+                                </sl-menu-item>
+                            </sl-menu>
+                            <sl-badge slot="suffix" variant="neutral" pill>English</sl-badge>
+                        </sl-menu-item>
+                    </sl-menu>
+                </sl-dropdown>
+                <sl-dropdown id="dropdown-stickers" stay-open-on-select>
+                    <sl-button id="btn-stickers" slot="trigger" caret>
+                        <span data-nosnippet>Stickers</span>
+                        <sl-icon id="stickers-power-icon" slot="prefix" name="bookmark-fill" class="led-strong"></sl-icon>
+                    </sl-button>
+                    <sl-menu id="menu-stickers-top">
+                        <sl-menu-item id="menu-sticker-red" type="checkbox" value="red">
+                            Red
+                            <sl-icon slot="prefix" name="bookmark-fill" style="color: red"></sl-icon>
+                            <span slot="suffix" class="menu-keyboard-shortcut">F3</span>
+                        </sl-menu-item>
+                        <sl-menu-item id="menu-sticker-yellow" type="checkbox" value="yellow">
+                            Yellow
+                            <sl-icon slot="prefix" name="bookmark-fill" style="color: yellow"></sl-icon>
+                            <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
+                        </sl-menu-item>
+                        <sl-menu-item id="menu-sticker-green" type="checkbox" value="green">
+                            Green
+                            <sl-icon slot="prefix" name="bookmark-fill" style="color: #0b0"></sl-icon>
+                            <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
+                        </sl-menu-item>
+                        <sl-menu-item id="menu-sticker-blue" type="checkbox" value="blue">
+                            Blue
+                            <sl-icon slot="prefix" name="bookmark-fill" style="color: blue"></sl-icon>
+                            <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
+                        </sl-menu-item>
+                        <sl-menu-item id="menu-sticker-violet" type="checkbox" value="violet">
+                            Violet
+                            <sl-icon slot="prefix" name="bookmark-fill" style="color: violet"></sl-icon>
+                            <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
+                        </sl-menu-item>
+                        <sl-divider></sl-divider>
+                        <sl-menu-item id="menu-stickers-clear">
+                            Clear all
                         </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>

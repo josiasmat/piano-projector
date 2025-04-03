@@ -43,6 +43,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
     &.mobile {
         u { text-decoration: none; }
+        .menu-keyboard-shortcut { display: none; }
     }
 }
 
@@ -158,7 +159,7 @@ div.menu-msg {
         margin-right: 12px; 
     }
 
-    #dropdown-size { margin-left: 12px; }
+    .space-before { margin-left: 12px; }
 
     #top-toolbar-right { margin-left: 15px; }
 
@@ -217,6 +218,7 @@ div.menu-msg {
             &#connection-power-icon { color: #4f4; }
             &#sound-power-icon { color: #4af; }
             &#transpose-power-icon { color: #ff0; }
+            &#labels-power-icon { color: #ff0; }
         }
     }
 }
@@ -224,7 +226,7 @@ div.menu-msg {
 #outer-main-area {
     width: 100%;
     flex-grow: 1;
-    padding: 3px 2px 4px;
+    padding: 3px 2px 0px 2px;
     overflow: hidden;
 }
 
@@ -278,12 +280,12 @@ div.menu-msg {
         }
     }
 
-    &[grabbing] {
-        cursor: grabbing !important;
-    }
-
     &.marking-mode {
         cursor: crosshair !important;
+    }
+
+    &[grabbing] {
+        cursor: grabbing !important;
     }
 
     .key {
@@ -352,7 +354,21 @@ div.menu-msg {
             }
         }
 
-        &:not(.marked) .key-marker {
+        .key-sticker {
+            /* stroke: black; */
+            stroke-width: calc(var(--stroke-width) * 3);
+            paint-order: stroke;
+            opacity: 85%;
+            filter: drop-shadow(1px 3px 1px #0005);
+        }
+
+        &.sticker-red    { .key-sticker { fill: red;    stroke: #700; } }
+        &.sticker-yellow { .key-sticker { fill: yellow; stroke: #770; } }
+        &.sticker-green  { .key-sticker { fill: #0b0;   stroke: #050; } }
+        &.sticker-blue   { .key-sticker { fill: blue;   stroke: #007; } }
+        &.sticker-violet { .key-sticker { fill: violet; stroke: #707; } }
+            
+        &:not(.sticker) .key-sticker {
             display: none;
         }
     }
@@ -443,15 +459,6 @@ div.menu-msg {
     .key-dark-border {
         stroke: color-mix(in srgb, var(--color-white-key-dark-border) 70%, var(--color-white-key));
     }
-    .key-marker {
-        fill: var(--color-highlight);
-        paint-order: stroke;
-        opacity: 90%;
-    }
-    &.active .key-marker {
-        stroke: var(--color-white-key);
-        stroke-width: calc(var(--stroke-width) * 3);
-    }
 }
 
 .black-key {
@@ -495,15 +502,6 @@ div.menu-msg {
         fill: url("#gap-reflection-gradient");
         fill-opacity: 20%;
     }
-    .key-marker {
-        fill: var(--color-highlight);
-        paint-order: stroke;
-        opacity: 90%;
-    }
-    &.active .key-marker {
-        stroke: var(--color-black-key);
-        stroke-width: calc(var(--stroke-width) * 3);
-    }
 }
 
 sl-dialog {
@@ -543,6 +541,12 @@ sl-menu {
         margin-top: 2px;
         margin-bottom: 2px;
     }
+}
+
+.menu-keyboard-shortcut {
+    color: var(--sl-color-neutral-500);
+    margin-left: 3ch;
+    &.invisible { visibility: hidden; }
 }
 
 #keyboard-navigator {

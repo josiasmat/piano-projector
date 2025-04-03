@@ -24,12 +24,12 @@ const BLACK_KEY_GAP = 2.5;
 
 const BK_OFFSET = 0.13;
 const WHITE_KEY_PRESSED_FACTOR = 1.007;
+const EXTRA_BOTTOM_SPACE = KBD_HEIGHT/50;
 
 const BLACK_KEY_SIDE_BEVEL = 3.0;
 
 import SvgTools from "./svgtools.js";
 
-const WHITE_NOTE = [1,0,1,0,1,1,0,1,0,1,0,1];
 const BK_OFFSETS = [,-BK_OFFSET,,+BK_OFFSET,,,-1.4*BK_OFFSET,,0,,+1.4*BK_OFFSET,];
 
 
@@ -95,6 +95,9 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     black_key_bevel.side_width_max = Math.max(black_key_bevel.side_width_top,
                                               black_key_bevel.side_width_bottom);
     black_key_bevel.bottom_height1 = black_key_bevel.bottom_height / 2;
+
+    const sticker_width = white_key_width/3;
+    const sticker_height = sticker_width*1.2;
 
     svg.innerHTML = "";
 
@@ -316,35 +319,26 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
             { class: "key-dark-border white-key-border" }
         );
 
-        const marker_inset = white_key_highlight_inset*5;
-        const marker_height = white_key_highlight_inset*4;
-        const marker = makeDualPath([
-                'M', normal.fx+marker_inset, normal.fy-marker_inset,
-                'H', normal.ex-marker_inset,
-                'v', -marker_height,
-                'H', normal.fx+marker_inset,
-                'Z'
-            ], [
-                'M', pressed.fx+marker_inset, pressed.fy-marker_inset,
-                'H', pressed.ex-marker_inset,
-                'v', -marker_height,
-                'H', pressed.fx+marker_inset,
-                'Z'
-            ],
-            { class: "key-marker white-key-marker" }
+        const sticker_xcenter = offset+width/2;
+        const sticker_top = white_key_height-white_key_width_half+white_key_highlight_inset*6;
+        const sticker_top1 = sticker_top*WHITE_KEY_PRESSED_FACTOR;
+        const sticker = createSticker(
+            sticker_xcenter, sticker_top, sticker_width, sticker_height,
+            sticker_xcenter, sticker_top1, sticker_width, sticker_height,
+            "white-key-sticker"
         );
 
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
         key_group.appendChild(dark_border);
         key_group.appendChild(light_border);
-        key_group.appendChild(marker);
+        key_group.appendChild(sticker);
         key_group.appendChild(key_touch_area);
         return key_group;
     }
 
     function computeLateralDisplacement(key) {
-        if ( !options.perspective || WHITE_NOTE[key%12] ) return 0;
+        if ( !options.perspective || isWhiteKey(key) ) return 0;
         // Restrict maximum displacement based on number of keys
         const perspective_factor = (key - kbd_center) / ((88 + keys_count) / 4);
         return perspective_factor * black_key_bevel.side_width_max;
@@ -564,24 +558,18 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
         );
         key_group.appendChild(bottom_reflection);
 
-        const marker_inset = black_key_highlight_inset*2;
-        const marker_height = black_key_highlight_inset*2.5;
-        const marker = makeDualPath([
-                'M', left+side_bevel.left_bottom+marker_inset, height-black_key_bevel.bottom_height-marker_inset,
-                'H', right-side_bevel.right_bottom-marker_inset,
-                'v', -marker_height,
-                'H', left+side_bevel.left_bottom+marker_inset,
-                'Z'
-            ], [
-                'M', left+side_bevel.left_bottom1+marker_inset, height-black_key_bevel.bottom_height1-marker_inset,
-                'H', right-side_bevel.right_bottom1-marker_inset,
-                'v', -marker_height,
-                'H', left+side_bevel.left_bottom1+marker_inset,
-                'Z'
-            ],
-            { class: "key-marker white-key-marker" }
+        const sticker_xcenter = offset+width/2+lateral_displacement;
+        const sticker_xcenter1 = offset+width/2+lateral_displacement1_bottom;
+        const sticker_top = height-black_key_bevel.bottom_height*1.5;
+        const sticker_top1 = sticker_top-black_key_bevel.bottom_height1+black_key_bevel.bottom_height;
+        const sticker_width1 = sticker_width*0.95;
+        const sticker_height1 = sticker_height*0.95;
+        const sticker = createSticker(
+            sticker_xcenter, sticker_top, sticker_width, sticker_height,
+            sticker_xcenter1, sticker_top1, sticker_width1, sticker_height1,
+            "black-key-sticker"
         );
-        key_group.appendChild(marker);
+        key_group.appendChild(sticker);
 
         return key_group;
     }
@@ -608,13 +596,41 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
         return elm;
     }
 
+    function createSticker(x1, y1, w1, h1, x2, y2, w2, h2, classname) {
+        const [l1,l2] = [x1 - (w1/2), x2 - (w2/2)];
+        const [r1,r2] = [x1 + (w1/2), x2 + (w2/2)];
+        const [q1,q2] = [w1/10, w2/10];
+        const sticker = makeDualPath([
+                'M', l1, y1+q1,
+                'Q', l1, y1, l1+q1, y1,
+                'H', r1-q1,
+                'Q', r1, y1, r1, y1+q1,
+                'V', y1+h1,
+                'L', x1,y1+h1*0.8,
+                'L', l1,y1+h1,
+                'Z'
+            ], [
+                'M', l2, y2+q2,
+                'Q', l2, y2, l2+q2, y2,
+                'H', r2-q2,
+                'Q', r2, y2, r2, y2+q2,
+                'V', y2+h2,
+                'L', x2,y2+h2*0.8,
+                'L', l2,y2+h2,
+                'Z'
+            ],
+            { class: `key-sticker ${classname}` }
+        );
+        return sticker;
+    }
+
     let width = 0;
     let white_left = 0;
 
     for ( let key = first_key; key <= last_key; key++ ) {
         const note = key % 12;
 
-        if ( WHITE_NOTE[note] ) {
+        if ( isWhiteKey(note) ) {
             const white_key = drawWhiteKey(key, note,
                 white_left, white_key_width, white_key_height, white_key_rounding
             );
@@ -649,7 +665,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
         left: -2,
         top: -4,
         width: width+STROKE_WIDTH+2,
-        height: (white_key_height * Math.max(WHITE_KEY_PRESSED_FACTOR, 1.0)) + STROKE_WIDTH + 4
+        height: (white_key_height * Math.max(WHITE_KEY_PRESSED_FACTOR, 1.0)) + STROKE_WIDTH + EXTRA_BOTTOM_SPACE
     }
 
     svg.setAttribute("viewBox", `${viewbox.left} ${viewbox.top} ${viewbox.width} ${viewbox.height}`);
@@ -808,21 +824,21 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
             { class: "key-highlight lowperf" }
         );
 
-        const marker_inset = white_key_highlight_inset*5;
-        const marker_height = white_key_highlight_inset*4;
-        const marker = SvgTools.makePath([
-                'M', left+marker_inset, height-marker_inset,
-                'H', right-marker_inset,
-                'v', -marker_height,
-                'H', left+marker_inset,
+        const sticker_inset = white_key_highlight_inset*5;
+        const sticker_height = white_key_highlight_inset*4;
+        const sticker = SvgTools.makePath([
+                'M', left+sticker_inset, height-sticker_inset,
+                'H', right-sticker_inset,
+                'v', -sticker_height,
+                'H', left+sticker_inset,
                 'Z'
             ], 
-            { class: "key-marker white-key-marker lowperf" }
+            { class: "key-sticker white-key-sticker lowperf" }
         );
         
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
-        key_group.appendChild(marker);
+        key_group.appendChild(sticker);
         return key_group;
     }
 
@@ -853,21 +869,21 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
             { class: "key-highlight lowperf" }
         );
 
-        const marker_inset = black_key_highlight_inset*4;
-        const marker_height = black_key_highlight_inset*3;
-        const marker = SvgTools.makePath([
-                'M', left+marker_inset, height-marker_inset,
-                'H', right-marker_inset,
-                'v', -marker_height,
-                'H', left+marker_inset,
+        const sticker_inset = black_key_highlight_inset*4;
+        const sticker_height = black_key_highlight_inset*3;
+        const sticker = SvgTools.makePath([
+                'M', left+sticker_inset, height-sticker_inset,
+                'H', right-sticker_inset,
+                'v', -sticker_height,
+                'H', left+sticker_inset,
                 'Z'
             ],
-            { class: "key-marker white-key-marker lowperf" }
+            { class: "key-sticker white-key-sticker lowperf" }
         );
         
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
-        key_group.appendChild(marker);
+        key_group.appendChild(sticker);
 
         return key_group;
     }
@@ -900,7 +916,7 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
     for ( let key = first_key; key <= last_key; key++ ) {
         const note = key % 12;
 
-        if ( WHITE_NOTE[note] ) {
+        if ( isWhiteKey(note) ) {
             const white_key = drawWhiteKey(key, note,
                 white_left, white_key_width, white_key_height, white_key_rounding
             );
@@ -961,4 +977,23 @@ function makeDualPath(d0, d1, attributes = {}) {
     path.setAttribute('d1', d1);
     // path.setAttribute('d', d0);
     return path;
+}
+
+
+const WHITE_NOTE = [true,false,true,false,true,true,false,true,false,true,false,true];
+
+/**
+ * @param {number} key - 0-127
+ * @returns {boolean}
+ */
+export function isWhiteKey(key) {
+    return WHITE_NOTE[key%12];
+}
+
+/**
+ * @param {number} key - 0-127
+ * @returns {boolean}
+ */
+export function isBlackKey(key) {
+    return !isWhiteKey(key);
 }
