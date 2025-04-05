@@ -1,0 +1,293 @@
+/*
+Piano Projector
+Copyright (C) 2025 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+/* Import key label font */
+@import url('https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap');
+
+:root {
+    --color-highlight: #f00;
+    --color-white-key: #eee;
+    --color-black-key: #222;
+    --color-background: black;
+    --color-key-light-border: #999;
+    --color-key-dark-border: #555;
+    --color-white-key-light-border: #999;
+    --color-white-key-dark-border:  #555;
+    --color-black-key-left-bevel:   color(from #999 srgb r g b / 37%);
+    --color-black-key-bottom-bevel: color(from #666 srgb r g b / 37%);
+    --color-black-key-right-bevel:  color(from #444 srgb r g b / 37%);
+    --color-felt-top: #920;
+    --color-felt-bottom: color-mix(in hsl, var(--color-felt-top) 30%, #000 45%);
+    --highlight-transition-duration: 0.05s;
+    --unpress-transition-duration: 0.1s;
+    --highlight-opacity: 100%;
+    --color-highlight-alpha: color(from var(--color-highlight) srgb r g b / var(--highlight-opacity));
+    --stroke-width: 1.3px;
+}
+
+svg#piano {
+    min-width: 100%;
+    max-height: 100%;
+    position: absolute;
+    cursor: grab;
+    transform-origin: top left;
+    image-rendering: optimizeSpeed;
+    * { image-rendering: optimizeSpeed; }
+
+    #top-felt {
+        &[hidden] { display: none; }
+        &.lowperf {
+            fill: var(--color-felt-top);
+        }
+        &:not(lowperf) {
+            fill: url("#top-felt-gradient");
+        }
+    }
+
+    &.grabbing {
+        cursor: grabbing !important;
+    }
+
+    &.marking-mode:not(.grabbing) {
+        cursor: crosshair !important;
+    }
+
+    .key {
+        transform-origin: center top 0px;
+
+        .invisible {
+            fill: none;
+            stroke: none;
+            visibility: hidden;
+        }
+
+        .key-touch-area {
+            pointer-events: all;
+        }
+
+        :not(.key-touch-area), & {
+            pointer-events: none;
+        }
+
+        .key-highlight {
+            pointer-events: none;
+            &:not(.lowperf) {
+                will-change: opacity;
+                transition-property: opacity, fill, d;
+                transition-timing-function: ease-out, ease-out, ease-in;
+            }
+        }
+
+        &:not(.active) {
+            .key-highlight {
+                opacity: 0%;
+                &:not(.lowperf) {
+                    transition-duration: var(--highlight-transition-duration),
+                                         var(--highlight-transition-duration),
+                                         var(--unpress-transition-duration);
+                }
+            }
+        }
+
+        &.active {
+            .key-highlight {
+                opacity: 100%;
+            }
+            &.dim .key-highlight {
+                opacity: 55%;
+            }
+            &:not(.pressed):not(.lowperf) .key-highlight {
+                transition-duration: var(--unpress-transition-duration);
+            }
+            .gap-reflection {
+                fill-opacity: 5%;
+            }
+        }
+
+        
+    }
+
+    .white-key {
+        .key-fill:not(.lowperf) {
+            fill: url(#white-key-gradient);
+        }
+        .key-fill.lowperf {
+            fill: var(--color-white-key);
+        }
+        .key-highlight {
+            &.lowperf {
+                fill: var(--color-highlight);
+                fill-opacity: var(--highlight-opacity);
+            }
+            &:not(.lowperf) {
+                fill: url(#pressed-white-key-highlight-gradient);
+            }
+        }
+        &:not(.pressed):not(.lowperf) path {
+            transition: d var(--unpress-transition-duration) ease-in;
+        }
+        .white-key-border {
+            stroke-width: var(--stroke-width);
+            stroke-linecap: square;
+            fill: none;
+            pointer-events: stroke;
+        }
+        .key-light-border {
+            stroke: color-mix(in srgb, var(--color-white-key-light-border) 70%, var(--color-white-key));
+        }        
+        .key-dark-border {
+            stroke: color-mix(in srgb, var(--color-white-key-dark-border) 70%, var(--color-white-key));
+        }
+    }
+    
+    .black-key {
+        .key-fill:not(.lowperf) {
+            fill: url(#black-key-gradient);
+        }
+        .key-fill.lowperf {
+            fill: var(--color-black-key);
+        }
+        .key-highlight {
+            &.lowperf {
+                fill: var(--color-highlight);
+                fill-opacity: var(--highlight-opacity);
+            }
+            &:not(.lowperf) {
+                fill: url(#pressed-black-key-highlight-gradient);
+            }
+        }
+        &:not(.pressed):not(.lowperf) path {
+            transition: d var(--unpress-transition-duration) ease-in;
+        }
+        .black-key-bevel {
+            pointer-events: fill;
+        }
+        .key-left-bevel {
+            fill: var(--color-black-key-left-bevel);
+        }        
+        .key-right-bevel {
+            fill: var(--color-black-key-right-bevel);
+        }        
+        .key-bottom-bevel {
+            fill: var(--color-black-key-bottom-bevel);
+        }
+        .key-left-round-bevel {
+            fill: color-mix(in srgb, var(--color-black-key-left-bevel), var(--color-black-key-bottom-bevel) 60%);
+        }
+        .key-right-round-bevel {
+            fill: color-mix(in srgb, var(--color-black-key-right-bevel), var(--color-black-key-bottom-bevel) 60%);
+        }
+        .gap-reflection {
+            fill: url("#gap-reflection-gradient");
+            fill-opacity: 20%;
+        }
+    }
+    
+    /* Key labels */
+
+    .key-label {
+        font-family: "PT Sans Narrow", "Arial Narrow", var(--sl-font-sans), sans-serif;
+        font-weight: 100;
+        text-anchor: middle;
+        text-rendering: optimizeSpeed;
+        white-space: wrap;
+        opacity: 0%;
+        pointer-events: none;
+
+        &.rotated {
+            text-anchor: start;
+            transform-box: content-box;
+            &.white-key-label {
+                transform-origin: left center;
+                transform: rotate(-90deg) translateX(-30px) scale(90%);
+            }
+            &.black-key-label {
+                transform-origin: center center;
+                transform: rotate(-90deg) translateX(10px);
+            }
+        }
+        &.hidden.fixed-visibility { 
+            display: none;
+        }
+        &.visible { 
+            opacity: 100%;
+            &.fixed-visibility {
+                will-change: fill;
+            }
+        }
+        &.may-change-visibility {
+            will-change: opacity;
+            &.hidden {
+                fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
+                opacity: 0%;
+                &:not(.lowperf) {
+                    transition-property: opacity;
+                    transition-timing-function: ease-out;
+                    transition-duration: var(--highlight-transition-duration);
+                }
+            }
+        }
+        &.white-key-label {
+            font-size: 36px;
+            fill: lch(from var(--color-white-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
+        }
+        &.black-key-label {
+            font-size: 25px;
+            fill: lch(from var(--color-black-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
+            tspan { text-anchor: middle; }
+        }
+    }
+
+    .white-key.active .key-label {
+        fill: lch(from color-mix(in srgb, var(--color-highlight) var(--highlight-opacity), var(--color-white-key)) 
+                  clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
+    }
+
+    .black-key.active .key-label {
+        fill: lch(from color-mix(in srgb, var(--color-highlight) var(--highlight-opacity), var(--color-black-key)) 
+                  clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
+    }
+
+    .key:not(.active) .key-label.fixed-visibility.visible:not(.lowperf) {
+        transition-duration: var(--highlight-transition-duration), 
+                             var(--highlight-transition-duration), 
+                             var(--unpress-transition-duration);
+    }
+
+    /* Key sticker */
+
+    .key {
+        .key-sticker {
+            stroke-width: calc(var(--stroke-width) * 3);
+            paint-order: stroke;
+            opacity: 85%;
+            filter: drop-shadow(1px 3px 1px #0005);
+        }
+    
+        &.sticker-red    { .key-sticker { fill: red;    stroke: #700; } }
+        &.sticker-yellow { .key-sticker { fill: yellow; stroke: #770; } }
+        &.sticker-green  { .key-sticker { fill: #0b0;   stroke: #050; } }
+        &.sticker-blue   { .key-sticker { fill: blue;   stroke: #007; } }
+        &.sticker-violet { .key-sticker { fill: violet; stroke: #707; } }
+            
+        &:not(.sticker) .key-sticker {
+            display: none;
+        }
+    }
+
+}

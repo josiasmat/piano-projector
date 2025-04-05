@@ -1,0 +1,136 @@
+/*
+Piano Projector
+Copyright (C) 2025 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+/* Import title text font */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+
+:root {
+    touch-action: none;
+    &.mobile {
+        u { text-decoration: none; }
+        .menu-keyboard-shortcut { display: none; }
+    }
+}
+
+* {
+    box-sizing: border-box;
+    &[cursor-hidden] {
+        cursor: none !important;
+    }
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background-color: var(--color-background);
+    overflow: hidden;
+    width: 100vw;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.title-text {
+    color: var(--sl-color-neutral-600);
+    opacity: 60%;
+    font-family: "Orbitron", serif;
+    font-size: 140%;
+    font-weight: lighter;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+#outer-main-area {
+    width: 100%;
+    flex-grow: 1;
+    padding: 3px 2px 0px 2px;
+    overflow: hidden;
+}
+
+#main-area {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    &:not(:hover) #btn-show-toolbar {
+        &:not(.mobile) { opacity: 0%; }
+    }
+}
+
+sl-dialog {
+    font-family: var(--sl-font-sans), sans-serif;
+    color: var(--sl-color-neutral-700);
+    --width: 45ch;
+    &::part(panel) {
+        box-shadow: var(--sl-shadow-large);
+    }
+    .title-text {
+        text-wrap: nowrap;
+        sl-icon {
+            height: 55%;
+            vertical-align: -2%;
+            padding-right: 2px;
+        }
+    } 
+}
+
+#keyboard-navigator {
+    position: fixed;
+    z-index: 999;
+    left: 20px;
+    padding: 10px 20px 10px 10px;
+    height: auto;
+    width: auto;
+    border-radius: 20px;
+    background-color: var(--sl-panel-background-color);
+    transition: all 0.1s ease-out;
+    box-shadow: 3px 3px 4px #0008;
+    &[position-top] { 
+        top: 75px; 
+        &[hidden] { top: 55px; }
+    }
+    &:not([position-top]) { 
+        bottom: 20px; 
+        &[hidden] { bottom: 0px; }
+    }
+    *, sl-breadcrumb-item::part(label) {
+        font-family: monospace;
+    }
+    &[hidden] { 
+        opacity: 0%;
+        display: block; 
+    }
+    span { 
+        color: var(--sl-color-neutral-800);
+        margin-right: 10px;
+        &:not(:first-child) { margin-left: 10px; }
+        u { text-decoration: underline; }
+        &.checkbox {
+            line-height: 0.7lh;
+            margin-right: -4px;
+            font-size: 120%;
+            vertical-align: -10%;
+        }
+    }
+}

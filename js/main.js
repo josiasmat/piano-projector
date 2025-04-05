@@ -58,7 +58,6 @@ const settings = {
         },
         /** @param {string} s */
         strToKeys(s) {
-            console.log(s);
             this.keys.clear();
             if ( s )
                 for ( const item of s.split(',') ) {
@@ -94,7 +93,6 @@ const settings = {
         },
         /** @param {string} s */
         strToKeys(s) {
-            console.log(s);
             this.keys.clear();
             if ( s )
                 for ( const item of s.split(',') ) {
@@ -396,18 +394,20 @@ const toolbar_shrink_list = [
     { elm: toolbar.dropdowns.connect,   action: "hide-label" },
     { elm: toolbar.dropdowns.pedals,    action: "hide-label" },
     { elm: toolbar.dropdowns.transpose, action: "hide-label" },
+    { elm: toolbar.dropdowns.stickers,  action: "hide-label" },
     { elm: toolbar.dropdowns.labels,    action: "hide-label" },
     { elm: toolbar.dropdowns.colors,    action: "hide-elm" },
     { elm: toolbar.dropdowns.size,      action: "hide-elm" },
     { elm: toolbar.dropdowns.sound,     action: "hide-elm" },
-    { elm: toolbar.dropdowns.labels,    action: "hide-elm" },
     { elm: toolbar.dropdowns.pedals,    action: "hide-elm" },
+    { elm: toolbar.dropdowns.stickers,  action: "hide-elm" },
+    { elm: toolbar.dropdowns.labels,    action: "hide-elm" },
     { elm: toolbar.buttons.panic,       action: "hide-elm" },
     { elm: toolbar.self,                action: "hide-elm" }
 ];
 
 const piano = {
-    svg: document.getElementById("kbd"),
+    svg: document.querySelector("svg#piano"),
     container: document.getElementById("main-area"),
     /** @type {[SVGElement?]} */
     keys: Array(128).fill(null),
@@ -1511,7 +1511,7 @@ piano.svg.addEventListener("pointerdown", (e) => {
             drag.origin.y = e.screenY;
             drag.previous_offset.x = settings.offset.x;
             drag.previous_offset.y = settings.offset.y;
-            piano.svg.toggleAttribute("grabbing", true);
+            piano.svg.classList.toggle("grabbing", true);
             piano.svg.setPointerCapture(e.pointerId);
         }
     }
@@ -1520,7 +1520,7 @@ piano.svg.addEventListener("pointerdown", (e) => {
 piano.svg.addEventListener("pointerup", (e) => {
     if ( e.pointerType != "touch" && drag.state ) {
         drag.state = ( drag.state == 2 && e.button == 2 ) ? 3 : 0;
-        piano.svg.toggleAttribute("grabbing", false);
+        piano.svg.classList.toggle("grabbing", false);
         piano.svg.releasePointerCapture(e.pointerId);
         updatePianoPosition();
         writeSettings();
@@ -1977,11 +1977,11 @@ if ( !settings.device_name ) {
         connectInput("touch", true);
         connect_tooltip.setAttribute("content", 
             "Play your keyboard using your fingers! " +
-            "Or change the input device by tapping this button."
+            "Or change the input method by tapping this button."
         );
     } else {
         connect_tooltip.setAttribute("content", 
-            "Click on this button to select an input device."
+            "Click on this button to select an input method."
         );
     }
     connect_tooltip.open = true;
