@@ -46,17 +46,12 @@ svg#piano {
     position: absolute;
     cursor: grab;
     transform-origin: top left;
-    image-rendering: optimizeSpeed;
-    * { image-rendering: optimizeSpeed; }
+    &, * { image-rendering: optimizeSpeed; }
 
     #top-felt {
         &[hidden] { display: none; }
-        &.lowperf {
-            fill: var(--color-felt-top);
-        }
-        &:not(lowperf) {
-            fill: url("#top-felt-gradient");
-        }
+        &.lowperf { fill: var(--color-felt-top); }
+        &:not(lowperf) { fill: url("#top-felt-gradient"); }
     }
 
     &.grabbing {
@@ -87,7 +82,7 @@ svg#piano {
         .key-highlight {
             pointer-events: none;
             &:not(.lowperf) {
-                will-change: opacity;
+                will-change: opacity, d;
                 transition-property: opacity, fill, d;
                 transition-timing-function: ease-out, ease-out, ease-in;
             }
@@ -118,16 +113,12 @@ svg#piano {
                 fill-opacity: 5%;
             }
         }
-
-        
     }
 
     .white-key {
-        .key-fill:not(.lowperf) {
-            fill: url(#white-key-gradient);
-        }
-        .key-fill.lowperf {
-            fill: var(--color-white-key);
+        .key-fill {
+            &.lowperf { fill: var(--color-white-key); }
+            &:not(.lowperf) { fill: url(#white-key-gradient); }
         }
         .key-highlight {
             &.lowperf {
@@ -156,11 +147,9 @@ svg#piano {
     }
     
     .black-key {
-        .key-fill:not(.lowperf) {
-            fill: url(#black-key-gradient);
-        }
-        .key-fill.lowperf {
-            fill: var(--color-black-key);
+        .key-fill {
+            &.lowperf { fill: var(--color-black-key); }
+            &:not(.lowperf) { fill: url(#black-key-gradient); }
         }
         .key-highlight {
             &.lowperf {
@@ -200,8 +189,12 @@ svg#piano {
     
     /* Key markings (labels and stickers) */
 
-    .key:not(.pressed) .key-marker-group:not(.lowperf) {
+    .key-marker-group:not(.lowperf) {
+        transform-origin: center center;
         transform-box: content-box;
+    }
+
+    .key:not(.pressed) .key-marker-group:not(.lowperf) {
         transition: transform var(--unpress-transition-duration) ease-in;
     }
     

@@ -135,7 +135,8 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
             ? black_key_width_half - (black_key_width * BK_OFFSETS[note+1]) + BLACK_KEY_GAP 
             : white_key_gap_half );
             
-        const press_h_shrink = width * 0.015;
+        const press_h_shrink_factor = 0.015;
+        const press_h_shrink = width * press_h_shrink_factor;
         const press_h_shrink_cut_point = press_h_shrink * cut_point / height;
         
         const left_offset1 = left_offset + ((center - left_offset)/width*press_h_shrink_cut_point);

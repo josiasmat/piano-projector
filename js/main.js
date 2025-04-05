@@ -413,10 +413,26 @@ const piano = {
     container: document.getElementById("main-area"),
     /** @type {[SVGElement?]} */
     keys: Array(128).fill(null),
+    /** @type {[SVGElement?]} */
+    labels: Array(128).fill(null),
+    /** @type {[SVGElement?]} */
+    marking_groups: Array(128).fill(null),
 }
 
 /** @type {string?} "label" or "sticker" or null */
 let marking_mode = null;
+
+
+//const OCTAVES_SUP_EN = ['⁻¹','⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
+const OCTAVES_SUB_EN = ['₋₁','₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'];
+const OCTAVES_SUP_IT = ['⁻²','⁻¹','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹','¹⁰'];
+const OCTAVES_SUB_IT = ['₋₂','₋₁','₁','₂','₃','₄','₅','₆','₇','₈','₉','₁₀'];
+const ENGLISH_NAMES_1 = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const ENGLISH_NAMES_2 = [   ,'D♭',   ,'E♭',   ,   ,'G♭',    ,'A♭',   ,'B♭',   ];
+const GERMAN_NAMES_1 = ['C','Ces','D','Des','E','F','Fes','G','Ges','A','Aes','H'];
+const GERMAN_NAMES_2 = [   ,'Dis',   ,'Eis',   ,   ,'Gis',    ,'Ais',   ,'B',   ];
+const ITALIAN_NAMES_1 = ['do','do♯','re','re♯','mi','fa','fa♯','sol','sol♯','la','la♯','si'];
+const ITALIAN_NAMES_2 = [    ,'re♭',    ,'mi♭',    ,    ,'sol♭',     ,'la♭',    ,'si♭',    ];
 
 
 function buildLabelsPreset(value) {
@@ -473,6 +489,10 @@ function createPianoKeyboard() {
         drawPianoKeyboardLP(piano.svg, piano.keys, options);
     else
         drawPianoKeyboard(piano.svg, piano.keys, options);
+    for ( const [i,key_elm] of piano.keys.entries() ) {
+        piano.marking_groups[i] = key_elm?.querySelector(".key-marker-group");
+        piano.labels[i] = key_elm?.querySelector(".key-label");
+    }
     updatePianoPosition();
     updatePianoKeys();
     updatePianoTopFelt();
@@ -496,7 +516,7 @@ function updatePianoKey(key) {
                         || KbdNotes.isNoteSustained(j);
         elm.classList.toggle("active", note_on);
         elm.classList.toggle("pressed", key_pressed);
-        elm.classList.toggle("dim", settings.pedal_dim && note_on && (!key_pressed));
+        elm.classList.toggle("dim", settings.pedal_dim && note_on && !key_pressed);
         const dn = key_pressed ? "d1" : "d0";
         for ( const child of elm.children )
             if ( child.hasAttribute(dn) )
@@ -515,24 +535,14 @@ function updatePianoKeys(keys=range(0,128)) {
 function updatePianoKeyMarkings(key_num, is_on, is_pressed) {
 
     const key_elm = piano.keys[key_num];
-    const group_elm = key_elm?.querySelector(".key-marker-group");
-    const label_elm = key_elm?.querySelector(".key-label");
+    const group_elm = piano.marking_groups[key_num];
+    const label_elm = piano.labels[key_num];
 
     function setLabelText() {
-        //const OCTAVES_SUP_EN = ['⁻¹','⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
-        const OCTAVES_SUB_EN = ['₋₁','₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'];
-        const OCTAVES_SUP_IT = ['⁻²','⁻¹','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹','¹⁰'];
-        const OCTAVES_SUB_IT = ['₋₂','₋₁','₁','₂','₃','₄','₅','₆','₇','₈','₉','₁₀'];
-        const ENGLISH_NAMES_1 = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
-        const ENGLISH_NAMES_2 = [   ,'D♭',   ,'E♭',   ,   ,'G♭',    ,'A♭',   ,'B♭',   ];
-        const GERMAN_NAMES_1 = ['C','Ces','D','Des','E','F','Fes','G','Ges','A','Aes','H'];
-        const GERMAN_NAMES_2 = [   ,'Dis',   ,'Eis',   ,   ,'Gis',    ,'Ais',   ,'B',   ];
-        const ITALIAN_NAMES_1 = ['do','do♯','re','re♯','mi','fa','fa♯','sol','sol♯','la','la♯','si'];
-        const ITALIAN_NAMES_2 = [    ,'re♭',    ,'mi♭',    ,    ,'sol♭',     ,'la♭',    ,'si♭',    ];
         
         const pc = key_num%12;
         const octave = Math.trunc(key_num/12);
-        const is_white_key = ![0,1,0,1,0,0,1,0,1,0,1,0][pc];
+        const is_white_key = isWhiteKey(pc);
         
         let text = "";
         switch ( settings.labels.type ) {
