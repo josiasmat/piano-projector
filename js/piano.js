@@ -23,8 +23,8 @@ const WHITE_KEY_GAP = 1.8;
 const BLACK_KEY_GAP = 2.5;
 
 const BK_OFFSET = 0.13;
-const WHITE_KEY_PRESSED_FACTOR = 1.007;
-const EXTRA_BOTTOM_SPACE = KBD_HEIGHT/50;
+const WHITE_KEY_PRESSED_FACTOR = 1.01;
+const EXTRA_BOTTOM_SPACE = 5;
 
 const BLACK_KEY_SIDE_BEVEL = 3.0;
 
@@ -36,7 +36,6 @@ const BK_OFFSETS = [,-BK_OFFSET,,+BK_OFFSET,,,-1.4*BK_OFFSET,,0,,+1.4*BK_OFFSET,
 /**
  * @param {SVGElement} svg - SVG element where to draw the piano keyboard
  * @param {[SVGElement?]} keys - Array of keys
- * @param {[SVGElement?]} labels - Array of labels
  * @param {Object} options - Object that acceps the following properties:
  *      - first_key (integer)
  *      - last_key (integer)
@@ -44,7 +43,7 @@ const BK_OFFSETS = [,-BK_OFFSET,,+BK_OFFSET,,,-1.4*BK_OFFSET,,0,,+1.4*BK_OFFSET,
  *      - perspective (boolean)
  *      - top_felt (boolean)
  */
-export function drawPianoKeyboard(svg, keys, labels, options = {}) {
+export function drawPianoKeyboard(svg, keys, options = {}) {
 
     const height = KBD_HEIGHT;
     const height_factor = options.height_factor ?? 1.0;
@@ -52,7 +51,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     const first_key = options.first_key ?? noteToMidi("a0");
     const last_key = options.last_key ?? noteToMidi("c8");
     const keys_count = last_key - first_key;
-    const kbd_center = (first_key + last_key) / 2;
+    const middle_key = (first_key + last_key) / 2;
 
     const white_key_height = height * height_factor;
     const black_key_height = white_key_height * (0.14 * height_factor + 0.51);
@@ -63,6 +62,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     const white_key_width = height * 2.2 / 15.5;
     const black_key_width = height * 1.4 / 15.5;
     const white_key_width_half = white_key_width / 2;
+    const white_key_width_third = white_key_width / 3;
     const black_key_width_half = black_key_width / 2;
 
     const white_key_rounding = white_key_width / 15;
@@ -96,8 +96,17 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
                                               black_key_bevel.side_width_bottom);
     black_key_bevel.bottom_height1 = black_key_bevel.bottom_height / 2;
 
-    const sticker_width = white_key_width/3;
-    const sticker_height = sticker_width*1.2;
+    const white_key_label_y = white_key_height - white_key_width_half*height_factor;
+    const white_key_label_y1 = white_key_label_y*WHITE_KEY_PRESSED_FACTOR;
+    const black_key_label_y = black_key_height - black_key_bevel.bottom_height
+            - white_key_width_third*height_factor;
+    const black_key_label_y1 = black_key_height - black_key_bevel.bottom_height1
+            - white_key_width_third*height_factor;
+
+    const sticker_width = white_key_width/4;
+    const sticker_radius = sticker_width/2;
+    const white_key_sticker_top_offset = sticker_radius + white_key_width_third*height_factor;
+    const black_key_sticker_top_offset = white_key_sticker_top_offset*0.8 + black_key_bevel.bottom_height;
 
     svg.innerHTML = "";
 
@@ -126,7 +135,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
             ? black_key_width_half - (black_key_width * BK_OFFSETS[note+1]) + BLACK_KEY_GAP 
             : white_key_gap_half );
             
-        const press_h_shrink = width * 0.02;
+        const press_h_shrink = width * 0.015;
         const press_h_shrink_cut_point = press_h_shrink * cut_point / height;
         
         const left_offset1 = left_offset + ((center - left_offset)/width*press_h_shrink_cut_point);
@@ -319,20 +328,26 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
             { class: "key-dark-border white-key-border" }
         );
 
-        const sticker_xcenter = offset+width/2;
-        const sticker_top = white_key_height-white_key_width_half+white_key_highlight_inset*6;
-        const sticker_top1 = sticker_top*WHITE_KEY_PRESSED_FACTOR;
-        const sticker = createSticker(
-            sticker_xcenter, sticker_top, sticker_width, sticker_height,
-            sticker_xcenter, sticker_top1, sticker_width, sticker_height,
-            "white-key-sticker"
+        const label = createWhiteKeyLabel(key, offset);
+
+        const sticker_x = offset+width/2;
+        const sticker_y = white_key_height - white_key_sticker_top_offset;
+        const sticker = SvgTools.makeCircle(
+            sticker_x, sticker_y, sticker_radius, { class: `key-sticker white-key-sticker` }
         );
+        
+        const key_marker_group = SvgTools.createGroup({ 
+            class: "key-marker-group",
+            press_transform: `translateY(${white_key_label_y1-white_key_label_y}px)`,
+        });
+        key_marker_group.appendChild(label);
+        key_marker_group.appendChild(sticker);
 
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
         key_group.appendChild(dark_border);
         key_group.appendChild(light_border);
-        key_group.appendChild(sticker);
+        key_group.appendChild(key_marker_group);
         key_group.appendChild(key_touch_area);
         return key_group;
     }
@@ -340,7 +355,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     function computeLateralDisplacement(key) {
         if ( !options.perspective || isWhiteKey(key) ) return 0;
         // Restrict maximum displacement based on number of keys
-        const perspective_factor = (key - kbd_center) / ((88 + keys_count) / 4);
+        const perspective_factor = (key - middle_key) / ((88 + keys_count) / 4);
         return perspective_factor * black_key_bevel.side_width_max;
     }
 
@@ -557,19 +572,23 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
             { class: "gap-reflection" }
         );
         key_group.appendChild(bottom_reflection);
+        
+        const label = createBlackKeyLabel(key, offset);
 
-        const sticker_xcenter = offset+width/2+lateral_displacement;
-        const sticker_xcenter1 = offset+width/2+lateral_displacement1_bottom;
-        const sticker_top = height-black_key_bevel.bottom_height*1.5;
-        const sticker_top1 = sticker_top-black_key_bevel.bottom_height1+black_key_bevel.bottom_height;
-        const sticker_width1 = sticker_width*0.95;
-        const sticker_height1 = sticker_height*0.95;
-        const sticker = createSticker(
-            sticker_xcenter, sticker_top, sticker_width, sticker_height,
-            sticker_xcenter1, sticker_top1, sticker_width1, sticker_height1,
-            "black-key-sticker"
+        const sticker_x = offset+width/2+lateral_displacement;
+        const sticker_y = black_key_height - black_key_sticker_top_offset;
+        const sticker = SvgTools.makeCircle(
+            sticker_x, sticker_y, sticker_radius, { class: `key-sticker black-key-sticker` }
         );
-        key_group.appendChild(sticker);
+
+        const key_marker_group = SvgTools.createGroup({ 
+            class: "key-marker-group",
+            press_transform: `translateX(${(lateral_displacement1_bottom-lateral_displacement)*0.7}px) translateY(${black_key_label_y1-black_key_label_y}px)`,
+        });
+        key_marker_group.appendChild(label);
+        key_marker_group.appendChild(sticker);
+
+        key_group.appendChild(key_marker_group);
 
         return key_group;
     }
@@ -577,7 +596,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     function createWhiteKeyLabel(keynum, left) {
         const center = left + white_key_width_half;
         const elm = SvgTools.createElement("text", {
-            x: center, y: white_key_height - white_key_width_half,
+            x: center, y: white_key_label_y,
             id: `keylabel${keynum}`, class: "key-label white-key-label"
         });
         elm.appendChild(SvgTools.createElement("tspan", { x: center }));
@@ -587,41 +606,13 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
     function createBlackKeyLabel(keynum, left) {
         const center = left + black_key_width_half + computeLateralDisplacement(keynum)/2;
         const elm = SvgTools.createElement("text", {
-            x: center, y: black_key_height - white_key_width_half*1.3,
+            x: center, y: black_key_label_y,
             id: `keylabel${keynum}`, class: "key-label black-key-label"
         });
         elm.appendChild(SvgTools.createElement("tspan", { x: center }));
         elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-0.9lh" }));
         elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-1.0lh" }));
         return elm;
-    }
-
-    function createSticker(x1, y1, w1, h1, x2, y2, w2, h2, classname) {
-        const [l1,l2] = [x1 - (w1/2), x2 - (w2/2)];
-        const [r1,r2] = [x1 + (w1/2), x2 + (w2/2)];
-        const [q1,q2] = [w1/10, w2/10];
-        const sticker = makeDualPath([
-                'M', l1, y1+q1,
-                'Q', l1, y1, l1+q1, y1,
-                'H', r1-q1,
-                'Q', r1, y1, r1, y1+q1,
-                'V', y1+h1,
-                'L', x1,y1+h1*0.8,
-                'L', l1,y1+h1,
-                'Z'
-            ], [
-                'M', l2, y2+q2,
-                'Q', l2, y2, l2+q2, y2,
-                'H', r2-q2,
-                'Q', r2, y2, r2, y2+q2,
-                'V', y2+h2,
-                'L', x2,y2+h2*0.8,
-                'L', l2,y2+h2,
-                'Z'
-            ],
-            { class: `key-sticker ${classname}` }
-        );
-        return sticker;
     }
 
     let width = 0;
@@ -634,11 +625,8 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
             const white_key = drawWhiteKey(key, note,
                 white_left, white_key_width, white_key_height, white_key_rounding
             );
-            const white_key_label = createWhiteKeyLabel(key, white_left);
             white_keys_g.appendChild(white_key);
-            white_key.appendChild(white_key_label);
             keys[key] = white_key;
-            labels[key] = white_key_label;
             width += white_key_width;
             white_left += white_key_width;
         } else {
@@ -646,11 +634,8 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
             const black_key = drawBlackKey(key,
                 black_left, black_key_width, black_key_height, black_key_rounding, white_left
             );
-            const black_key_label = createBlackKeyLabel(key, black_left);
             black_keys_g.appendChild(black_key);
-            black_key.appendChild(black_key_label);
             keys[key] = black_key;
-            labels[key] = black_key_label;
         }
     }
     
@@ -714,7 +699,6 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
 /**
  * @param {SVGElement} svg - SVG element where to draw the piano keyboard
  * @param {[SVGElement?]} keys - Array of keys
- * @param {[SVGElement?]} labels - Array of labels
  * @param {Object} options - Object that acceps the following properties:
  *      - first_key (integer)
  *      - last_key (integer)
@@ -722,7 +706,7 @@ export function drawPianoKeyboard(svg, keys, labels, options = {}) {
  *      - perspective (boolean)
  *      - top_felt (boolean)
  */
-export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
+export function drawPianoKeyboardLP(svg, keys, options = {}) {
 
     const height = KBD_HEIGHT;
     const height_factor = options.height_factor ?? 1.0;
@@ -739,6 +723,7 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
     const white_key_width = height * 2.2 / 15.5;
     const black_key_width = height * 1.4 / 15.5;
     const white_key_width_half = white_key_width / 2;
+    const white_key_width_third = white_key_width / 3;
     const black_key_width_half = black_key_width / 2;
 
     const white_key_rounding = white_key_width / 17;
@@ -754,6 +739,14 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
     
     const white_key_top = top_felt.bottom-1;
     const black_key_top = top_felt.bottom-5;
+
+    const white_key_label_y = white_key_height - white_key_width_half*height_factor;
+    const black_key_label_y = black_key_height - white_key_width_half*height_factor;
+
+    const sticker_width = white_key_width/4;
+    const sticker_radius = sticker_width/2;
+    const white_key_sticker_top_offset = sticker_radius + white_key_width_third*height_factor;
+    const black_key_sticker_top_offset = white_key_sticker_top_offset;
 
     svg.innerHTML = "";
 
@@ -824,21 +817,23 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
             { class: "key-highlight lowperf" }
         );
 
-        const sticker_inset = white_key_highlight_inset*5;
-        const sticker_height = white_key_highlight_inset*4;
-        const sticker = SvgTools.makePath([
-                'M', left+sticker_inset, height-sticker_inset,
-                'H', right-sticker_inset,
-                'v', -sticker_height,
-                'H', left+sticker_inset,
-                'Z'
-            ], 
-            { class: "key-sticker white-key-sticker lowperf" }
+        const label = createWhiteKeyLabel(key, offset);
+
+        const sticker_x = offset+width/2;
+        const sticker_y = white_key_height - white_key_sticker_top_offset;
+        const sticker = SvgTools.makeCircle(
+            sticker_x, sticker_y, sticker_radius, { class: "key-sticker white-key-sticker lowperf" }
         );
         
+        const key_marker_group = SvgTools.createGroup({ 
+            class: "key-marker-group lowperf",
+        });
+        key_marker_group.appendChild(label);
+        key_marker_group.appendChild(sticker);
+
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
-        key_group.appendChild(sticker);
+        key_group.appendChild(key_marker_group);
         return key_group;
     }
 
@@ -869,21 +864,23 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
             { class: "key-highlight lowperf" }
         );
 
-        const sticker_inset = black_key_highlight_inset*4;
-        const sticker_height = black_key_highlight_inset*3;
-        const sticker = SvgTools.makePath([
-                'M', left+sticker_inset, height-sticker_inset,
-                'H', right-sticker_inset,
-                'v', -sticker_height,
-                'H', left+sticker_inset,
-                'Z'
-            ],
-            { class: "key-sticker white-key-sticker lowperf" }
+        const label = createBlackKeyLabel(key, offset);
+
+        const sticker_x = offset+width/2;
+        const sticker_y = black_key_height - black_key_sticker_top_offset;
+        const sticker = SvgTools.makeCircle(
+            sticker_x, sticker_y, sticker_radius, { class: "key-sticker black-key-sticker lowperf" }
         );
+
+        const key_marker_group = SvgTools.createGroup({ 
+            class: "key-marker-group lowperf",
+        });
+        key_marker_group.appendChild(label);
+        key_marker_group.appendChild(sticker);
         
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
-        key_group.appendChild(sticker);
+        key_group.appendChild(key_marker_group);
 
         return key_group;
     }
@@ -891,7 +888,7 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
     function createWhiteKeyLabel(keynum, left) {
         const center = left + white_key_width_half;
         const elm = SvgTools.createElement("text", {
-            x: center, y: white_key_height - white_key_width_half,
+            x: center, y: white_key_label_y,
             id: `keylabel${keynum}`, class: "key-label white-key-label lowperf"
         });
         elm.appendChild(SvgTools.createElement("tspan", { x: center }));
@@ -901,7 +898,7 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
     function createBlackKeyLabel(keynum, left) {
         const center = left + black_key_width_half;
         const elm = SvgTools.createElement("text", {
-            x: center, y: black_key_height - white_key_width_half,
+            x: center, y: black_key_label_y,
             id: `keylabel${keynum}`, class: "key-label black-key-label lowperf"
         });
         elm.appendChild(SvgTools.createElement("tspan", { x: center }));
@@ -920,11 +917,8 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
             const white_key = drawWhiteKey(key, note,
                 white_left, white_key_width, white_key_height, white_key_rounding
             );
-            const white_key_label = createWhiteKeyLabel(key, white_left);
             white_keys_g.appendChild(white_key);
-            white_key.appendChild(white_key_label);
             keys[key] = white_key;
-            labels[key] = white_key_label;
             width += white_key_width;
             white_left += white_key_width;
         } else {
@@ -932,11 +926,8 @@ export function drawPianoKeyboardLP(svg, keys, labels, options = {}) {
             const black_key = drawBlackKey(key,
                 black_left, black_key_width, black_key_height
             );
-            const black_key_label = createBlackKeyLabel(key, black_left);
             black_keys_g.appendChild(black_key);
-            black_key.appendChild(black_key_label);
             keys[key] = black_key;
-            labels[key] = black_key_label;
         }
     }
     

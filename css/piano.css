@@ -198,6 +198,13 @@ svg#piano {
         }
     }
     
+    /* Key markings (labels and stickers) */
+
+    .key:not(.pressed) .key-marker-group:not(.lowperf) {
+        transform-box: content-box;
+        transition: transform var(--unpress-transition-duration) ease-in;
+    }
+    
     /* Key labels */
 
     .key-label {
@@ -208,49 +215,36 @@ svg#piano {
         white-space: wrap;
         opacity: 0%;
         pointer-events: none;
+    }
 
-        &.rotated {
-            text-anchor: start;
-            transform-box: content-box;
-            &.white-key-label {
-                transform-origin: left center;
-                transform: rotate(-90deg) translateX(-30px) scale(90%);
-            }
-            &.black-key-label {
-                transform-origin: center center;
-                transform: rotate(-90deg) translateX(10px);
-            }
+    .key:not(.label-visible) .key-label { display: none; }
+
+    .key.label-visible .key-label { opacity: 100%; }
+
+    .key.has-temporary-label:not(.label-visible) .key-label {
+        fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
+        opacity: 0%;
+        &:not(.lowperf) {
+            transition-property: opacity;
+            transition-timing-function: ease-out;
+            transition-duration: var(--highlight-transition-duration);
         }
-        &.hidden.fixed-visibility { 
-            display: none;
-        }
-        &.visible { 
-            opacity: 100%;
-            &.fixed-visibility {
-                will-change: fill;
-            }
-        }
-        &.may-change-visibility {
-            will-change: opacity;
-            &.hidden {
-                fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
-                opacity: 0%;
-                &:not(.lowperf) {
-                    transition-property: opacity;
-                    transition-timing-function: ease-out;
-                    transition-duration: var(--highlight-transition-duration);
-                }
-            }
-        }
-        &.white-key-label {
-            font-size: 36px;
-            fill: lch(from var(--color-white-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
-        }
-        &.black-key-label {
-            font-size: 25px;
-            fill: lch(from var(--color-black-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
-            tspan { text-anchor: middle; }
-        }
+    }
+
+    .white-key-label {
+        font-size: 36px;
+        fill: lch(from var(--color-white-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
+    }
+
+    .black-key-label {
+        font-size: 25px;
+        fill: lch(from var(--color-black-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
+        tspan { text-anchor: middle; }
+    }
+
+    .key-label.rotated {
+        text-anchor: start;
+        transform-box: content-box;
     }
 
     .white-key.active .key-label {
@@ -263,10 +257,35 @@ svg#piano {
                   clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
     }
 
-    .key:not(.active) .key-label.fixed-visibility.visible:not(.lowperf) {
-        transition-duration: var(--highlight-transition-duration), 
-                             var(--highlight-transition-duration), 
-                             var(--unpress-transition-duration);
+    .white-key.has-sticker {
+        .key-label:not(.rotated) {
+            transform: translateY(-20px);
+        }
+        .key-label.rotated {
+            transform-origin: left center;
+            transform: translateY(-20px) rotate(-90deg) translateX(-18px) scale(70%);
+        }
+    }
+
+    .black-key.has-sticker {
+        .key-label:not(.rotated) {
+            transform: translateY(-25px);
+        }
+        .key-label.rotated {
+            transform-origin: center center;
+            transform: translateY(-25px) rotate(-90deg) translateX(10px);
+        }
+    }
+
+    .key:not(.has-sticker) .key-label.rotated {
+        &.white-key-label {
+            transform-origin: left center;
+            transform: rotate(-90deg) translateX(-18px) scale(70%);
+        }
+        &.black-key-label {
+            transform-origin: center center;
+            transform: rotate(-90deg) translateX(10px);
+        }
     }
 
     /* Key sticker */
@@ -276,16 +295,16 @@ svg#piano {
             stroke-width: calc(var(--stroke-width) * 3);
             paint-order: stroke;
             opacity: 85%;
-            filter: drop-shadow(1px 3px 1px #0005);
+            stroke-opacity: 80%;
         }
     
-        &.sticker-red    { .key-sticker { fill: red;    stroke: #700; } }
-        &.sticker-yellow { .key-sticker { fill: yellow; stroke: #770; } }
-        &.sticker-green  { .key-sticker { fill: #0b0;   stroke: #050; } }
-        &.sticker-blue   { .key-sticker { fill: blue;   stroke: #007; } }
-        &.sticker-violet { .key-sticker { fill: violet; stroke: #707; } }
+        &.has-sticker-red    { .key-sticker { fill: red;    stroke: #700; } }
+        &.has-sticker-yellow { .key-sticker { fill: yellow; stroke: #770; } }
+        &.has-sticker-green  { .key-sticker { fill: #0b0;   stroke: #050; } }
+        &.has-sticker-blue   { .key-sticker { fill: blue;   stroke: #007; } }
+        &.has-sticker-violet { .key-sticker { fill: violet; stroke: #707; } }
             
-        &:not(.sticker) .key-sticker {
+        &:not(.has-sticker) .key-sticker {
             display: none;
         }
     }

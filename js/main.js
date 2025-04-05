@@ -407,13 +407,12 @@ const toolbar_shrink_list = [
 ];
 
 const piano = {
+    /** @type {SVGElement} */
     svg: document.querySelector("svg#piano"),
+    /** @type {HTMLDivElement} */
     container: document.getElementById("main-area"),
     /** @type {[SVGElement?]} */
     keys: Array(128).fill(null),
-    /** @type {[SVGElement?]} */
-    labels: Array(128).fill(null),
-    /** @type {[Boolean]} */
 }
 
 /** @type {string?} "label" or "sticker" or null */
@@ -471,9 +470,9 @@ function createPianoKeyboard() {
         last_key: noteToMidi(first_last_notes[1])
     };
     if ( settings.lowperf )
-        drawPianoKeyboardLP(piano.svg, piano.keys, piano.labels, options);
+        drawPianoKeyboardLP(piano.svg, piano.keys, options);
     else
-        drawPianoKeyboard(piano.svg, piano.keys, piano.labels, options);
+        drawPianoKeyboard(piano.svg, piano.keys, options);
     updatePianoPosition();
     updatePianoKeys();
     updatePianoTopFelt();
@@ -502,8 +501,7 @@ function updatePianoKey(key) {
         for ( const child of elm.children )
             if ( child.hasAttribute(dn) )
                 child.setAttribute("d", child.getAttribute(dn));
-        updatePianoKeyLabel(key, note_on);
-        updatePianoKeySticker(key);
+        updatePianoKeyMarkings(key, note_on, key_pressed);
     }
 }
 
@@ -514,22 +512,26 @@ function updatePianoKeys(keys=range(0,128)) {
 }
 
 
-function updatePianoKeyLabel(key, is_on) {
-    //const OCTAVES_SUP_EN = ['⁻¹','⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
-    const OCTAVES_SUB_EN = ['₋₁','₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'];
-    const OCTAVES_SUP_IT = ['⁻²','⁻¹','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹','¹⁰'];
-    const OCTAVES_SUB_IT = ['₋₂','₋₁','₁','₂','₃','₄','₅','₆','₇','₈','₉','₁₀'];
-    const ENGLISH_NAMES_1 = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
-    const ENGLISH_NAMES_2 = [   ,'D♭',   ,'E♭',   ,   ,'G♭',    ,'A♭',   ,'B♭',   ];
-    const GERMAN_NAMES_1 = ['C','Ces','D','Des','E','F','Fes','G','Ges','A','Aes','H'];
-    const GERMAN_NAMES_2 = [   ,'Dis',   ,'Eis',   ,   ,'Gis',    ,'Ais',   ,'B',   ];
-    const ITALIAN_NAMES_1 = ['do','do♯','re','re♯','mi','fa','fa♯','sol','sol♯','la','la♯','si'];
-    const ITALIAN_NAMES_2 = [    ,'re♭',    ,'mi♭',    ,    ,'sol♭',     ,'la♭',    ,'si♭',    ];
-    const label = piano.labels[key];
+function updatePianoKeyMarkings(key_num, is_on, is_pressed) {
 
-    if ( label ) {
-        const pc = key%12;
-        const octave = Math.trunc(key/12);
+    const key_elm = piano.keys[key_num];
+    const group_elm = key_elm?.querySelector(".key-marker-group");
+    const label_elm = key_elm?.querySelector(".key-label");
+
+    function setLabelText() {
+        //const OCTAVES_SUP_EN = ['⁻¹','⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
+        const OCTAVES_SUB_EN = ['₋₁','₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'];
+        const OCTAVES_SUP_IT = ['⁻²','⁻¹','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹','¹⁰'];
+        const OCTAVES_SUB_IT = ['₋₂','₋₁','₁','₂','₃','₄','₅','₆','₇','₈','₉','₁₀'];
+        const ENGLISH_NAMES_1 = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+        const ENGLISH_NAMES_2 = [   ,'D♭',   ,'E♭',   ,   ,'G♭',    ,'A♭',   ,'B♭',   ];
+        const GERMAN_NAMES_1 = ['C','Ces','D','Des','E','F','Fes','G','Ges','A','Aes','H'];
+        const GERMAN_NAMES_2 = [   ,'Dis',   ,'Eis',   ,   ,'Gis',    ,'Ais',   ,'B',   ];
+        const ITALIAN_NAMES_1 = ['do','do♯','re','re♯','mi','fa','fa♯','sol','sol♯','la','la♯','si'];
+        const ITALIAN_NAMES_2 = [    ,'re♭',    ,'mi♭',    ,    ,'sol♭',     ,'la♭',    ,'si♭',    ];
+        
+        const pc = key_num%12;
+        const octave = Math.trunc(key_num/12);
         const is_white_key = ![0,1,0,1,0,0,1,0,1,0,1,0][pc];
         
         let text = "";
@@ -565,39 +567,47 @@ function updatePianoKeyLabel(key, is_on) {
                     : `${ITALIAN_NAMES_2[pc]}\n${ITALIAN_NAMES_1[pc]}\n${it_oct}`;
                 break;
             case "freq":
-                const freq = midiToFreq(touch.enabled ? key+settings.transpose : key);
+                const freq = midiToFreq(touch.enabled ? key_num+settings.transpose : key_num);
                 text = `${freq.toFixed(freq<1000 ? 1 : 0)}`;
                 break;
             default: 
-                text = `${key}`;
+                text = `${key_num}`;
         }
+
         const lines = text.split('\n');
-        for ( const [i,tspan] of Array.from(label.children).entries() )
+        for ( const [i,tspan] of Array.from(label_elm.children).entries() )
             tspan.textContent = lines[i] ?? '';
-
-        const has_fixed_label = settings.labels.keys.has(key);
-        const visible = has_fixed_label || ( settings.labels.played && is_on );
-        const temporary = settings.labels.played && is_on && !has_fixed_label;
-
-        label.classList.toggle("may-change-visibility", temporary);
-        label.classList.toggle("fixed-visibility", !temporary);
-        label.classList.toggle("visible", visible);
-        label.classList.toggle("hidden", !visible);
-        label.classList.toggle("rotated", settings.labels.type == "freq");
     }
-}
 
+    if ( key_elm ) {
 
-function updatePianoKeySticker(key) {
-    const elm = piano.keys[key];
-    const has_sticker = settings.stickers.keys.has(key);
-    const sticker_color = has_sticker ? settings.stickers.keys.get(key) : null;
-    elm.classList.toggle("sticker", has_sticker);
-    elm.classList.toggle("sticker-red", sticker_color == "red");
-    elm.classList.toggle("sticker-yellow", sticker_color == "yellow");
-    elm.classList.toggle("sticker-green", sticker_color == "green");
-    elm.classList.toggle("sticker-blue", sticker_color == "blue");
-    elm.classList.toggle("sticker-violet", sticker_color == "violet");
+        const has_fixed_label = settings.labels.keys.has(key_num);
+        const label_visible = has_fixed_label || ( settings.labels.played && is_on );
+        const label_temporary = settings.labels.played && !has_fixed_label;
+
+        if ( label_visible ) setLabelText();
+
+        key_elm.classList.toggle("label-visible", label_visible);
+        key_elm.classList.toggle("has-fixed-label", has_fixed_label);
+        key_elm.classList.toggle("has-temporary-label", label_temporary);
+
+        label_elm.classList.toggle("rotated", settings.labels.type == "freq");
+
+        const has_sticker = settings.stickers.keys.has(key_num);
+        const sticker_color = has_sticker ? settings.stickers.keys.get(key_num) : null;
+        key_elm.classList.toggle("has-sticker", has_sticker);
+        key_elm.classList.toggle("has-sticker-red", sticker_color == "red");
+        key_elm.classList.toggle("has-sticker-yellow", sticker_color == "yellow");
+        key_elm.classList.toggle("has-sticker-green", sticker_color == "green");
+        key_elm.classList.toggle("has-sticker-blue", sticker_color == "blue");
+        key_elm.classList.toggle("has-sticker-violet", sticker_color == "violet");
+
+        if ( is_pressed && group_elm.hasAttribute("press_transform") )
+            group_elm.style.setProperty("transform", group_elm.getAttribute("press_transform"));
+        else 
+            group_elm.style.removeProperty("transform");
+
+    }
 }
 
 
@@ -1448,8 +1458,8 @@ function buildKbdNavStructure() {
                 ["&Dim pedalized notes", () => togglePedalsDim(), {checked: settings.pedal_dim}]
             ]],
             ["&Labels", [
-                ["Toggle &Labeling mode (F2)", () => toggleLabelingMode(), {checked: (marking_mode == "label")}],
-                ["Show on &played keys", () => toggleLabelsPlayed(), {checked: settings.labels.played}],
+                ["&Toggle Labeling mode (F2)", () => toggleLabelingMode(), {checked: (marking_mode == "label")}],
+                ["&Show on played keys", () => toggleLabelsPlayed(), {checked: settings.labels.played}],
                 ["&Presets", [
                     ["&None", () => setLabelsPreset("none"), {checked: labels_preset == "none"}],
                     ["&Middle-C", () => setLabelsPreset("mc"), {checked: labels_preset == "mc"}],
