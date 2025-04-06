@@ -45,11 +45,12 @@ const settings = {
         played: false,
         /** @type {Set<number>} */
         keys: new Set(),
-        toggleKey(key) {
-            if ( this.keys.has(key) )
-                this.keys.delete(key);
-            else
+        toggle(key, value=undefined) {
+            value = value ?? !this.keys.has(key);
+            if ( value )
                 this.keys.add(key);
+            else
+                this.keys.delete(key);
             updatePianoKey(key);
             writeSettings();
         },
@@ -77,11 +78,12 @@ const settings = {
         color: "red",
         /** @type {Map<number,string>} */
         keys: new Map(),
-        toggleSticker(key) {
-            if ( this.keys.has(key) && this.keys.get(key) == this.color )
-                this.keys.delete(key);
+        toggle(key, value=undefined) {
+            value = value ?? !this.keys.has(key);
+            if ( value )
+                this.keys.set(key, this.color);
             else
-                this.keys.set(key,this.color);
+                this.keys.delete(key);
             updatePianoKey(key);
             writeSettings();
         },
@@ -353,8 +355,12 @@ const toolbar = {
         size: document.getElementById("btn-size"),
         colors: document.getElementById("btn-colors"),
         pedals: document.getElementById("btn-pedals"),
-        labels: document.getElementById("btn-labels"),
-        stickers: document.getElementById("btn-stickers"),
+        labels_group: document.getElementById("btn-labels-group"),
+        labels_left: document.getElementById("btn-labels-switch"),
+        labels_right: document.getElementById("btn-labels-dropdown"),
+        stickers_group: document.getElementById("btn-labels-group"),
+        stickers_left: document.getElementById("btn-stickers-switch"),
+        stickers_right: document.getElementById("btn-stickers-dropdown"),
         panic: document.getElementById("btn-panic"),
         hide_toolbar: document.getElementById("btn-hide-toolbar"),
         show_toolbar: document.getElementById("btn-show-toolbar")
@@ -389,21 +395,21 @@ const toolbar = {
 }
 
 const toolbar_shrink_list = [
-    { elm: toolbar.title,               action: "hide-elm" },
-    { elm: toolbar.dropdowns.sound,     action: "hide-label" },
-    { elm: toolbar.dropdowns.connect,   action: "hide-label" },
-    { elm: toolbar.dropdowns.pedals,    action: "hide-label" },
-    { elm: toolbar.dropdowns.transpose, action: "hide-label" },
-    { elm: toolbar.dropdowns.stickers,  action: "hide-label" },
-    { elm: toolbar.dropdowns.labels,    action: "hide-label" },
-    { elm: toolbar.dropdowns.colors,    action: "hide-elm" },
-    { elm: toolbar.dropdowns.size,      action: "hide-elm" },
-    { elm: toolbar.dropdowns.sound,     action: "hide-elm" },
-    { elm: toolbar.dropdowns.pedals,    action: "hide-elm" },
-    { elm: toolbar.dropdowns.stickers,  action: "hide-elm" },
-    { elm: toolbar.dropdowns.labels,    action: "hide-elm" },
-    { elm: toolbar.buttons.panic,       action: "hide-elm" },
-    { elm: toolbar.self,                action: "hide-elm" }
+    { elm: toolbar.title,                  action: "hide-elm" },
+    { elm: toolbar.buttons.sound,          action: "hide-label" },
+    { elm: toolbar.buttons.connect,        action: "hide-label" },
+    { elm: toolbar.buttons.pedals,         action: "hide-label" },
+    { elm: toolbar.buttons.transpose,      action: "hide-label" },
+    { elm: toolbar.buttons.stickers_left,  action: "hide-label" },
+    { elm: toolbar.buttons.labels_left,    action: "hide-label" },
+    { elm: toolbar.dropdowns.colors,       action: "hide-elm" },
+    { elm: toolbar.dropdowns.size,         action: "hide-elm" },
+    { elm: toolbar.dropdowns.sound,        action: "hide-elm" },
+    { elm: toolbar.dropdowns.pedals,       action: "hide-elm" },
+    { elm: toolbar.buttons.stickers_group, action: "hide-elm" },
+    { elm: toolbar.buttons.labels_group,   action: "hide-elm" },
+    { elm: toolbar.buttons.panic,          action: "hide-elm" },
+    { elm: toolbar.self,                   action: "hide-elm" }
 ];
 
 const piano = {
@@ -411,6 +417,10 @@ const piano = {
     svg: document.querySelector("svg#piano"),
     /** @type {HTMLDivElement} */
     container: document.getElementById("main-area"),
+    /** @type {number?} */
+    first_key: null,
+    /** @type {number?} */
+    last_key: null,
     /** @type {[SVGElement?]} */
     keys: Array(128).fill(null),
     /** @type {[SVGElement?]} */
@@ -478,12 +488,14 @@ function createPianoKeyboard() {
         [25, ["c3", "c5"]],
         [20, ["f3", "c5"]]
     ]).get(settings.number_of_keys);
+    piano.first_key = noteToMidi(first_last_notes[0]);
+    piano.last_key = noteToMidi(first_last_notes[1]);
     const options = {
         height_factor: settings.height_factor,
         perspective: settings.perspective,
         top_felt: settings.top_felt,
-        first_key: noteToMidi(first_last_notes[0]),
-        last_key: noteToMidi(first_last_notes[1])
+        first_key: piano.first_key,
+        last_key: piano.last_key
     };
     if ( settings.lowperf )
         drawPianoKeyboardLP(piano.svg, piano.keys, options);
@@ -1198,7 +1210,7 @@ for ( const dropdown of toolbar.dropdowns.all ) {
     });
     dropdown.addEventListener("sl-hide", (e) => {
         const btn = e.currentTarget.querySelector("sl-button");
-        btn.toggleAttribute("variant", false);
+        btn.setAttribute("variant", "default");
         btn.blur();
     });
 }
@@ -1349,12 +1361,20 @@ toolbar.menus.labels.top.addEventListener("sl-select", (e) => {
     }
 });
 
+toolbar.buttons.labels_left.addEventListener("click", () => {
+    toggleLabelingMode();
+});
+
 toolbar.menus.stickers.top.addEventListener("sl-select", (e) => {
     if ( e.detail.item.getAttribute("type") == "checkbox" ) {
         toggleStickerMode(undefined, e.detail.item.value);
         toolbar.dropdowns.stickers.hide();
     }
     writeSettings();
+});
+
+toolbar.buttons.stickers_left.addEventListener("click", () => {
+    toggleStickerMode();
 });
 
 toolbar.menus.stickers.clear.addEventListener("click", (e) => {
@@ -1791,12 +1811,20 @@ window.addEventListener("touchmove", handlePianoTouchMove, { capture: false, pas
 /** @param {PointerEvent} e */
 function handlePianoClick(e) {
     if ( e.button === 0 ) {
-        const note = findKeyUnderPoint(e.clientX, e.clientY);
-        if ( note ) {
-            if ( marking_mode == "label" )
-                settings.labels.toggleKey(note);
-            else if ( marking_mode == "sticker" )
-                settings.stickers.toggleSticker(note);
+        const key_num = findKeyUnderPoint(e.clientX, e.clientY);
+        if ( key_num ) {
+            const notes = e.ctrlKey
+                ? Array.from(range(key_num%12, 128, 12))
+                : [key_num];
+            if ( marking_mode == "label" ) {
+                const value = !settings.labels.keys.has(key_num);
+                for ( const note of notes )
+                    settings.labels.toggle(note, value);
+            } else if ( marking_mode == "sticker" ) {
+                const value = !settings.stickers.keys.has(key_num);
+                for ( const note of notes )
+                    settings.stickers.toggle(note, value);
+            }
         }
     }
 }
