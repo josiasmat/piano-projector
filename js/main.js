@@ -391,7 +391,8 @@ const toolbar = {
             clear: document.getElementById("menu-stickers-clear")
         },
         pedals: document.getElementById("pedal-menu")
-    }
+    },
+    resize_timeout: null,
 }
 
 const toolbar_shrink_list = [
@@ -1420,9 +1421,14 @@ toolbar.title.onclick =
     () => { document.getElementById("dialog-about").show() };
 
 window.addEventListener("resize", () => {
-    updateToolbarBasedOnWidth();
+    if ( toolbar.resize_timeout ) clearTimeout(toolbar.resize_timeout);
+    toolbar.resize_timeout = setTimeout(() => {
+        updateToolbarBasedOnWidth();
+        toolbar.resize_timeout = null;
+    }, settings.lowperf ? 50 : 10);
     updatePianoPosition();
 });
+
 window.addEventListener("keydown", handleKeyDown);
 
 
