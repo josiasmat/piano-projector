@@ -6,7 +6,7 @@ A tool to display a music keyboard on screen and control it through a MIDI contr
 
 Visit: https://pianoprojector.app
 
-## Usage tips
+## Usage instructions
 
 The user interface is mostly self-explanatory. The browser will ask for MIDI access permission before you can use any MIDI device.
 
@@ -14,7 +14,7 @@ You can change the keyboard position by dragging it with the mouse. When touch/m
 
 Pressing the **ALT** key will open a keyboard navigation menu; press the underlined characters to navigate, while holding **ALT**.
 
-**F2** toggles Labeling mode, and **F3** toggles Sticker mode (with the last used sticker color).
+**F2** toggles Labeling mode, and **F3** toggles Sticker mode (with the last used sticker color). Clicking on a key while holding **CTRL** in one of these modes marks all octaves.
 
 **ESC** triggers the MIDI Panic button. This is useful mainly for resetting stuck keys.
 
