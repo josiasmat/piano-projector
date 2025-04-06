@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     touch-action: none;
     &.mobile {
         u { text-decoration: none; }
-        .menu-keyboard-shortcut { display: none; }
+        *[mobile-hide] { display: none; }
     }
 }
 

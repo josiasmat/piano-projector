@@ -16,6 +16,28 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+:root.mobile #top-toolbar { 
+    sl-dropdown[open]>sl-button::part(base) {
+        background-color: var(--sl-color-neutral-600);
+        border-color: var(--sl-color-neutral-600);
+        color: var(--sl-color-neutral-0);
+    }
+    sl-button[variant=default]::part(base):hover {
+        background-color: var(--sl-color-neutral-0);
+        border-color: var(--sl-input-border-color);
+        color: var(--sl-color-neutral-700);
+    }
+    .menu-keyboard-shortcut { display: none; }
+}
+
+:root:not(.mobile) #top-toolbar {
+    sl-button[variant=default]::part(base):hover {
+        background-color: var(--sl-color-neutral-100);
+        border-color: var(--sl-input-border-color);
+        color: var(--sl-color-neutral-700);
+    }
+}
+
 #top-toolbar {
     width: 100%;
     height: auto;
@@ -177,7 +199,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     display: none;
 }
 
-.condensed-toolbar-hidden-label>sl-button::part(label) {
+.condensed-toolbar-hidden-label::part(label) {
     content-visibility: hidden;
     padding: 0px 5px;
 }
