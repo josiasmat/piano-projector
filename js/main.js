@@ -320,6 +320,10 @@ const touch = {
     },
 }
 
+const window_last_size = {
+    width: 0,
+    height: 0
+}
 
 const toolbar = {
     self: document.getElementById("top-toolbar"),
@@ -1421,12 +1425,20 @@ toolbar.title.onclick =
     () => { document.getElementById("dialog-about").show() };
 
 window.addEventListener("resize", () => {
-    if ( toolbar.resize_timeout ) clearTimeout(toolbar.resize_timeout);
-    toolbar.resize_timeout = setTimeout(() => {
-        updateToolbarBasedOnWidth();
-        toolbar.resize_timeout = null;
-    }, settings.lowperf ? 50 : 10);
-    updatePianoPosition();
+    if ( window_last_size.width != window.innerWidth 
+         || window_last_size.height != window.innerHeight) 
+    {
+        if ( toolbar.resize_timeout ) clearTimeout(toolbar.resize_timeout);
+        toolbar.resize_timeout = setTimeout(() => {
+            if ( window_last_size.width != window.innerWidth ) {
+                updateToolbarBasedOnWidth();
+                window_last_size.width = window.innerWidth
+            }
+            updatePianoPosition();
+            window_last_size.height = window.innerHeight;
+            toolbar.resize_timeout = null;
+        }, settings.lowperf ? 50 : 5);
+    }
 });
 
 window.addEventListener("keydown", handleKeyDown);
