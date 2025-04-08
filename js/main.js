@@ -715,11 +715,10 @@ function updateColorsMenu() {
     toolbar.menus.colors.picker_color_black.value = settings.color_black;
     toolbar.menus.colors.picker_color_pressed.value = settings.color_highlight;
     toolbar.menus.colors.item_perspective.checked = settings.perspective;
-    toolbar.menus.colors.item_top_felt.checked = settings.top_felt;
     toolbar.menus.colors.item_perspective.hidden = settings.lowperf;
-    for ( const item of toolbar.menus.colors.highlight_opacity.children ) {
+    toolbar.menus.colors.item_top_felt.checked = settings.top_felt;
+    for ( const item of toolbar.menus.colors.highlight_opacity.children )
         item.checked = ( item.value == settings.highlight_opacity.toString() );
-    }
 }
 
 
@@ -1120,6 +1119,23 @@ function disconnectInput(save=false) {
 }
 
 
+/** 
+ * Connects or disconnects an input device.
+ * @param {string} name - Name of the input device, which can be:
+ *      - "pckbd", the computer keyboard,
+ *      - "touch",
+ *      - name of a MIDI input port,
+ *      - "" or any falsy value, to disconnect.
+ * @param {boolean} save - _true_ to call writeSettings() after connection.
+ */
+function toggleInput(name, save=false) {
+    if ( name && settings.device_name != name )
+        connectInput(settings.device_name == name ? "" : name, save);
+    else
+        disconnectInput(save);
+}
+
+
 function updateConnectionMenu() {
     const menu_divider = toolbar.menus.connect.querySelector("sl-divider");
 
@@ -1156,10 +1172,7 @@ function updateConnectionMenu() {
             );
             // menu item click event handler
             new_menu_item.addEventListener("click", (e) => {
-                if ( settings.device_name === e.currentTarget.value )
-                    disconnectInput(true);
-                else
-                    connectInput(e.currentTarget.value, true);
+                toggleInput(e.currentTarget.value, true);
             });
             toolbar.menus.connect.insertBefore(new_menu_item, menu_divider);
         }
@@ -1314,14 +1327,14 @@ toolbar.menus.colors.highlight_opacity.addEventListener("sl-select", (e) => {
     updateColorsMenu();
 });
 
-document.getElementById("menu-perspective").addEventListener("click", () => {
+toolbar.menus.colors.item_perspective.addEventListener("click", () => {
     settings.perspective = !settings.perspective;
     createPianoKeyboard();
     writeSettings();
     if ( isMobile() ) toolbar.dropdowns.colors.hide();
 });
 
-document.getElementById("menu-top-felt").addEventListener("click", () => {
+toolbar.menus.colors.item_top_felt.addEventListener("click", () => {
     settings.top_felt = !settings.top_felt;
     updatePianoTopFelt();
     writeSettings();
@@ -1450,17 +1463,17 @@ function buildKbdNavStructure() {
     function populateControlNav() {
         const list = midi.ports.map((p,i) => [
             p.name,
-            () => connectInput(p.name, true),
+            () => toggleInput(p.name, true),
             {checked: ( settings.device_name == p.name )}
         ]);
         list.push([
             "Computer keyboard", 
-            () => connectInput("pckbd", true), 
+            () => toggleInput("pckbd", true), 
             {checked: settings.pc_keyboard_connected}
         ]);
         list.push([
             "Touch or mouse", 
-            () => connectInput("touch", true), 
+            () => toggleInput("touch", true), 
             {checked: touch.enabled}
         ]);
         return list;
