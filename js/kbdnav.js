@@ -166,14 +166,15 @@ export class KbdNav {
     /** @param {KeyboardEvent} e */
     #keyDownHandler(e) {
         if ( e.repeat ) return;
-        if ( triggerMatchKey(this.#trigger, e) ) {
+        if ( this.#triggerMatchKey(e) ) {
             e.preventDefault();
             this.#show();
-        } else if ( triggerMatchHold(this.#trigger, e) ) {
-            e.preventDefault();
+        } else if ( this.#triggerMatchHold(e) ) {
+            let match = false;
             const k = e.key.toLowerCase();
             for ( const item of this.#current_menu ) {
                 if ( item.keys.includes(k) && item.action !== null ) {
+                    match = true;
                     if ( typeof(item.action) == "number" ) {
                         this.#enter(item.action);
                     } else if ( typeof(item.action) == "function" ) {
@@ -183,12 +184,17 @@ export class KbdNav {
                 }
             }
             this.#build();
+            // Only prevent default if there is a match or
+            // if key pressed is a character key, to not 
+            // prevent combinations like Alt+F4
+            if ( match || k.length == 1 )
+                e.preventDefault();
         }
     }
 
     /** @param {KeyboardEvent} e */
     #keyUpHandler(e) {
-        if ( triggerMatchKey(this.#trigger, e) ) {
+        if ( this.#triggerMatchKey(e) ) {
             e.preventDefault();
             this.#hide();
         }
@@ -197,6 +203,19 @@ export class KbdNav {
     #blurHandler() {
         if ( this.#visible )
             this.#hide();
+    }
+
+    /** @param {string} t @param {KeyboardEvent} e */
+    #triggerMatchKey(e) {
+        return ( e.key.toLowerCase() == this.#trigger || e.code.toLowerCase().startsWith(this.#trigger) );
+    }
+
+    /** @param {string} t @param {KeyboardEvent} e */
+    #triggerMatchHold(e) {
+        return [ ( this.#trigger == "ctrl"  && e.ctrlKey ),
+                 ( this.#trigger == "alt"   && e.altKey ),
+                 ( this.#trigger == "shift" && e.shiftKey ) ]
+               .filter(x => x).length == 1;
     }
 
 }
@@ -216,19 +235,6 @@ function removeAmpersand(s) {
 function getShortcutKeys(s) {
     const matches = s.match(/(?<=&)./g);
     return matches?.map(c => c.toLowerCase()) ?? [];
-}
-
-/** @param {string} t @param {KeyboardEvent} e */
-function triggerMatchKey(t, e) {
-    return ( e.key.toLowerCase() == t || e.code.toLowerCase().startsWith(t) );
-}
-
-/** @param {string} t @param {KeyboardEvent} e */
-function triggerMatchHold(t, e) {
-    return [ ( t == "ctrl"  && e.ctrlKey ),
-             ( t == "alt"   && e.altKey ),
-             ( t == "shift" && e.shiftKey ) ]
-             .filter(x => x).length == 1;
 }
 
 
