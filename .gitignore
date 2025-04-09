@@ -2,5 +2,4 @@ bin/
 PRIVATE/
 node_modules/
 
-/package*.json
 /run-local-windows.cmd

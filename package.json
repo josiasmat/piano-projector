@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "@shoelace-style/shoelace": "^2.20.0",
+    "smplr": "^0.16.1",
+    "esbuild": "0.25.2"
+  }
+}
