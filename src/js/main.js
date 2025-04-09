@@ -1998,7 +1998,6 @@ function handleKeyDown(e) {
 // Resize handlers
 
 function handleToolbarResize() {
-    console.log("toolbar resized");
     if ( toolbar.resize.timeout ) clearTimeout(toolbar.resize.timeout);
     toolbar.resize_timeout = setTimeout(() => {
         updateToolbarBasedOnWidth();
@@ -2007,7 +2006,6 @@ function handleToolbarResize() {
 }
 
 function handlePianoContainerResize() {
-    console.log("piano container resized");
     if ( piano.resize.timeout ) clearTimeout(piano.resize.timeout);
     piano.resize_timeout = setTimeout(() => {
         updatePianoPosition();
