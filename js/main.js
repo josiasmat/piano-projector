@@ -774,8 +774,6 @@ function updateTransposeMenuAndButton() {
 
 
 function updatePianoPosition() {
-    if ( !piano.loaded ) return;
-
     const max_zoom = piano.container.clientHeight / piano.svg.clientHeight;
     if ( settings.zoom > 1 ) {
         if ( settings.zoom > max_zoom ) settings.zoom = max_zoom;
@@ -2009,10 +2007,6 @@ function handleKeyDown(e) {
 
 function initializeApp() {
 
-    updateToolbar();
-    updateToolbarBasedOnWidth();
-    createPianoKeyboard();
-
     if ( isMobile() ) {
         document.documentElement.classList.add("mobile");
         toolbar.buttons.show_toolbar.classList.add("mobile");
@@ -2040,6 +2034,9 @@ function initializeApp() {
                 if ( isMobile() && settings.sound ) loadSound(settings.sound);
             });
     }
+
+    updateToolbar();
+    createPianoKeyboard();
 
     if ( !settings.device_name ) {
         const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
@@ -2072,21 +2069,25 @@ function initializeApp() {
     midiWatchdog();
     midi.setWatchdog(2000);
 
+    updateToolbarBasedOnWidth();
+
 }
 
 
 loadSettings();
 checkUrlQueryStrings();
 
-function updatePianoPositionWhenLoaded() {
-    if ( piano.loaded )
+function handleWindowOnLoad() {
+    if ( piano.loaded ) {
+        updateToolbarBasedOnWidth();
         updatePianoPosition();
+    }
     else
-        setTimeout(updatePianoPositionWhenLoaded, 250);
+        setTimeout(handleWindowOnLoad, 250);
 }
 
 window.addEventListener("load", () => {
-    updatePianoPositionWhenLoaded();
+    handleWindowOnLoad();
 });
 
 Promise.allSettled([
@@ -2096,4 +2097,4 @@ Promise.allSettled([
     customElements.whenDefined('sl-icon'),
     customElements.whenDefined('sl-menu'),
     customElements.whenDefined('sl-menu-item')
-]).then(initializeApp);
+]).finally(initializeApp);
