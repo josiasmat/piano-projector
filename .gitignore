@@ -1,6 +1,3 @@
-bin/
-PRIVATE/
+private/
 node_modules/
-
-/run-local-windows.cmd
-*.*.map
+pub/*.map
