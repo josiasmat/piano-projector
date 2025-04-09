@@ -399,7 +399,10 @@ const toolbar = {
         },
         pedals: document.getElementById("pedal-menu")
     },
-    resize_timeout: null,
+    resize: {
+        observer: null,
+        timeout: null
+    }
 }
 
 const toolbar_shrink_list = [
@@ -437,6 +440,10 @@ const piano = {
     marking_groups: Array(128).fill(null),
     /** @type {boolean} */
     loaded: false,
+    resize: {
+        timeout: null,
+        observer: null,
+    }
 }
 
 /** @type {string?} "label" or "sticker" or null */
@@ -1443,23 +1450,6 @@ toolbar.buttons.show_toolbar.onclick = toggleToolbarVisibility;
 toolbar.title.onclick = 
     () => { document.getElementById("dialog-about").show() };
 
-window.addEventListener("resize", () => {
-    if ( window_last_size.width != window.innerWidth 
-         || window_last_size.height != window.innerHeight) 
-    {
-        if ( toolbar.resize_timeout ) clearTimeout(toolbar.resize_timeout);
-        toolbar.resize_timeout = setTimeout(() => {
-            if ( window_last_size.width != window.innerWidth ) {
-                updateToolbarBasedOnWidth();
-                window_last_size.width = window.innerWidth
-            }
-            updatePianoPosition();
-            window_last_size.height = window.innerHeight;
-            toolbar.resize_timeout = null;
-        }, settings.lowperf ? 50 : 5);
-    }
-});
-
 window.addEventListener("keydown", handleKeyDown);
 
 
@@ -2005,6 +1995,27 @@ function handleKeyDown(e) {
 }
 
 
+// Resize handlers
+
+function handleToolbarResize() {
+    console.log("toolbar resized");
+    if ( toolbar.resize.timeout ) clearTimeout(toolbar.resize.timeout);
+    toolbar.resize_timeout = setTimeout(() => {
+        updateToolbarBasedOnWidth();
+        toolbar.resize.timeout = null;
+    }, settings.lowperf ? 50 : 5);
+}
+
+function handlePianoContainerResize() {
+    console.log("piano container resized");
+    if ( piano.resize.timeout ) clearTimeout(piano.resize.timeout);
+    piano.resize_timeout = setTimeout(() => {
+        updatePianoPosition();
+        piano.resize.timeout = null;
+    }, settings.lowperf ? 50 : 5);
+}
+
+
 // Initialization
 
 
@@ -2075,7 +2086,11 @@ function initializeApp() {
 
     function postInit() {
         updateToolbarBasedOnWidth();
+        toolbar.resize.observer = new ResizeObserver(handleToolbarResize);
+        toolbar.resize.observer.observe(toolbar.self);
         updatePianoPosition();
+        piano.resize.observer = new ResizeObserver(handlePianoContainerResize);
+        piano.resize.observer.observe(piano.container);
     }
 
     if ( document.readyState == "complete" )
