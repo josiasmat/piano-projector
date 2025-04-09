@@ -2093,10 +2093,10 @@ function initializeApp() {
         piano.resize.observer.observe(piano.container);
     }
 
-    if ( document.readyState == "complete" )
-        postInit();
-    else
+    if ( document.readyState != "complete" )
         window.addEventListener("load", postInit, { once: true });
+    else
+        postInit();
 
     midiWatchdog();
     midi.setWatchdog(2000);
