@@ -1145,7 +1145,6 @@ function toggleInput(name, save=false) {
 function updateConnectionMenu() {
     const menu_divider = toolbar.menus.connect.querySelector("sl-divider");
 
-    console.log(midi.access);
     document.getElementById("menu-connect-item-midi-denied")
         .toggleAttribute("hidden", midi.access != "denied");
     document.getElementById("menu-connect-item-midi-unavailable")

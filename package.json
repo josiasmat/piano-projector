@@ -6,8 +6,8 @@
     "smplr": "^0.16.1"
   },
   "scripts": {
-    "build:dev": "esbuild js/main.js --bundle --sourcemap --outfile=js/bundle.js && esbuild css/main.css --bundle --sourcemap --outfile=css/bundle.css",
-    "build": "esbuild js/main.js --bundle --minify --outfile=js/bundle.js && esbuild css/main.css --bundle --minify --outfile=css/bundle.css",
+    "build:dev": "esbuild src/js/main.js --bundle --sourcemap --outfile=pub/bundle.js && esbuild src/css/main.css --bundle --sourcemap --outfile=pub/bundle.css",
+    "build": "esbuild src/js/main.js --bundle --minify --outfile=pub/bundle.js && esbuild src/css/main.css --bundle --minify --outfile=pub/bundle.css",
     "local": "http-server --port 8000 -o -c-1"
   }
 }
