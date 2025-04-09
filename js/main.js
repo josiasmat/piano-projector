@@ -178,7 +178,10 @@ const midi = {
                 this.access = "granted";
                 callback?.(true);
             },
-            () => { callback?.(false); }
+            () => { 
+                this.access = "denied";
+                callback?.(false); 
+            }
         );
     },
     /** @param {(MIDIInput[])} callback */
@@ -1142,6 +1145,7 @@ function toggleInput(name, save=false) {
 function updateConnectionMenu() {
     const menu_divider = toolbar.menus.connect.querySelector("sl-divider");
 
+    console.log(midi.access);
     document.getElementById("menu-connect-item-midi-denied")
         .toggleAttribute("hidden", midi.access != "denied");
     document.getElementById("menu-connect-item-midi-unavailable")
@@ -2007,6 +2011,9 @@ function handleKeyDown(e) {
 
 function initializeApp() {
 
+    loadSettings();
+    checkUrlQueryStrings();
+    
     if ( isMobile() ) {
         document.documentElement.classList.add("mobile");
         toolbar.buttons.show_toolbar.classList.add("mobile");
@@ -2014,6 +2021,7 @@ function initializeApp() {
         toolbar.buttons.panic.parentElement.toggleAttribute("disabled", true);
         toolbar.buttons.hide_toolbar.parentElement.toggleAttribute("disabled", true);
         toolbar.buttons.show_toolbar.parentElement.toggleAttribute("disabled", true);
+        // Enable selection of keyboard with 20 keys
         toolbar.menus.size.querySelector('.btn-number-of-keys[value="20"]').toggleAttribute("hidden", false);
     }
 
@@ -2041,6 +2049,7 @@ function initializeApp() {
     if ( !settings.device_name ) {
         const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
         if ( isMobile() ) {
+            // Select touch input by default on mobile
             connectInput("touch", true);
             connect_tooltip.setAttribute("content", 
                 "Play your keyboard using your fingers! " +
@@ -2052,10 +2061,9 @@ function initializeApp() {
             );
         }
         connect_tooltip.open = true;
-        window.onclick = () => {
+        window.addEventListener("click", () => {
             connect_tooltip.open = false;
-            window.onclick = null;
-        }
+        }, { once: true });
     } else {
         if ( ["pckbd","touch"].includes(settings.device_name) )
             connectInput(settings.device_name)
@@ -2066,29 +2074,21 @@ function initializeApp() {
             });
     }
 
-    midiWatchdog();
-    midi.setWatchdog(2000);
-
-    updateToolbarBasedOnWidth();
-
-}
-
-
-loadSettings();
-checkUrlQueryStrings();
-
-function handleWindowOnLoad() {
-    if ( piano.loaded ) {
+    function postInit() {
         updateToolbarBasedOnWidth();
         updatePianoPosition();
     }
+
+    if ( document.readyState == "complete" )
+        postInit();
     else
-        setTimeout(handleWindowOnLoad, 250);
+        window.addEventListener("load", postInit, { once: true });
+
+    midiWatchdog();
+    midi.setWatchdog(2000);
+
 }
 
-window.addEventListener("load", () => {
-    handleWindowOnLoad();
-});
 
 Promise.allSettled([
     customElements.whenDefined('sl-dropdown'),
