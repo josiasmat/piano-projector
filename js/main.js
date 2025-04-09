@@ -432,6 +432,8 @@ const piano = {
     labels: Array(128).fill(null),
     /** @type {[SVGElement?]} */
     marking_groups: Array(128).fill(null),
+    /** @type {boolean} */
+    loaded: false,
 }
 
 /** @type {string?} "label" or "sticker" or null */
@@ -510,6 +512,7 @@ function createPianoKeyboard() {
         piano.marking_groups[i] = key_elm?.querySelector(".key-marker-group");
         piano.labels[i] = key_elm?.querySelector(".key-label");
     }
+    piano.loaded = true;
     updatePianoPosition();
     updatePianoKeys();
     updatePianoTopFelt();
@@ -659,7 +662,7 @@ function updateToolbar() {
     toolbar.buttons.show_toolbar.toggleAttribute("hidden", settings.toolbar);
     toolbar.dropdowns.pedals.toggleAttribute("hidden", touch.enabled);
     updatePedalIcons();
-    updateToolbarBasedOnWidth();
+    // updateToolbarBasedOnWidth();
 }
 
 
@@ -771,6 +774,8 @@ function updateTransposeMenuAndButton() {
 
 
 function updatePianoPosition() {
+    if ( !piano.loaded ) return;
+
     const max_zoom = piano.container.clientHeight / piano.svg.clientHeight;
     if ( settings.zoom > 1 ) {
         if ( settings.zoom > max_zoom ) settings.zoom = max_zoom;
@@ -1999,84 +2004,96 @@ function handleKeyDown(e) {
 }
 
 
-// Initialize
+// Initialization
+
+
+function initializeApp() {
+
+    updateToolbar();
+    updateToolbarBasedOnWidth();
+    createPianoKeyboard();
+
+    if ( isMobile() ) {
+        document.documentElement.classList.add("mobile");
+        toolbar.buttons.show_toolbar.classList.add("mobile");
+        // Disable tooltips
+        toolbar.buttons.panic.parentElement.toggleAttribute("disabled", true);
+        toolbar.buttons.hide_toolbar.parentElement.toggleAttribute("disabled", true);
+        toolbar.buttons.show_toolbar.parentElement.toggleAttribute("disabled", true);
+        toolbar.menus.size.querySelector('.btn-number-of-keys[value="20"]').toggleAttribute("hidden", false);
+    }
+
+    if ( isSafari() ) {
+        // For now, disable sound button on Safari browser
+        toolbar.dropdowns.sound.toggleAttribute("hidden", true);
+    } else {
+        // Dynamically import smplr module
+        import("https://unpkg.com/smplr@0.16.1/dist/index.mjs")
+            .then( (result) => {
+                sound.cache = new result.CacheStorage("sound_v1");
+                sound.apiano = result.SplendidGrandPiano;
+                sound.epiano = result.ElectricPiano;
+                sound.versilian = result.Versilian;
+                document.getElementById("menu-sound-item-unavailable").hidden = true;
+                toolbar.menus.sound.querySelectorAll(".menu-sound-item")
+                    .forEach((item) => { item.hidden = false });
+                if ( isMobile() && settings.sound ) loadSound(settings.sound);
+            });
+    }
+
+    if ( !settings.device_name ) {
+        const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
+        if ( isMobile() ) {
+            connectInput("touch", true);
+            connect_tooltip.setAttribute("content", 
+                "Play your keyboard using your fingers! " +
+                "Or change the input method by tapping this button."
+            );
+        } else {
+            connect_tooltip.setAttribute("content", 
+                "Click on this button to select an input method."
+            );
+        }
+        connect_tooltip.open = true;
+        window.onclick = () => {
+            connect_tooltip.open = false;
+            window.onclick = null;
+        }
+    } else {
+        if ( ["pckbd","touch"].includes(settings.device_name) )
+            connectInput(settings.device_name)
+        else
+            midi.queryAccess((access) => {
+                if ( access == "granted" )
+                    connectInput(settings.device_name);
+            });
+    }
+
+    midiWatchdog();
+    midi.setWatchdog(2000);
+
+}
+
 
 loadSettings();
 checkUrlQueryStrings();
 
+function updatePianoPositionWhenLoaded() {
+    if ( piano.loaded )
+        updatePianoPosition();
+    else
+        setTimeout(updatePianoPositionWhenLoaded, 250);
+}
+
 window.addEventListener("load", () => {
-    updatePianoPosition();
-    // Sometimes the window.load event fires too early
-    setTimeout(() => { updatePianoPosition() }, 500);
+    updatePianoPositionWhenLoaded();
 });
 
-await Promise.allSettled([
+Promise.allSettled([
     customElements.whenDefined('sl-dropdown'),
     customElements.whenDefined('sl-button'),
     customElements.whenDefined('sl-button-group'),
     customElements.whenDefined('sl-icon'),
     customElements.whenDefined('sl-menu'),
     customElements.whenDefined('sl-menu-item')
-]);
-
-updateToolbar();
-createPianoKeyboard();
-
-if ( isMobile() ) {
-    document.documentElement.classList.add("mobile");
-    toolbar.buttons.show_toolbar.classList.add("mobile");
-    // Disable tooltips
-    toolbar.buttons.panic.parentElement.toggleAttribute("disabled", true);
-    toolbar.buttons.hide_toolbar.parentElement.toggleAttribute("disabled", true);
-    toolbar.buttons.show_toolbar.parentElement.toggleAttribute("disabled", true);
-    toolbar.menus.size.querySelector('.btn-number-of-keys[value="20"]').toggleAttribute("hidden", false);
-}
-
-if ( isSafari() ) {
-    // For now, disable sound button on Safari browser
-    toolbar.dropdowns.sound.toggleAttribute("hidden", true);
-} else {
-    // Dynamically import smplr module
-    import("https://unpkg.com/smplr@0.16.1/dist/index.mjs")
-        .then( (result) => {
-            sound.cache = new result.CacheStorage("sound_v1");
-            sound.apiano = result.SplendidGrandPiano;
-            sound.epiano = result.ElectricPiano;
-            sound.versilian = result.Versilian;
-            document.getElementById("menu-sound-item-unavailable").hidden = true;
-            toolbar.menus.sound.querySelectorAll(".menu-sound-item")
-                .forEach((item) => { item.hidden = false });
-            if ( isMobile() && settings.sound ) loadSound(settings.sound);
-        });
-}
-
-if ( !settings.device_name ) {
-    const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
-    if ( isMobile() ) {
-        connectInput("touch", true);
-        connect_tooltip.setAttribute("content", 
-            "Play your keyboard using your fingers! " +
-            "Or change the input method by tapping this button."
-        );
-    } else {
-        connect_tooltip.setAttribute("content", 
-            "Click on this button to select an input method."
-        );
-    }
-    connect_tooltip.open = true;
-    window.onclick = () => {
-        connect_tooltip.open = false;
-        window.onclick = null;
-    }
-} else {
-    if ( ["pckbd","touch"].includes(settings.device_name) )
-        connectInput(settings.device_name)
-    else
-        midi.queryAccess((access) => {
-            if ( access == "granted" )
-                connectInput(settings.device_name);
-        });
-}
-
-midiWatchdog();
-midi.setWatchdog(2000);
+]).then(initializeApp);
