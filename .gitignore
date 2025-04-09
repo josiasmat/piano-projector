@@ -3,3 +3,4 @@ PRIVATE/
 node_modules/
 
 /run-local-windows.cmd
+*.*.map
