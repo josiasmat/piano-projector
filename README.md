@@ -2,6 +2,8 @@
 
 A tool to display a music keyboard on screen and control it through a MIDI controller.
 
+![Screenshot](/assets/img/readme-screenshot.png)
+
 ## Online usage
 
 Visit: https://pianoprojector.app
