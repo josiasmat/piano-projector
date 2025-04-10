@@ -30,9 +30,15 @@ To switch back to normal mode, append `/?mode=hp` to the URL.
 
 The mode setting is saved, so it is not necessary to always change the URL.
 
+## Known issues
+
+- MIDI doesn't work in Safari browser, as the browser does not support the Web Midi API.
+- MIDI doesn't work on iOS-based devices (iPhone/iPad), because any browser distributed through Apple's App Store have to use Safari's engine. Sound doesn't work either (apparently a bug in the smplr library).
+- On Ubuntu (and perhaps other Linux distributions), browsers installed via Snap packages (e.g. the default installation of Mozilla Firefox) may come with MIDI access disabled by default. To resolve this, you need to go into your system settings and enable browser's permission to access media input devices. Or, install a browser using a native package (.deb/.rpm).
+
 ## More info
 
-Contact me: josiasmatschulat@outlook.com
+Feel free to contact me: josiasmatschulat@outlook.com
 
 Copyright 2025 Josias Matschulat
 
