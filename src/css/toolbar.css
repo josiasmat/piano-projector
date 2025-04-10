@@ -42,7 +42,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     width: 100%;
     height: auto;
     background-image: linear-gradient(to top, #333, #222);
-    padding: 6px 12px;
+    padding: 7px 0 6px 12px;
     display: flex;
     justify-content: space-between;
     flex-wrap: nowrap;
@@ -90,8 +90,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         }
     }
 
-    sl-radio-group
-
     #menu-group-number-of-keys {
         .btn-number-of-keys {
             width: 6ch;
@@ -112,7 +110,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
     .space-before { margin-left: 12px; }
 
-    #top-toolbar-right { margin-left: 15px; }
+    #top-toolbar-right { 
+        margin-left: 15px; 
+        padding-right: 12px;
+    }
 
     sl-color-picker {
         margin: 20px 30px;
