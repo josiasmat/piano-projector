@@ -77,6 +77,10 @@ export class KbdNav {
         }
     }
 
+    get container() {
+        return this.#container;
+    }
+
     replaceStructure(structure) {
         this.#structure = structure;
         if ( this.#visible ) this.#build();
