@@ -44,18 +44,20 @@ svg#piano {
     min-width: 100%;
     max-height: 100%;
     position: absolute;
-    cursor: grab;
     transform-origin: top left;
+    
     &, * { image-rendering: optimizeSpeed; }
 
-    #top-felt {
-        &[hidden] { display: none; }
-        &.lowperf { fill: var(--color-felt-top); }
-        &:not(lowperf) { fill: url("#top-felt-gradient"); }
+    &:not(.grabbing, touch-input) {
+        cursor: grab;
+    }
+
+    &.touch-input:not(.grabbing) {
+        cursor: pointer;
     }
 
     &.grabbing {
-        cursor: grabbing !important;
+        cursor: grabbing;
     }
 
     &.marking-mode:not(.grabbing) {
@@ -300,6 +302,14 @@ svg#piano {
         &:not(.has-sticker) .key-sticker {
             display: none;
         }
+    }
+
+    /* Top red felt */
+
+    #top-felt {
+        &[hidden] { display: none; }
+        &.lowperf { fill: var(--color-felt-top); }
+        &:not(lowperf) { fill: url("#top-felt-gradient"); }
     }
 
 }

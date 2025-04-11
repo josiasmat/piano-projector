@@ -314,18 +314,13 @@ const touch = {
     },
     enable() {
         this.enabled = true;
-        piano.svg.style.cursor = "pointer";
+        piano.svg.classList.toggle("touch-input", true);
     },
     disable() {
         this.reset();
         this.enabled = false;
-        piano.svg.style.removeProperty("cursor");
+        piano.svg.classList.toggle("touch-input", false);
     },
-}
-
-const window_last_size = {
-    width: 0,
-    height: 0
 }
 
 const toolbar = {
@@ -375,6 +370,20 @@ const toolbar = {
     menus: {
         connect: document.getElementById("midi-connection-menu"),
         sound: document.getElementById("menu-sound"),
+        transpose: {
+            top: document.getElementById("menu-transpose"),
+            semitones: {
+                input: document.getElementById("input-semitones"),
+                btn_minus: document.getElementById("btn-semitone-minus"),
+                btn_plus: document.getElementById("btn-semitone-plus"),
+            },
+            octaves: {
+                input: document.getElementById("input-octaves"),
+                btn_minus: document.getElementById("btn-octave-minus"),
+                btn_plus: document.getElementById("btn-octave-plus"),
+            },
+            item_reset: document.getElementById("reset-transpose")
+        },
         size: document.getElementById("menu-size"),
         colors: {
             top: document.getElementById("menu-colors"),
@@ -397,7 +406,11 @@ const toolbar = {
             top: document.getElementById("menu-stickers-top"),
             clear: document.getElementById("menu-stickers-clear")
         },
-        pedals: document.getElementById("pedal-menu")
+        pedals: {
+            top: document.getElementById("pedal-menu"),
+            item_follow: document.getElementById("menu-pedal-follow"),
+            item_dim: document.getElementById("menu-pedal-dim")
+        } 
     },
     resize: {
         observer: null,
@@ -530,7 +543,7 @@ function createPianoKeyboard() {
 
 
 function updatePianoTopFelt() {
-    document.getElementById("top-felt").toggleAttribute("hidden", !settings.top_felt);
+    document.getElementById("top-felt")?.toggleAttribute("hidden", !settings.top_felt);
 }
 
 
@@ -736,10 +749,9 @@ function updateColorsMenu() {
 
 
 function updatePedalsMenu() {
-    document.getElementById("menu-pedal-follow").checked = settings.pedals;
-    const menu_pedal_dim = document.getElementById("menu-pedal-dim");
-    menu_pedal_dim.checked = settings.pedal_dim;
-    menu_pedal_dim.toggleAttribute("disabled", !settings.pedals);
+    toolbar.menus.pedals.item_follow.checked = settings.pedals;
+    toolbar.menus.pedals.item_dim.checked = settings.pedal_dim;
+    toolbar.menus.pedals.item_dim.toggleAttribute("disabled", !settings.pedals);
 }
 
 
@@ -776,9 +788,9 @@ function updateStickersMenu() {
 
 
 function updateTransposeMenuAndButton() {
-    document.getElementById("input-semitones").value = settings.semitones;
-    document.getElementById("input-octaves").value = settings.octaves;
-    document.getElementById("reset-transpose").toggleAttribute("disabled", settings.transpose == 0);
+    toolbar.menus.transpose.semitones.input.value = settings.semitones;
+    toolbar.menus.transpose.octaves.input.value = settings.octaves;
+    toolbar.menus.transpose.item_reset.toggleAttribute("disabled", settings.transpose == 0);
     changeLed("transpose-power-icon", ( settings.transpose != 0 ));
 }
 
@@ -802,7 +814,7 @@ function updatePianoPosition() {
     const px = Math.round((kbd_rect.width - cnt_rect.width) * settings.offset.x);
     piano.container.scroll(px, 0);
 
-    document.getElementById("keyboard-navigator").toggleAttribute("position-top", settings.offset.y > 0.5);
+    kbdnav.container.toggleAttribute("position-top", settings.offset.y > 0.5);
 }
 
 
@@ -1354,17 +1366,17 @@ toolbar.menus.colors.item_top_felt.addEventListener("click", () => {
     if ( isMobile() ) toolbar.dropdowns.colors.hide();
 });
 
-document.getElementById("color-white").addEventListener("sl-change", (e) => {
+toolbar.menus.colors.picker_color_white.addEventListener("sl-change", (e) => {
     settings.color_white = e.target.value;
     writeSettings();
 });
 
-document.getElementById("color-black").addEventListener("sl-change", (e) => {
+toolbar.menus.colors.picker_color_black.addEventListener("sl-change", (e) => {
     settings.color_black = e.target.value;
     writeSettings();
 });
 
-document.getElementById("color-pressed").addEventListener("sl-change", (e) => {
+toolbar.menus.colors.picker_color_pressed.addEventListener("sl-change", (e) => {
     settings.color_highlight = e.target.value;
     writeSettings();
 });
@@ -1412,13 +1424,13 @@ toolbar.menus.stickers.clear.addEventListener("click", (e) => {
     clearStickers();
 });
 
-toolbar.menus.pedals.addEventListener("sl-select", (e) => {
+toolbar.menus.pedals.top.addEventListener("sl-select", (e) => {
     const item = e.detail.item;
     switch ( item.id ) {
         case "menu-pedal-follow": settings.pedals = item.checked; break;
         case "menu-pedal-dim": settings.pedal_dim = item.checked; break;
     }
-    document.getElementById("menu-pedal-dim").toggleAttribute(
+    toolbar.menus.pedals.item_dim.toggleAttribute(
         "disabled", !settings.pedals);
     updatePedalIcons();
     updatePianoKeys();
@@ -1426,19 +1438,19 @@ toolbar.menus.pedals.addEventListener("sl-select", (e) => {
     if ( isMobile() ) toolbar.dropdowns.pedals.hide();
 });
 
-document.getElementById("btn-semitone-plus").onclick = 
+toolbar.menus.transpose.semitones.btn_plus.onclick = 
     () => { transpose({ semitones: +1 }) };
 
-document.getElementById("btn-semitone-minus").onclick =
+toolbar.menus.transpose.semitones.btn_minus.onclick =
     () => { transpose({ semitones: -1 }) };
 
-document.getElementById("btn-octave-plus").onclick =
+toolbar.menus.transpose.octaves.btn_plus.onclick =
     () => { transpose({ octaves: +1 }) };
 
-document.getElementById("btn-octave-minus").onclick =
+toolbar.menus.transpose.octaves.btn_minus.onclick =
     () => { transpose({ octaves: -1 }) };
 
-document.getElementById("reset-transpose").onclick = () => {
+toolbar.menus.transpose.item_reset.onclick = () => {
      transpose({ reset: true }) ;
      if ( isMobile() ) toolbar.dropdowns.transpose.hide();
 };
