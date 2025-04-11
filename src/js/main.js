@@ -314,12 +314,12 @@ const touch = {
     },
     enable() {
         this.enabled = true;
-        piano.svg.classList.toggle("touch-input", true);
+        updatePianoCursor();
     },
     disable() {
         this.reset();
         this.enabled = false;
-        piano.svg.classList.toggle("touch-input", false);
+        updatePianoCursor();
     },
 }
 
@@ -536,9 +536,7 @@ function createPianoKeyboard() {
         piano.labels[i] = key_elm?.querySelector(".key-label");
     }
     piano.loaded = true;
-    updatePianoPosition();
-    updatePianoKeys();
-    updatePianoTopFelt();
+    updatePiano();
 }
 
 
@@ -661,6 +659,21 @@ function updatePianoKeyMarkings(key_num, is_on, is_pressed) {
             group_elm.style.removeProperty("transform");
 
     }
+}
+
+
+function updatePianoCursor() {
+    piano.svg.classList.toggle("touch-input", touch.enabled);
+    piano.svg.classList.toggle("grabbing", drag.state);
+    piano.svg.classList.toggle("marking-mode", marking_mode);
+}
+
+
+function updatePiano() {
+    updatePianoKeys();
+    updatePianoTopFelt();
+    updatePianoPosition();
+    updatePianoCursor();
 }
 
 
@@ -921,7 +934,7 @@ function setLabelsType(value) {
 /** @param {string} value - "label", "sticker" or _null_ */
 function setMarkingMode(value) {
     marking_mode = value ? value : null;
-    piano.svg.classList.toggle("marking-mode", Boolean(value));
+    updatePianoCursor();
     updateToolbar();
 }
 
@@ -1106,7 +1119,7 @@ function connectInput(name, save=false) {
             touch.disable();
             settings.device_name = "pckbd";
             updateToolbar();
-            updatePianoKeys();
+            updatePiano();
             if ( save ) writeSettings();
             break;
         case "touch":
@@ -1590,8 +1603,8 @@ piano.svg.addEventListener("pointerdown", (e) => {
             drag.origin.y = e.screenY;
             drag.previous_offset.x = settings.offset.x;
             drag.previous_offset.y = settings.offset.y;
-            piano.svg.classList.toggle("grabbing", true);
             piano.svg.setPointerCapture(e.pointerId);
+            updatePianoCursor();
         }
     }
 }, { capture: true, passive: false });
@@ -1599,9 +1612,9 @@ piano.svg.addEventListener("pointerdown", (e) => {
 piano.svg.addEventListener("pointerup", (e) => {
     if ( e.pointerType != "touch" && drag.state ) {
         drag.state = ( drag.state == 2 && e.button == 2 ) ? 3 : 0;
-        piano.svg.classList.toggle("grabbing", false);
         piano.svg.releasePointerCapture(e.pointerId);
         updatePianoPosition();
+        updatePianoCursor();
         writeSettings();
     }
 }, { capture: true, passive: false });
@@ -1637,6 +1650,7 @@ piano.svg.addEventListener("pointermove", (e) => {
         }
 
         updatePianoPosition();
+        updatePianoCursor();
     }
 }, { capture: false, passive: true });
 
