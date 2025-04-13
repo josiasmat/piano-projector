@@ -66,7 +66,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
     const black_key_width_half = black_key_width / 2;
 
     const white_key_rounding = white_key_width / 15;
-    const black_key_rounding = black_key_width / 30;
+    const black_key_rounding = black_key_width / 20;
 
     const white_key_highlight_inset = 2;
     const black_key_highlight_inset = 2;
@@ -555,24 +555,24 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         ], { class: "key-right-round-bevel black-key-bevel" });
         key_group.appendChild(bevel_round_right);
 
-        const reflection_height = black_key_bevel.bottom_height * 0.8;
-        const reflection_height1 = black_key_bevel.bottom_height1 * 0.8;
-        const bottom_reflection = makeDualPath([
-                'M', white_gap-white_key_gap_half, height-reflection_height,
-                'h', WHITE_KEY_GAP,
-                'v', reflection_height,
-                'h', -WHITE_KEY_GAP,
-                'Z'
-            ], [
-                'M', white_gap-white_key_gap_half, height-reflection_height1,
-                'h', WHITE_KEY_GAP,
-                'v', reflection_height1,
-                'h', -WHITE_KEY_GAP,
-                'Z'
-            ],
-            { class: "gap-reflection" }
-        );
-        key_group.appendChild(bottom_reflection);
+        // const reflection_height = black_key_bevel.bottom_height * 0.8;
+        // const reflection_height1 = black_key_bevel.bottom_height1 * 0.8;
+        // const bottom_reflection = makeDualPath([
+        //         'M', white_gap-white_key_gap_half, height-reflection_height,
+        //         'h', WHITE_KEY_GAP,
+        //         'v', reflection_height,
+        //         'h', -WHITE_KEY_GAP,
+        //         'Z'
+        //     ], [
+        //         'M', white_gap-white_key_gap_half, height-reflection_height1,
+        //         'h', WHITE_KEY_GAP,
+        //         'v', reflection_height1,
+        //         'h', -WHITE_KEY_GAP,
+        //         'Z'
+        //     ],
+        //     { class: "gap-reflection" }
+        // );
+        // key_group.appendChild(bottom_reflection);
         
         const label = createBlackKeyLabel(key, offset);
 
@@ -687,10 +687,10 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         { offset: "50%", "stop-color": "var(--color-felt-top)" },
         { offset: "100%", "stop-color": "var(--color-felt-bottom)" }
     ], true));
-    svg_defs.appendChild(makeGradient("gap-reflection-gradient", [
-        { offset: "0%", "stop-color": "var(--color-background)", "stop-opacity": "0%" },
-        { offset: "100%", "stop-color": "var(--color-background)", "stop-opacity": "100%" },
-    ], true));
+    // svg_defs.appendChild(makeGradient("gap-reflection-gradient", [
+    //     { offset: "0%", "stop-color": "var(--color-background)", "stop-opacity": "0%" },
+    //     { offset: "100%", "stop-color": "var(--color-background)", "stop-opacity": "100%" },
+    // ], true));
 
     svg.appendChild(svg_defs);
 
