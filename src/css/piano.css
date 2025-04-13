@@ -81,22 +81,15 @@ svg#piano {
             pointer-events: none;
         }
 
-        .key-highlight {
-            pointer-events: none;
-            &:not(.lowperf) {
-                will-change: opacity, d;
-                transition-property: opacity, fill, d;
-                transition-timing-function: ease-out, ease-out, ease-in;
-            }
-        }
-
-        &:not(.active) {
+        &:not(.active),
+        &.active:not(.pressed) {
             .key-highlight {
                 opacity: 0%;
                 &:not(.lowperf) {
+                    transition-property: opacity, d;
                     transition-duration: var(--highlight-transition-duration),
-                                         var(--highlight-transition-duration),
                                          var(--unpress-transition-duration);
+                    transition-timing-function: ease-out, ease-in;
                 }
             }
         }
@@ -108,12 +101,9 @@ svg#piano {
             &.dim .key-highlight {
                 opacity: 55%;
             }
-            &:not(.pressed):not(.lowperf) .key-highlight {
-                transition-duration: var(--unpress-transition-duration);
-            }
-            .gap-reflection {
+            /* .gap-reflection {
                 fill-opacity: 5%;
-            }
+            } */
         }
     }
 
@@ -183,10 +173,10 @@ svg#piano {
         .key-right-round-bevel {
             fill: color-mix(in srgb, var(--color-black-key-right-bevel), var(--color-black-key-bottom-bevel) 60%);
         }
-        .gap-reflection {
+        /* .gap-reflection {
             fill: url("#gap-reflection-gradient");
             fill-opacity: 20%;
-        }
+        } */
     }
     
     /* Key markings (labels and stickers) */
@@ -221,7 +211,7 @@ svg#piano {
         opacity: 0%;
         &:not(.lowperf) {
             transition-property: opacity;
-            transition-timing-function: ease-out;
+            transition-timing-function: ease-in;
             transition-duration: var(--highlight-transition-duration);
         }
     }
