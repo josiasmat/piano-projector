@@ -302,4 +302,14 @@ svg#piano {
         &:not(lowperf) { fill: url("#top-felt-gradient"); }
     }
 
+    /* Optimize animations */
+
+    .key:not(.lowperf) {
+        .key-highlight { will-change: opacity, d; }
+        .key-marker-group { will-change: fill, transform; }
+        path:not(.key-highlight) { will-change: d; }
+    }
+
+    .key-highlight.lowperf { will-change: opacity; }
+
 }
