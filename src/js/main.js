@@ -30,6 +30,9 @@ import KbdNav from "./kbdnav.js";
 const settings_storage = new LocalStorageHandler("piano-projector");
 const session_storage = new SessionStorageHandler("piano-projector-session");
 
+const is_mobile = isMobile();
+const is_safari = isSafari();
+
 const settings = {
     first_time: true,
     lowperf: false,
@@ -321,6 +324,7 @@ const touch = {
         this.enabled = false;
         updatePianoCursor();
     },
+    last_vibration_time: 0
 }
 
 const toolbar = {
@@ -461,6 +465,10 @@ const piano = {
 
 /** @type {string?} "label" or "sticker" or null */
 let marking_mode = null;
+
+
+const MIDI_WATCHDOG_FAST_INTERVAL = 500;
+const MIDI_WATCHDOG_SLOW_INTERVAL = 2000;
 
 
 //const OCTAVES_SUP_EN = ['⁻¹','⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
@@ -1034,8 +1042,8 @@ function writeSettings() {
 function loadSettings() {
     settings.first_time = settings_storage.readBool("first-time", true);
     settings.lowperf = settings_storage.readBool("lowperf", settings.lowperf);
-    settings.height_factor = settings_storage.readNumber("height-factor", isMobile() ? 0.75 : settings.height_factor);
-    settings.number_of_keys = settings_storage.readNumber("number-of-keys", isMobile() ? 20 : settings.number_of_keys);
+    settings.height_factor = settings_storage.readNumber("height-factor", is_mobile ? 0.75 : settings.height_factor);
+    settings.number_of_keys = settings_storage.readNumber("number-of-keys", is_mobile ? 20 : settings.number_of_keys);
     settings.color_white = settings_storage.readString("color-white", settings.color_white);
     settings.color_black = settings_storage.readString("color-black", settings.color_black);
     settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight);
@@ -1180,12 +1188,12 @@ function updateConnectionMenu() {
     document.getElementById("menu-connect-item-midi-denied")
         .toggleAttribute("hidden", midi.access != "denied");
     document.getElementById("menu-connect-item-midi-unavailable")
-        .toggleAttribute("hidden", isMobile() || midi.access != "unavailable");
+        .toggleAttribute("hidden", is_mobile || midi.access != "unavailable");
     document.getElementById("menu-connect-item-midi-prompt")
         .toggleAttribute("hidden", midi.access != "prompt");
     menu_divider.toggleAttribute("hidden", 
         (midi.access == "granted" && !midi.ports?.length) 
-        || ( isMobile() && midi.access == "unavailable"));
+        || ( is_mobile && midi.access == "unavailable"));
 
     document.getElementById("menu-connect-item-computer-keyboard")
         .toggleAttribute("checked", settings.pc_keyboard_connected);
@@ -1233,7 +1241,7 @@ function updateConnectionMenu() {
 
 toolbar.dropdowns.connect.addEventListener("sl-show", () => {
     updateConnectionMenu();
-    midi.setWatchdog(500);
+    midi.setWatchdog(MIDI_WATCHDOG_FAST_INTERVAL);
     midi.queryAccess((access) => {
         if ( access != "granted" )
             updateConnectionMenu();
@@ -1247,7 +1255,7 @@ toolbar.dropdowns.connect.addEventListener("sl-show", () => {
 });
 
 toolbar.dropdowns.connect.addEventListener("sl-hide", () => {
-    midi.setWatchdog(2000);
+    midi.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
     updateToolbar();
 });
 
@@ -1348,14 +1356,14 @@ toolbar.menus.sound.addEventListener("sl-select", (e) => {
 toolbar.dropdowns.size.querySelectorAll(".btn-number-of-keys").forEach((item) => {
     item.addEventListener("click", (e) => {
         setNumberOfKeys(parseInt(e.currentTarget.value));
-        if ( isMobile() ) toolbar.dropdowns.size.hide();
+        if ( is_mobile ) toolbar.dropdowns.size.hide();
     });
 });
 
 toolbar.dropdowns.size.querySelectorAll(".btn-key-depth").forEach((item) => {
     item.addEventListener("click", (e) => {
         setKeyDepth(parseFloat(e.currentTarget.value));
-        if ( isMobile() ) toolbar.dropdowns.size.hide();
+        if ( is_mobile ) toolbar.dropdowns.size.hide();
     });
 });
 
@@ -1369,14 +1377,14 @@ toolbar.menus.colors.item_perspective.addEventListener("click", () => {
     settings.perspective = !settings.perspective;
     createPianoKeyboard();
     writeSettings();
-    if ( isMobile() ) toolbar.dropdowns.colors.hide();
+    if ( is_mobile ) toolbar.dropdowns.colors.hide();
 });
 
 toolbar.menus.colors.item_top_felt.addEventListener("click", () => {
     settings.top_felt = !settings.top_felt;
     updatePianoTopFelt();
     writeSettings();
-    if ( isMobile() ) toolbar.dropdowns.colors.hide();
+    if ( is_mobile ) toolbar.dropdowns.colors.hide();
 });
 
 toolbar.menus.colors.picker_color_white.addEventListener("sl-change", (e) => {
@@ -1396,7 +1404,7 @@ toolbar.menus.colors.picker_color_pressed.addEventListener("sl-change", (e) => {
 
 toolbar.menus.labels.presets.addEventListener("sl-select", (e) => {
     setLabelsPreset(e.detail.item.value);
-    if ( isMobile() ) toolbar.dropdowns.labels.hide();
+    if ( is_mobile ) toolbar.dropdowns.labels.hide();
 });
 
 toolbar.menus.labels.type.addEventListener("sl-select", (e) => {
@@ -1404,7 +1412,7 @@ toolbar.menus.labels.type.addEventListener("sl-select", (e) => {
         toggleLabelsOctave(e.detail.item.checked);
     else
         setLabelsType(e.detail.item.value);
-    if ( isMobile() ) toolbar.dropdowns.labels.hide();
+    if ( is_mobile ) toolbar.dropdowns.labels.hide();
 });
 
 toolbar.menus.labels.top.addEventListener("sl-select", (e) => {
@@ -1413,7 +1421,7 @@ toolbar.menus.labels.top.addEventListener("sl-select", (e) => {
         toolbar.dropdowns.labels.hide();
     } else if ( e.detail.item.id == toolbar.menus.labels.played.id ) {
         toggleLabelsPlayed(e.detail.item.checked);
-        if ( isMobile() ) toolbar.dropdowns.labels.hide();
+        if ( is_mobile ) toolbar.dropdowns.labels.hide();
     }
 });
 
@@ -1448,7 +1456,7 @@ toolbar.menus.pedals.top.addEventListener("sl-select", (e) => {
     updatePedalIcons();
     updatePianoKeys();
     writeSettings();
-    if ( isMobile() ) toolbar.dropdowns.pedals.hide();
+    if ( is_mobile ) toolbar.dropdowns.pedals.hide();
 });
 
 toolbar.menus.transpose.semitones.btn_plus.onclick = 
@@ -1465,7 +1473,7 @@ toolbar.menus.transpose.octaves.btn_minus.onclick =
 
 toolbar.menus.transpose.item_reset.onclick = () => {
      transpose({ reset: true }) ;
-     if ( isMobile() ) toolbar.dropdowns.transpose.hide();
+     if ( is_mobile ) toolbar.dropdowns.transpose.hide();
 };
 
 toolbar.buttons.panic.onclick = midiPanic;
@@ -1579,12 +1587,14 @@ const kbdnav = new KbdNav(
 );
 
 kbdnav.onmenuenter = (s) => {
-    midi.setWatchdog(( s == "Control" ) ? 500 : 2000);
+    midi.setWatchdog(( s == "Control" ) 
+        ? MIDI_WATCHDOG_FAST_INTERVAL 
+        : MIDI_WATCHDOG_SLOW_INTERVAL);
     kbdnav.replaceStructure(buildKbdNavStructure());
 }
 kbdnav.onoptionenter = () => kbdnav.replaceStructure(buildKbdNavStructure());
-kbdnav.onshow = () => midi.setWatchdog(2000);
-kbdnav.onhide = () => midi.setWatchdog(2000);
+kbdnav.onshow = () => midi.setWatchdog(MIDI_WATCHDOG_FAST_INTERVAL);
+kbdnav.onhide = () => midi.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
 
 
 // Pointer move events
@@ -1655,7 +1665,6 @@ piano.svg.addEventListener("pointermove", (e) => {
 }, { capture: false, passive: true });
 
 piano.container.addEventListener("wheel", (e) => {
-    e.preventDefault();
     if ( !drag.state && !touch.started() && !e.ctrlKey ) {
         // make zoom out faster than zoom in
         const amount = -e.deltaY / (e.deltaY <= 0 ? 1000 : 500);
@@ -1676,9 +1685,10 @@ piano.container.addEventListener("wheel", (e) => {
         }
         updatePianoPosition();
     }
+    e.preventDefault();
 }, { capture: false, passive: false });
 
-if ( !isMobile() ) {
+if ( !is_mobile ) {
     var btn_show_toolbar_timeout = null;
     piano.container.addEventListener("pointermove", (e) => {
         if ( e.pointerType == "touch" ) return;
@@ -1726,7 +1736,7 @@ function findKeysUnderArea(x, y, rx, ry, a_deg) {
 
     // For some reason, Safari appears to
     // inflate touch area
-    if ( isSafari() ) {
+    if ( is_safari ) {
         rx /= 10;
         ry /= 10;
     }
@@ -1786,8 +1796,8 @@ function handlePianoPointerDown(e) {
          && e.button === 0 && !touch.started(e.pointerId)) {
         const note = findKeyUnderPoint(e.clientX, e.clientY);
         if ( note ) { 
-            e.preventDefault();
             touch.add(e.pointerId, new Set([note]));
+            e.preventDefault();
         }
     }
 }
@@ -1795,17 +1805,17 @@ function handlePianoPointerDown(e) {
 /** @param {PointerEvent} e */
 function handlePianoPointerUp(e) {
     if ( e.pointerType != "touch" && touch.started(e.pointerId) && e.button === 0 ) {
-        touch.remove(e.pointerId);
         e.preventDefault();
+        touch.remove(e.pointerId);
     }
 }
 
 /** @param {PointerEvent} e */
 function handlePianoPointerMove(e) {
     if ( e.pointerType != "touch" && touch.started(e.pointerId) ) {
-        e.preventDefault();
         const note = findKeyUnderPoint(e.clientX, e.clientY);
         touch.change(e.pointerId, new Set([note]));
+        e.preventDefault();
     }
 }
 
@@ -1819,7 +1829,10 @@ function handlePianoTouchStart(e) {
                 );
                 if ( notes.size ) {
                     touch.add(t.identifier, notes);
-                    navigator.vibrate(40);
+                    if ( e.timeStamp - touch.last_vibration_time > 40 ) {
+                        navigator.vibrate(40);
+                        touch.last_vibration_time = e.timeStamp;
+                    }
                     e.preventDefault();
                 }
             }
@@ -1839,12 +1852,16 @@ function handlePianoTouchEnd(e) {
 function handlePianoTouchMove(e) {
     for ( const t of e.changedTouches )
         if ( touch.started(t.identifier) ) {
-            e.preventDefault();
             const notes = findKeysUnderArea(
                 t.clientX, t.clientY, t.radiusX, t.radiusY, t.rotationAngle
             );
-            if ( touch.change(t.identifier, notes) == 1 )
+            if ( touch.change(t.identifier, notes) == 1 &&
+                 e.timeStamp - touch.last_vibration_time > 40 )
+            {
                 navigator.vibrate(40);
+                touch.last_vibration_time = e.timeStamp;
+            }
+            e.preventDefault();
         }
 }
 
@@ -2048,7 +2065,7 @@ function initializeApp() {
     loadSettings();
     checkUrlQueryStrings();
     
-    if ( isMobile() ) {
+    if ( is_mobile ) {
         document.documentElement.classList.add("mobile");
         toolbar.buttons.show_toolbar.classList.add("mobile");
         // Disable tooltips
@@ -2059,7 +2076,7 @@ function initializeApp() {
         toolbar.menus.size.querySelector('.btn-number-of-keys[value="20"]').toggleAttribute("hidden", false);
     }
 
-    if ( isSafari() ) {
+    if ( is_safari ) {
         // For now, disable sound button on Safari browser
         toolbar.dropdowns.sound.toggleAttribute("hidden", true);
     } else {
@@ -2073,7 +2090,7 @@ function initializeApp() {
                 document.getElementById("menu-sound-item-unavailable").hidden = true;
                 toolbar.menus.sound.querySelectorAll(".menu-sound-item")
                     .forEach((item) => { item.hidden = false });
-                if ( isMobile() && settings.sound ) loadSound(settings.sound);
+                if ( is_mobile && settings.sound ) loadSound(settings.sound);
             });
     }
 
@@ -2082,7 +2099,7 @@ function initializeApp() {
 
     if ( !settings.device_name ) {
         const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
-        if ( isMobile() ) {
+        if ( is_mobile ) {
             // Select touch input by default on mobile
             connectInput("touch", true);
             connect_tooltip.setAttribute("content", 
@@ -2123,7 +2140,7 @@ function initializeApp() {
         postInit();
 
     midiWatchdog();
-    midi.setWatchdog(2000);
+    midi.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
 
 }
 
