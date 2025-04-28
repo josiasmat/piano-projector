@@ -81,10 +81,13 @@ svg#piano {
             pointer-events: none;
         }
 
+        &:not(.active) .key-highlight {
+            opacity: 0%;
+        }
+
         &:not(.active),
         &.active:not(.pressed) {
             .key-highlight {
-                opacity: 0%;
                 &:not(.lowperf) {
                     transition-property: opacity, d;
                     transition-duration: var(--highlight-transition-duration),
