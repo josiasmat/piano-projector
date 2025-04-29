@@ -2064,6 +2064,8 @@ function initializeApp() {
 
     loadSettings();
     checkUrlQueryStrings();
+
+    document.body.classList.add('ready');
     
     if ( is_mobile ) {
         document.documentElement.classList.add("mobile");
