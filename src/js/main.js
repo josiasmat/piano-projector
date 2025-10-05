@@ -672,7 +672,7 @@ function updatePianoKeyMarkings(key_num, is_on, is_pressed) {
 
 function updatePianoCursor() {
     piano.svg.classList.toggle("touch-input", touch.enabled);
-    piano.svg.classList.toggle("grabbing", drag.state);
+    piano.svg.classList.toggle("grabbing", [1,2].includes(drag.state));
     piano.svg.classList.toggle("marking-mode", marking_mode);
 }
 
