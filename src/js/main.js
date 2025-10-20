@@ -27,6 +27,25 @@ import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js
 import KbdNav from "./kbdnav.js";
 
 
+// I plan to bundle shoelace in the future.
+// import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/utilities/base-path.js';
+// setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn');
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/alert/alert.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/badge/badge.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/breadcrumb/breadcrumb.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/button/button.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/button-group/button-group.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/dialog/dialog.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/divider/divider.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/dropdown/dropdown.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/icon/icon.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/input/input.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/menu/menu.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/menu-item/menu-item.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/tooltip/tooltip.js';
+// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/visually-hidden/visually-hidden.js';
+
+
 const settings_storage = new LocalStorageHandler("piano-projector");
 const session_storage = new SessionStorageHandler("piano-projector-session");
 
