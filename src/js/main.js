@@ -663,7 +663,8 @@ function updatePianoKeyMarkings(key_num, is_on, is_pressed) {
         const label_visible = has_fixed_label || ( settings.labels.played && is_on );
         const label_temporary = settings.labels.played && !has_fixed_label;
 
-        if ( label_visible ) setLabelText();
+        // if ( label_visible ) setLabelText();
+        setLabelText();
 
         key_elm.classList.toggle("label-visible", label_visible);
         key_elm.classList.toggle("has-fixed-label", has_fixed_label);
@@ -693,6 +694,8 @@ function updatePianoCursor() {
     piano.svg.classList.toggle("touch-input", touch.enabled);
     piano.svg.classList.toggle("grabbing", [1,2].includes(drag.state));
     piano.svg.classList.toggle("marking-mode", marking_mode);
+    piano.svg.classList.toggle("labeling-mode", marking_mode == "label");
+    piano.svg.classList.toggle("sticker-mode", marking_mode == "sticker");
 }
 
 

@@ -195,6 +195,13 @@ svg#piano {
     
     /* Key labels */
 
+    &.labeling-mode .key:not(.label-visible):hover {
+        .key-label {
+            display: block;
+            opacity: 20%;
+        }
+    }
+
     .key-label {
         font-family: "PT Sans Narrow", "Arial Narrow", var(--sl-font-sans), sans-serif;
         font-weight: 100;
@@ -277,6 +284,15 @@ svg#piano {
     }
 
     /* Key sticker */
+
+    &.sticker-mode .key:not(.has-sticker):hover {
+        .key-sticker {
+            fill: white;  
+            stroke: black;
+            opacity: 15%;
+            display: block;
+        }
+    }
 
     .key {
         .key-sticker {
