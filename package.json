@@ -1,11 +1,12 @@
 {
   "name": "piano-projector",
   "type": "module",
-  "devDependencies": {
-    "@shoelace-style/shoelace": "^2.20.0",
-    "esbuild": "0.25.2",
-    "http-server": "^14.1.1",
+  "dependencies": {
+    "@shoelace-style/shoelace": "^2.20.1",
     "smplr": "^0.16.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.2"
   },
   "scripts": {
     "build": "node ./build.js",

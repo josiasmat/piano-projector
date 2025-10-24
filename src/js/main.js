@@ -26,24 +26,30 @@ import { KbdNotes } from "./kbdnotes.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
 import KbdNav from "./kbdnav.js";
 
+import '@shoelace-style/shoelace/dist/components/alert/alert.js';
+import '@shoelace-style/shoelace/dist/components/badge/badge.js';
+import '@shoelace-style/shoelace/dist/components/breadcrumb/breadcrumb.js';
+import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/button-group/button-group.js';
+import '@shoelace-style/shoelace/dist/components/color-picker/color-picker.js';
+import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import '@shoelace-style/shoelace/dist/components/divider/divider.js';
+import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/input/input.js';
+import '@shoelace-style/shoelace/dist/components/menu/menu.js';
+import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
+import '@shoelace-style/shoelace/dist/components/visually-hidden/visually-hidden.js';
+import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path.js';
+setBasePath('/assets/shoelace');
 
-// I plan to bundle shoelace in the future.
-// import { setBasePath } from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/utilities/base-path.js';
-// setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn');
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/alert/alert.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/badge/badge.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/breadcrumb/breadcrumb.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/button/button.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/button-group/button-group.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/dialog/dialog.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/divider/divider.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/dropdown/dropdown.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/icon/icon.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/input/input.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/menu/menu.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/menu-item/menu-item.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/tooltip/tooltip.js';
-// import 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/components/visually-hidden/visually-hidden.js';
+import { 
+    CacheStorage, 
+    SplendidGrandPiano, 
+    ElectricPiano,
+    Versilian
+} from 'smplr/dist/index.mjs';
 
 
 const settings_storage = new LocalStorageHandler("piano-projector");
@@ -2104,18 +2110,14 @@ function initializeApp() {
         // For now, disable sound button on Safari browser
         toolbar.dropdowns.sound.toggleAttribute("hidden", true);
     } else {
-        // Dynamically import smplr module
-        import("https://unpkg.com/smplr@0.16.1/dist/index.mjs")
-            .then( (result) => {
-                sound.cache = new result.CacheStorage("sound_v1");
-                sound.apiano = result.SplendidGrandPiano;
-                sound.epiano = result.ElectricPiano;
-                sound.versilian = result.Versilian;
-                document.getElementById("menu-sound-item-unavailable").hidden = true;
-                toolbar.menus.sound.querySelectorAll(".menu-sound-item")
-                    .forEach((item) => { item.hidden = false });
-                if ( is_mobile && settings.sound ) loadSound(settings.sound);
-            });
+        sound.cache = new CacheStorage("sound_v1");
+        sound.apiano = SplendidGrandPiano;
+        sound.epiano = ElectricPiano;
+        sound.versilian = Versilian;
+        document.getElementById("menu-sound-item-unavailable").hidden = true;
+        toolbar.menus.sound.querySelectorAll(".menu-sound-item")
+            .forEach((item) => { item.hidden = false });
+        if ( is_mobile && settings.sound ) loadSound(settings.sound);
     }
 
     updateToolbar();
