@@ -195,13 +195,6 @@ svg#piano {
     
     /* Key labels */
 
-    &.labeling-mode .key:not(.label-visible):hover {
-        .key-label {
-            display: block;
-            opacity: 20%;
-        }
-    }
-
     .key-label {
         font-family: "PT Sans Narrow", "Arial Narrow", var(--sl-font-sans), sans-serif;
         font-weight: 100;
@@ -212,11 +205,18 @@ svg#piano {
         pointer-events: none;
     }
 
+    &.labeling-mode .key:not(.label-visible):has(.key-touch-area:hover) {
+        .key-label {
+            display: block ;
+            opacity: 30% ;
+        }
+    }
+
     .key:not(.label-visible) .key-label { display: none; }
 
     .key.label-visible .key-label { opacity: 100%; }
 
-    .key.has-temporary-label:not(.label-visible) .key-label {
+    .key.has-temporary-label:not(.label-visible):has(.key-touch-area:not(:hover)) .key-label { 
         fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
         opacity: 0%;
         &:not(.lowperf) {

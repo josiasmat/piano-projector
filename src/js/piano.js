@@ -412,6 +412,21 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
 
         const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key black-key", value: key });
 
+        const key_touch_area = SvgTools.makePath(
+            [
+                'M', body.left_top1, black_key_base_top,
+                'L', body.left_top1+side_bevel.left_top1, black_key_top1,
+                'H', body.right_top1-side_bevel.right_top1,
+                'L', body.right_top1, black_key_base_top,
+                'L', body.right_bottom1, height-black_key_bevel.bottom_height1-round,
+                'L', right, height,
+                'H', left,
+                'L', body.left_bottom1, height-black_key_bevel.bottom_height1-round,
+                'Z'
+            ],
+            { class: "key-touch-area invisible", value: key }
+        );
+
         const key_fill = makeDualPath([
                 'M', body.left_top, black_key_base_top,
                 'L', body.left_top+side_bevel.left_top, black_key_top,
@@ -433,7 +448,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
                 'L', body.left_bottom1, height-black_key_bevel.bottom_height1-round,
                 'Z'
             ],
-            { class: "key-fill key-touch-area" }
+            { class: "key-fill" }
         );
 
         const inset = black_key_highlight_inset;
@@ -590,6 +605,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         key_marker_group.appendChild(sticker);
 
         key_group.appendChild(key_marker_group);
+        key_group.appendChild(key_touch_area);
 
         return key_group;
     }
