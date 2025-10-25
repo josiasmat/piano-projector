@@ -260,14 +260,12 @@ const sound = {
                 this.stop(key, false);
     },
 
-    load(name = null, menu_item = null) {
+    load(name, menu_item = null) {
         if ( !name ) {
             this.player.unload();
             this.led = 0;
-            updateToolbar();
         } else {
             this.led = 1;
-            menu_item.toggleAttribute("loading", true);
             const interval = setInterval(() => {
                 this.led = ( this.led == 0 ? 1 : 0 );
                 updateToolbar();
@@ -275,7 +273,6 @@ const sound = {
             const onLoadFinished = (result) => {
                 clearInterval(interval);
                 this.led = result ? 2 : 0;
-                menu_item.toggleAttribute("loading", false);
                 updateToolbar(); 
                 updateSoundMenu();
             }
@@ -287,8 +284,9 @@ const sound = {
                 this.fail_alert.children[1].innerText = `Reason: ${reason}`;
                 this.fail_alert.toast();
             });
-            updateToolbar();
         }
+        updateToolbar();
+        updateSoundMenu();
     }
 
 }
@@ -781,15 +779,19 @@ function updateToolbarBasedOnWidth() {
 
 
 function updateSoundMenu() {
-    if ( sound.type && !sound.loaded ) {
+    if ( sound.loading ) {
         for ( const item of toolbar.menus.sound.querySelectorAll(".menu-sound-item") ) {
-            item.toggleAttribute("disabled", !item.hasAttribute("loading"));
+            const is_selected_sound = item.getAttribute("value") == sound.type;
+            item.toggleAttribute("loading", is_selected_sound);
+            item.toggleAttribute("disabled", !is_selected_sound);
             item.checked = false;
         }
     } else {
         for ( const item of toolbar.menus.sound.querySelectorAll(".menu-sound-item") ) {
+            const is_selected_sound = item.getAttribute("value") == sound.type;
+            item.checked = is_selected_sound;
+            item.toggleAttribute("loading", false);
             item.toggleAttribute("disabled", false);
-            item.checked = ( item.value == sound.type && !item.hasAttribute("loading") );
         }
     }
 }
@@ -1343,7 +1345,7 @@ document.getElementById("menu-connect-item-touch")
 
 
 toolbar.menus.sound.addEventListener("sl-select", (e) => {
-    sound.load(e.detail.item.value, e.detail.item);
+    sound.load(e.detail.item.value);
     writeSettings();
 });
 
