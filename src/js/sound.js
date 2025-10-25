@@ -20,8 +20,11 @@ import {
     CacheStorage as SmplrCacheStorage, 
     SplendidGrandPiano, 
     ElectricPiano,
-    Versilian
+    Versilian,
+    Soundfont2Sampler
 } from 'smplr/dist/index.mjs';
+
+import { SoundFont2 } from "soundfont2";
 
 
 /** @type {AudioContext?} */
@@ -43,6 +46,7 @@ class InternalSoundPlayer {
 
 export class SmplrPlayer extends InternalSoundPlayer {
     player = null;
+    sfCreator = () => { (data) => new SoundFont2(data) };
     instruments = {
         apiano:  { loader: SplendidGrandPiano, options: { volume: 90 } },
         epiano1: { loader: ElectricPiano, 
@@ -53,12 +57,21 @@ export class SmplrPlayer extends InternalSoundPlayer {
                    options: { instrument: "CP80", volume: 70 } },
         harpsi:  { loader: Versilian, 
                    options: { instrument: "Chordophones/Zithers/Harpsichord, Unk", volume: 100 } },
+        organ1:  { loader: Soundfont2Sampler, 
+                   options: { createSoundfont: (data) => new SoundFont2(data), 
+                              url: "/assets/sf/organ.sf2", patch: "b3slow", volume: 70 } },
+        organ2:  { loader: Soundfont2Sampler, 
+                   options: { createSoundfont: (data) => new SoundFont2(data), 
+                              url: "/assets/sf/organ.sf2", patch: "b3fast", volume: 70 } },
+        organ3:  { loader: Soundfont2Sampler, 
+                   options: { createSoundfont: (data) => new SoundFont2(data), 
+                              url: "/assets/sf/organ.sf2", patch: "percorg", volume: 60 } },
     }
     cache = new SmplrCacheStorage("sound_v1");;
 
     play(note, vel=this.default_vel) {
         if ( this.name == "epiano1" ) note += 12;
-        else if ( this.name == "harpsi" ) vel = 127;
+        else if ( this.name == "harpsi" || this.name.startsWith("organ") ) vel = 127;
         this.player?.start({ note, velocity: vel });
     }
 
@@ -91,10 +104,12 @@ export class SmplrPlayer extends InternalSoundPlayer {
             if ( !audio_ctx ) audio_ctx = new AudioContext();
             const params = this.instruments[name];
             params.storage = this.cache;
-            this.player = new params.loader(audio_ctx, params.options);
             this.loaded = false;
             this.name = name;
+            this.player = new params.loader(audio_ctx, params.options);
             this.player.load.then(() => {
+                if ( Object.hasOwn(params.options, "patch") )
+                    this.player.loadInstrument(params.options.patch);
                 this.loaded = true;
                 audio_ctx.resume();
                 callback_ok(name);
