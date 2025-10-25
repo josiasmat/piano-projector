@@ -260,6 +260,37 @@ const sound = {
                 this.stop(key, false);
     },
 
+    load(name = null, menu_item = null) {
+        if ( !name ) {
+            this.player.unload();
+            this.led = 0;
+            updateToolbar();
+        } else {
+            this.led = 1;
+            menu_item.toggleAttribute("loading", true);
+            const interval = setInterval(() => {
+                this.led = ( this.led == 0 ? 1 : 0 );
+                updateToolbar();
+            }, 400);
+            const onLoadFinished = (result) => {
+                clearInterval(interval);
+                this.led = result ? 2 : 0;
+                menu_item.toggleAttribute("loading", false);
+                updateToolbar(); 
+                updateSoundMenu();
+            }
+            this.player.load(name, () => {
+                onLoadFinished(true);
+                writeSettings();
+            }, (reason) => {
+                onLoadFinished(false);
+                this.fail_alert.children[1].innerText = `Reason: ${reason}`;
+                this.fail_alert.toast();
+            });
+            updateToolbar();
+        }
+    }
+
 }
 
 const drag = {
@@ -1311,39 +1342,8 @@ document.getElementById("menu-connect-item-touch")
     });
 
 
-function loadSound(name = null, menu_item = null) {
-    if ( !name ) {
-        sound.player.unload();
-        sound.led = 0;
-        updateToolbar();
-    } else {
-        sound.led = 1;
-        menu_item.toggleAttribute("loading", true);
-        const interval = setInterval(() => {
-            sound.led = ( sound.led == 0 ? 1 : 0 );
-            updateToolbar();
-        }, 400);
-        const onLoadFinished = (result) => {
-            clearInterval(interval);
-            sound.led = result ? 2 : 0;
-            menu_item.toggleAttribute("loading", false);
-            updateToolbar(); 
-            updateSoundMenu();
-        }
-        sound.player.load(name, () => {
-            onLoadFinished(true);
-            writeSettings();
-        }, (reason) => {
-            onLoadFinished(false);
-            sound.fail_alert.children[1].innerText = `Reason: ${reason}`;
-            sound.fail_alert.toast();
-        });
-        updateToolbar();
-    }
-}
-
 toolbar.menus.sound.addEventListener("sl-select", (e) => {
-    loadSound(e.detail.item.value, e.detail.item);
+    sound.load(e.detail.item.value, e.detail.item);
     writeSettings();
 });
 
@@ -1515,11 +1515,11 @@ function buildKbdNavStructure() {
         ['', [
             ["&Control", populateControlNav()],
             // ["&Sound", sound.loading ? [["Loading...", null]] : [
-            //     ["&Disabled", () => loadSound(''), {checked: (sound.type == '')}],
-            //     ["&1. Acoustic piano", () => loadSound('apiano'), {checked: (sound.type == 'apiano')}],
-            //     ["&2. Electric piano 1", () => loadSound('epiano1'), {checked: (sound.type == 'epiano1')}],
-            //     ["&3. Electric piano 2", () => loadSound('epiano2'), {checked: (sound.type == 'epiano2')}],
-            //     ["&4. Electric piano 3", () => loadSound('epiano3'), {checked: (sound.type == 'epiano3')}]
+            //     ["&Disabled", () => sound.load(''), {checked: (sound.type == '')}],
+            //     ["&1. Acoustic piano", () => sound.load('apiano'), {checked: (sound.type == 'apiano')}],
+            //     ["&2. Electric piano 1", () => sound.load('epiano1'), {checked: (sound.type == 'epiano1')}],
+            //     ["&3. Electric piano 2", () => sound.load('epiano2'), {checked: (sound.type == 'epiano2')}],
+            //     ["&4. Electric piano 3", () => sound.load('epiano3'), {checked: (sound.type == 'epiano3')}]
             // ]],
             ["&Transpose", [
                 ["[↑] Semitone up", () => transpose({semitones:+1}), {noindex:true, key:'arrowup'}],
@@ -2079,7 +2079,7 @@ function initializeApp() {
         document.getElementById("menu-sound-item-unavailable").hidden = true;
         toolbar.menus.sound.querySelectorAll(".menu-sound-item")
             .forEach((item) => { item.hidden = false });
-        if ( is_mobile && settings.sound ) loadSound(settings.sound);
+        if ( is_mobile && settings.sound ) sound.load(settings.sound);
     }
 
     updateToolbar();
