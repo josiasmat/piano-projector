@@ -24,8 +24,10 @@ import { Midi, noteToMidi, midiToFreq } from "./midi.js";
 import { drawPianoKeyboard, drawPianoKeyboardLP, isWhiteKey } from "./piano.js";
 import { KbdNotes } from "./kbdnotes.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js";
-import KbdNav from "./kbdnav.js";
+import { KbdNav } from "./kbdnav.js";
+import { SmplrPlayer } from "./sound.js";
 
+// import '@shoelace-style/shoelace/dist/shoelace.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/badge/badge.js';
 import '@shoelace-style/shoelace/dist/components/breadcrumb/breadcrumb.js';
@@ -41,15 +43,9 @@ import '@shoelace-style/shoelace/dist/components/menu/menu.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/visually-hidden/visually-hidden.js';
-import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path.js';
-setBasePath('/assets/shoelace');
-
-import { 
-    CacheStorage, 
-    SplendidGrandPiano, 
-    ElectricPiano,
-    Versilian
-} from 'smplr/dist/index.mjs';
+import { setBasePath as shoelaceSetBaseBath } 
+    from '@shoelace-style/shoelace/dist/utilities/base-path.js';
+shoelaceSetBaseBath('/assets/shoelace');
 
 
 const settings_storage = new LocalStorageHandler("piano-projector");
@@ -236,39 +232,34 @@ const midi = {
 }
 
 const sound = {
-    type: "",
-    loaded: false,
+    player: new SmplrPlayer(),
     led: null,
-    audio_ctx: null,
-    player: null,
-    get loading() {
-        return this.type && !this.loaded;
-    },
+    fail_alert: document.getElementById("alert-sound-connection-fail"),
+
+    get type() { return this.player.name; },
+    get loaded() { return this.player.loaded; },
+    get loading() { return this.type && !this.loaded; },
+
     play(note, vel=100) {
-        if ( this.type == "epiano1" ) note += 12;
-        else if ( this.type == "harpsi" ) vel = 127;
-        this.player?.start({ note: note+settings.transpose, velocity: vel });
+        this.player.play(note+settings.transpose, vel);
     },
+
     stop(note, force) {
-        if ( this.type == "epiano1" ) note += 12;
         if ( force 
              || ( !( Midi.isNoteOn(note, settings.pedals ? "both" : "none") 
                      || KbdNotes.isNoteSustained(note) ) )
                   && !( this.type == "apiano" && note+settings.transpose > 88 ) )
-            this.player?.stop(note+settings.transpose);
+            this.player.stop(note+settings.transpose);
     },
+
     stopAll(force) {
         if ( force )
-            this.player?.stop();
+            this.player.stopAll();
         else
             for ( let key = 0; key < 128; key++ )
                 this.stop(key, false);
     },
-    fail_alert: document.getElementById("alert-sound-connection-fail"),
-    apiano: null,
-    epiano: null,
-    versilian: null,
-    cache: null,
+
 }
 
 const drag = {
@@ -1321,58 +1312,33 @@ document.getElementById("menu-connect-item-touch")
 
 
 function loadSound(name = null, menu_item = null) {
-    sound.stopAll(true);
     if ( !name ) {
-        if ( sound.player ) sound.player = null;
-        sound.loaded = false;
+        sound.player.unload();
         sound.led = 0;
-        sound.type = "";
         updateToolbar();
-    } else if ( sound.type != name ) {
-        if ( !menu_item )
-            menu_item = toolbar.dropdowns.sound.querySelector(`.menu-sound-item[value="${name}"]`);
-        if ( !sound.audio_ctx ) sound.audio_ctx = new AudioContext();
-        const sound_params = {
-            apiano:  { loader: sound.apiano, options: { volume: 90 } },
-            epiano1: { loader: sound.epiano, 
-                       options: { instrument: "TX81Z", volume: 127 } },
-            epiano2: { loader: sound.epiano, 
-                       options: { instrument: "WurlitzerEP200", volume: 70 } },
-            epiano3: { loader: sound.epiano, 
-                       options: { instrument: "CP80", volume: 70 } },
-            harpsi: { loader: sound.versilian, 
-                       options: { instrument: "Chordophones/Zithers/Harpsichord, Unk", volume: 100 } },
-        }[name];
-        sound_params.storage = sound.cache;
-        sound.player = new sound_params.loader(sound.audio_ctx, sound_params.options);
-        sound.loaded = false;
+    } else {
         sound.led = 1;
         menu_item.toggleAttribute("loading", true);
-        sound.type = name;
-        updateToolbar();
         const interval = setInterval(() => {
             sound.led = ( sound.led == 0 ? 1 : 0 );
             updateToolbar();
         }, 400);
         const onLoadFinished = (result) => {
             clearInterval(interval);
-            sound.loaded = result;
             sound.led = result ? 2 : 0;
             menu_item.toggleAttribute("loading", false);
             updateToolbar(); 
             updateSoundMenu();
         }
-        sound.player.load.then(() => { 
+        sound.player.load(name, () => {
             onLoadFinished(true);
-            sound.audio_ctx.resume();
             writeSettings();
         }, (reason) => {
-            sound.player = null;
-            sound.type = '';
             onLoadFinished(false);
             sound.fail_alert.children[1].innerText = `Reason: ${reason}`;
             sound.fail_alert.toast();
         });
+        updateToolbar();
     }
 }
 
@@ -2110,10 +2076,6 @@ function initializeApp() {
         // For now, disable sound button on Safari browser
         toolbar.dropdowns.sound.toggleAttribute("hidden", true);
     } else {
-        sound.cache = new CacheStorage("sound_v1");
-        sound.apiano = SplendidGrandPiano;
-        sound.epiano = ElectricPiano;
-        sound.versilian = Versilian;
         document.getElementById("menu-sound-item-unavailable").hidden = true;
         toolbar.menus.sound.querySelectorAll(".menu-sound-item")
             .forEach((item) => { item.hidden = false });

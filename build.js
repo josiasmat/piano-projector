@@ -12,9 +12,6 @@ const buildCSS = await esbuild.context({
     bundle: true,
     format: 'esm',
     target: targetBrowsers,
-    loader: {
-        '.css': 'css'
-    },
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
     sourcemap: !productionMode,
