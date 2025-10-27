@@ -31,11 +31,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         <link rel="stylesheet" href="pub/bundle.css">
         <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/dark.css" /> -->
         <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace-autoloader.js"></script> -->
-        <script type="module" src="pub/bundle.js"></script>
+        <script type="module" src="pub/bundle.js" async></script>
         <!-- <script type="module" src="https://unpkg.com/smplr@0.16.1/dist/index.mjs" async fetchpriority="low"></script> -->
         <link rel="icon" type="image/png" href="assets/icon/favicon.png">
     </head>
     <body>
+        <div id="loading-title" class="title-text">Piano Projector</div>
         <sl-dialog label="About" id="dialog-about" class="sl-theme-dark" hidden>
             <span slot="label" class="title-text">
                 <sl-icon src="assets/icon/favicon.svg"></sl-icon>
@@ -255,6 +256,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                             <sl-visually-hidden data-nosnippet>More labeling options</sl-visually-hidden>
                         </sl-button>
                         <sl-menu id="menu-labels-top">
+                            <sl-menu-item id="menu-labeling-mode" type="checkbox" value="labeling-mode">
+                                Labeling mode
+                                <span slot="suffix" class="menu-keyboard-shortcut">F2</span>
+                            </sl-menu-item>
+                            <sl-divider></sl-divider>
                             <sl-menu-item>
                                 <span data-nosnippet>Presets</span>
                                 <sl-menu id="menu-labels-which" slot="submenu">
@@ -266,10 +272,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                                 </sl-menu>
                                 <sl-badge slot="suffix" variant="neutral" pill></sl-badge>
                             </sl-menu-item>
-                            <sl-menu-item id="menu-labels-played-keys" type="checkbox" value="played-keys">
-                                Show on played keys
-                            </sl-menu-item>
-                            <sl-divider></sl-divider>
                             <sl-menu-item>
                                 <span data-nosnippet>Format</span>
                                 <sl-menu id="menu-labels-type" slot="submenu">
@@ -286,10 +288,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                                 </sl-menu>
                                 <sl-badge slot="suffix" variant="neutral" pill>English</sl-badge>
                             </sl-menu-item>
-                            <sl-divider></sl-divider>
-                            <sl-menu-item id="menu-labeling-mode" type="checkbox" value="labeling-mode">
-                                Labeling mode
-                                <span slot="suffix" class="menu-keyboard-shortcut">F2</span>
+                            <sl-menu-item id="menu-labels-played-keys" type="checkbox" value="played-keys">
+                                Show on played keys
                             </sl-menu-item>
                         </sl-menu>
                     </sl-dropdown>
@@ -311,7 +311,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                             </sl-menu-item>
                             <sl-menu-item id="menu-sticker-yellow" type="checkbox" value="yellow">
                                 Yellow
-                                <sl-icon slot="prefix" name="circle-fill" style="color: yellow"></sl-icon>
+                                <sl-icon slot="prefix" name="circle-fill" style="color: #dd0"></sl-icon>
                                 <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
                             </sl-menu-item>
                             <sl-menu-item id="menu-sticker-green" type="checkbox" value="green">

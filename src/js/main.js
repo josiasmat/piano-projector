@@ -2134,7 +2134,6 @@ function initializeApp() {
 
 }
 
-
 Promise.allSettled([
     customElements.whenDefined('sl-dropdown'),
     customElements.whenDefined('sl-button'),

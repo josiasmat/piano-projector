@@ -46,7 +46,7 @@ svg#piano {
     position: absolute;
     transform-origin: top left;
     
-    &, * { image-rendering: optimizeSpeed; }
+    &.lowperf, *.lowperf { shape-rendering: optimizeSpeed; }
 
     &:not(.grabbing, touch-input) {
         cursor: grab;
@@ -296,17 +296,17 @@ svg#piano {
 
     .key {
         .key-sticker {
-            stroke-width: calc(var(--stroke-width) * 3);
+            stroke-width: calc(var(--stroke-width) * 2);
             paint-order: stroke;
-            opacity: 85%;
-            stroke-opacity: 80%;
+            opacity: 100%;
+            stroke-opacity: 75%;
         }
     
-        &.has-sticker-red    { .key-sticker { fill: red;    stroke: #700; } }
-        &.has-sticker-yellow { .key-sticker { fill: yellow; stroke: #770; } }
-        &.has-sticker-green  { .key-sticker { fill: #0b0;   stroke: #050; } }
-        &.has-sticker-blue   { .key-sticker { fill: blue;   stroke: #007; } }
-        &.has-sticker-violet { .key-sticker { fill: violet; stroke: #707; } }
+        &.has-sticker-red    { .key-sticker { fill: red;    stroke: #c00; } }
+        &.has-sticker-yellow { .key-sticker { fill: #ee0;   stroke: #bb0; } }
+        &.has-sticker-green  { .key-sticker { fill: #0b0;   stroke: #080; } }
+        &.has-sticker-blue   { .key-sticker { fill: blue;   stroke: #00c; } }
+        &.has-sticker-violet { .key-sticker { fill: violet; stroke: #c0c; } }
             
         &:not(.has-sticker) .key-sticker {
             display: none;

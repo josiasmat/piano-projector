@@ -57,7 +57,26 @@ body {
     display: flex;
     flex-direction: column;
     &:not(.ready) {
-        visibility: hidden;
+        #dialog-about, #top-toolbar, #outer-main-area, #alert-sound-connection-fail {
+            visibility: hidden;
+            opacity: 0%;
+        }
+    }
+    &.ready {
+        #top-toolbar, #outer-main-area {
+            transition: opacity 1s;
+        }
+        #loading-title {
+            visibility: hidden;
+            display: none;
+            opacity: 0%;
+        }
+    }
+    #loading-title {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(200%);
     }
 }
 
