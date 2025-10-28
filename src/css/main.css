@@ -149,10 +149,12 @@ sl-dialog {
     &[hidden] { 
         opacity: 0%;
         display: block; 
+        visibility: hidden;
     }
     span { 
         color: var(--sl-color-neutral-800);
         margin-right: 10px;
+        vertical-align: 10%;
         &:not(:first-child) { margin-left: 10px; }
         u { text-decoration: underline; }
         &.checkbox {

@@ -154,7 +154,7 @@ export class KbdNav {
                     : `<span>${item.html}</span>`
             ).join('|');
         const menu_elm = document.createElement("sl-breadcrumb-item");
-        menu_elm.innerHTML = html;
+        menu_elm.innerHTML = '&nbsp;' + html;
         breadcrumb_top.appendChild(menu_elm);
     }
 
