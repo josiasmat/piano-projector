@@ -21,19 +21,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 <!DOCTYPE html>
 <html class="sl-theme-dark">
     <head>
-        <meta http-equiv="Cache-Control" content="public, max-age=0, no-cache" />
+        <meta name="author" content="Josias Matschulat" />
+        <meta name="color-scheme" content="dark" />
+        <meta name="theme-color" content="#171717" />
+        <meta name="keywords" content="music,piano,music keyboard,music theory,on-screen piano" />
         <meta name="description" 
             content="A versatile and easy-to-use on-screen piano keyboard for music education. Control it with a MIDI device, your computer keyboard, mouse or touch."
         />
-        <meta name="viewport" content="user-scalable=no"/>
+        <meta name="viewport" content="user-scalable=no" />
         <title i18n="main-title">Piano Projector</title>
         <link rel="manifest" href="manifest.json" />
-        <link rel="stylesheet" href="pub/bundle.css">
-        <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/dark.css" /> -->
-        <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace-autoloader.js"></script> -->
-        <script type="module" src="pub/bundle.js" async></script>
-        <!-- <script type="module" src="https://unpkg.com/smplr@0.16.1/dist/index.mjs" async fetchpriority="low"></script> -->
-        <link rel="icon" type="image/png" href="assets/icon/favicon.png">
+        <link rel="stylesheet" blocking="render" href="pub/bundle.css">
+        <script type="module" src="pub/bundle.js" defer></script>
+        <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icon/favicon.svg">
+        <link rel="icon" type="image/png" sizes="128x128" href="assets/icon/favicon.png">
+        <link rel="icon" type="image/png" sizes="192x192" href="assets/icon/favicon-192.png">
+        <link rel="icon" type="image/png" sizes="512x512" href="assets/icon/favicon-512.png">
+        <link rel="license" type="text/markdown" href="/LICENSE.md">
     </head>
     <body>
         <div id="loading-title" class="title-text">Piano Projector</div>

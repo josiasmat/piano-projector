@@ -41,7 +41,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #top-toolbar {
     width: 100%;
     height: auto;
-    background-image: linear-gradient(to top, #333, #222);
+    background-image: linear-gradient(to top, #272727, #171717);
     padding: 7px 0 6px 12px;
     display: flex;
     justify-content: space-between;
