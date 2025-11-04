@@ -63,9 +63,9 @@ body {
         }
     }
     &.ready {
-        #top-toolbar, #outer-main-area {
+        /* #top-toolbar, #outer-main-area {
             transition: opacity 1s;
-        }
+        } */
         #loading-title {
             visibility: hidden;
             display: none;
