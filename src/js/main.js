@@ -43,6 +43,8 @@ import '@shoelace-style/shoelace/dist/components/menu/menu.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/visually-hidden/visually-hidden.js';
+import { setDefaultAnimation as shoelaceSetDefaultAnimation } 
+    from '@shoelace-style/shoelace/dist/utilities/animation-registry.js'
 import { setBasePath as shoelaceSetBaseBath } 
     from '@shoelace-style/shoelace/dist/utilities/base-path.js';
 shoelaceSetBaseBath('/assets/shoelace');
@@ -2086,6 +2088,16 @@ function initializeApp() {
 
     updateToolbar();
     createPianoKeyboard();
+
+    shoelaceSetDefaultAnimation('tooltip.show', {
+        keyframes: [
+            { transform: 'translateY(30px)', opacity: '0' },
+            { transform: 'translateY(0px)', opacity: '1' }
+        ],
+        options: {
+            duration: 300,
+        }
+    });
 
     if ( !settings.device_name ) {
         const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
