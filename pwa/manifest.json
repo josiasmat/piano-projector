@@ -5,6 +5,7 @@
     "categories": "music,education",
     "start_url": "/pwa/",
     "scope": "/pwa/",
+    "id": "/v1",
     "icons": [
         {
             "src": "/pwa/assets/icon/favicon.png",
@@ -25,5 +26,7 @@
     "display_override": ["window-controls-overlay", "fullscreen"],
     "display": "standalone",
     "orientation": "landscape",
-    "background_color": "#000"
+    "lang": "en",
+    "background_color": "#000",
+    "theme_color": "#171717"
 }
