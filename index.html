@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta name="author" content="Josias Matschulat" />
         <meta name="color-scheme" content="dark" />
@@ -8,8 +8,8 @@
             content="A versatile and easy-to-use on-screen piano keyboard for music education. Control it with a MIDI device, your computer keyboard, mouse or touch."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title i18n="main-title">Piano Projector</title>
-        <link rel="stylesheet" blocking="render" href="home/style.css">
+        <title i18n="main-title" translate="no">Piano Projector</title>
+        <link rel="stylesheet" href="home/style.css">
         <link rel="icon" type="image/svg+xml" sizes="any" href="pwa/assets/icon/favicon.svg">
         <link rel="icon" type="image/png" sizes="128x128" href="pwa/assets/icon/favicon.png">
         <link rel="icon" type="image/png" sizes="192x192" href="pwa/assets/icon/favicon-192.png">
@@ -17,68 +17,83 @@
         <link rel="license" type="text/markdown" href="/LICENSE.md">
     </head>
     <body>
-    <header>
-        <h1 class="app-name">Piano Projector</h1>
-        <p>A lightweight web app to display piano keys and highlight pitches in real time.</p>
-    </header>
+        <header>
+            <h1 class="app-name" translate="no">Piano Projector</h1>
+            <p>A versatile and easy-to-use on-screen virtual piano keyboard for music education.</p>
+        </header>
+        
+        <main>
+            <img src="home/screenshot.png" alt="Piano Projector Screenshot" class="screenshot" />
 
-    <main>
-        <img src="home/screenshot.png" alt="Piano Projector Screenshot" class="screenshot" />
+            <a href="/pwa" class="button">Launch online app</a>
 
-        <a href="/pwa" class="button">Launch online app</a>
+            <h2>What is <span translate="no">Piano Projector</span>?</h2>
+            <p>
+                Piano Projector is a progressive web app designed for music educators, students 
+                and performers. It provides a clean visual representation of a piano keyboard and 
+                allows your MIDI keyboard or controller to highlight the notes being played. 
+                It's ideal for classroom projection, online lessons, and musical demonstrations.
+            </p>
 
-        <h2>What is Piano Projector?</h2>
-        <p>
-            Piano Projector is a progressive web app designed for 
-            music educators, students and performers. It provides a clean visual representation 
-            of a piano keyboard and allows your keyboard or MIDI input to highlight the notes 
-            being played. It's ideal for classroom projection, online lessons, and demonstrations.
-        </p>
+            <h2>How to Use</h2>
+            <ul>
+                <li>Launch the app using the button above.</li>
+                <li>Click on the "Control" button to select an input device.</li>
+                <li>If prompted, grant permission for MIDI access.</li>
+                <li>Play on your MIDI keyboard or computer keyboard to see the notes light up.</li>
+                <li>You can resize the browser window or go fullscreen for classroom projection.</li>
+            </ul>
 
-        <h2>How to Use</h2>
-        <ul>
-            <li>Launch the app using the button above.</li>
-            <li>Click on the "Control" button to select an input device.</li>
-            <li>If prompted, grant permission for MIDI access.</li>
-            <li>Play on your MIDI keyboard or computer keyboard to see the notes light up.</li>
-            <li>You can resize the browser window or go fullscreen for classroom projection.</li>
-        </ul>
+            <h2>Features</h2>
+            <ul>
+                <li>MIDI input support.</li>
+                <li>Recognizes pedal input (sustain, sostenuto and soft).</li>
+                <li>Piano, organ and harpsichord sounds (optional).</li>
+                <li>Adjustable keyboard size and layout.</li>
+                <li>Customizable key labels and stickers.</li>
+                <li>Transposition support.</li>
+                <li>Lightweight and open-source.</li>
+                <li>Works offline (PWA).</li>
+            </ul>
 
-        <h2>Features</h2>
-        <ul>
-            <li>MIDI input support.</li>
-            <li>Recognizes pedal input (sustain, sostenuto and soft).</li>
-            <li>Piano, organ and harpsichord sounds (optional).</li>
-            <li>Adjustable keyboard size and layout.</li>
-            <li>Customizable key labels and stickers.</li>
-            <li>Transposition support.</li>
-            <li>Lightweight and open-source.</li>
-            <li>Works offline (PWA).</li>
-        </ul>
+            <h2>Keyboard shortcuts</h2>
+            <ul>
+                <li><strong>F2</strong> - toggles labeling mode.</li>
+                <li><strong>F3</strong> - toggles sticker mode.</li>
+                <li><strong>CTRL+click</strong> - sets label/sticker to all octaves.</li>
+                <li><strong>F9</strong> - toggles toolbar visibility.</li>
+                <li><strong>F11</strong> - go fullscreen.</li>
+                <li><strong>ALT</strong> - opens keyboard navigation menu.</li>
+                <li><strong>ESC</strong> - triggers MIDI panic.</li>
+            </ul>
 
-        <h2>Keyboard shortcuts</h2>
-        <ul>
-            <li>F2: toggles labeling mode.</li>
-            <li>F3: toggles sticker mode.</li>
-            <li>CTRL+click: sets label/sticker to all octaves.</li>
-            <li>F9: toggles toolbar visibility.</li>
-            <li>F11: go fullscreen.</li>
-            <li>ALT: opens keyboard navigation menu.</li>
-            <li>ESC: triggers MIDI panic.</li>
-        </ul>
+            <h2>Compatible with:</h2>
+            <ul>
+                <li>Mozilla Firefox</li>
+                <li>Google Chrome</li>
+                <li>Microsoft Edge</li>
+                <li>Any Chromium-based browser</li>
+            </ul>
+            <p>Not compatible with Apple Safari.</p>
+            <p>Runs best on desktop or laptop computers.</p>
 
-        <h2>Source Code</h2>
-        <p>
-            Piano Projector is open-source and available on GitHub.
-            You can view the repository, report issues, or contribute improvements.
-        </p>
-        <p>
-            <a href="https://github.com/josiasmat/piano-projector">GitHub repository</a>
-        </p>
-    </main>
+            <h2>Low performance mode</h2>
+            <p>Append <a href="/pwa/?mode=lp"><code>/?mode=lp</code></a> to the URL to enable low-performance mode, with simplified graphics.<br />
+               To switch back to normal mode, append <a href="/pwa/?mode=hp"><code>/?mode=hp</code></a> to the URL.<br />
+               The mode setting is saved, so it is not necessary to always change the URL.</p>
 
-    <footer>
-        &copy; 2025 Piano Projector — Created by Josias Matschulat.
-    </footer>
+            <h2>Source Code</h2>
+            <p>
+                Piano Projector is free and open-source software. Its source code is available on GitHub.
+                You can view the repository, report issues, or contribute improvements.
+            </p>
+            <p>
+                <a href="https://github.com/josiasmat/piano-projector" target="_blank">GitHub repository</a>
+            </p>
+        </main>
+
+        <footer>
+            &copy; 2025 Piano Projector — Created by Josias Matschulat.
+        </footer>
     </body>
 </html>
