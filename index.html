@@ -1,393 +1,84 @@
-<!--
-Piano Projector
-A versatile and easy-to-use on-screen piano keyboard for music education. 
-Control it with a MIDI device, your computer keyboard, mouse or touch.
-
-Copyright (C) 2025 Josias Matschulat
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
--->
 <!DOCTYPE html>
-<html class="sl-theme-dark">
+<html>
     <head>
         <meta name="author" content="Josias Matschulat" />
         <meta name="color-scheme" content="dark" />
-        <meta name="theme-color" content="#171717" />
         <meta name="keywords" content="music,piano,music keyboard,music theory,on-screen piano" />
         <meta name="description" 
             content="A versatile and easy-to-use on-screen piano keyboard for music education. Control it with a MIDI device, your computer keyboard, mouse or touch."
         />
-        <meta name="viewport" content="user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title i18n="main-title">Piano Projector</title>
-        <link rel="manifest" href="manifest.json" />
-        <link rel="stylesheet" blocking="render" href="pub/bundle.css">
-        <script type="module" src="pub/bundle.js" defer></script>
-        <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icon/favicon.svg">
-        <link rel="icon" type="image/png" sizes="128x128" href="assets/icon/favicon.png">
-        <link rel="icon" type="image/png" sizes="192x192" href="assets/icon/favicon-192.png">
-        <link rel="icon" type="image/png" sizes="512x512" href="assets/icon/favicon-512.png">
+        <link rel="stylesheet" blocking="render" href="home/style.css">
+        <link rel="icon" type="image/svg+xml" sizes="any" href="pwa/assets/icon/favicon.svg">
+        <link rel="icon" type="image/png" sizes="128x128" href="pwa/assets/icon/favicon.png">
+        <link rel="icon" type="image/png" sizes="192x192" href="pwa/assets/icon/favicon-192.png">
+        <link rel="icon" type="image/png" sizes="512x512" href="pwa/assets/icon/favicon-512.png">
         <link rel="license" type="text/markdown" href="/LICENSE.md">
     </head>
     <body>
-        <div id="loading-title" class="title-text">Piano Projector</div>
-        <sl-dialog label="About" id="dialog-about" class="sl-theme-dark" hidden>
-            <span slot="label" class="title-text">
-                <sl-icon src="assets/icon/favicon.svg"></sl-icon>
-                Piano Projector
-            </span>
-            <span>A versatile and easy-to-use on-screen piano keyboard for music education.</span><br /><br />
-            <span>© 2025 Josias Matschulat.</span><br /><br />
-            <span data-nosnippet>
-                Licensed under the <br />
-                <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank">
-                    GNU Affero General Public License version 3
-                </a>.
-            </span>
-            <span slot="footer" data-nosnippet>
-                Get the 
-                <a href="https://github.com/josiasmat/piano-projector" target="_blank">source code at GitHub</a>.
-            </span>
-        </sl-dialog>
-        <div id="top-toolbar">
-            <div id="top-toolbar-left">
-                <span id="toolbar-title" class="title-text">Piano Projector</span>
-                <sl-tooltip id="dropdown-connect-tooltip" content="" trigger="manual" distance="10" placement="bottom-start">
-                    <sl-dropdown id="dropdown-connect">
-                        <sl-button id="btn-connect" slot="trigger" caret>
-                            <span data-nosnippet>Control</span>
-                            <sl-icon id="connection-power-icon" class="led-strong" slot="prefix" name="power"></sl-icon>
-                        </sl-button>
-                        <sl-menu id="midi-connection-menu">
-                            <sl-menu-item id="menu-connect-item-midi-prompt" disabled loading>
-                                <span data-nosnippet>Requesting MIDI access…</span>
-                            </sl-menu-item>
-                            <sl-menu-item id="menu-connect-item-midi-denied" disabled>
-                                <span data-nosnippet>MIDI access denied.</span>
-                            </sl-menu-item>
-                            <sl-menu-item id="menu-connect-item-midi-unavailable" disabled>
-                                <span data-nosnippet>
-                                    Your browser does not support the Web MIDI API.<br />
-                                    To use MIDI, try updating your browser or switching<br />
-                                    to <a href="https://www.mozilla.org/firefox/" target="_blank">Mozilla Firefox</a>
-                                    or <a href="https://www.google.com/chrome/" target="_blank">Google Chrome</a>.
-                                </span>
-                            </sl-menu-item>
-                            <sl-divider></sl-divider>
-                            <sl-menu-item id="menu-connect-item-computer-keyboard" type="checkbox">
-                                <span data-nosnippet>Computer keyboard</span>
-                                <sl-icon name="keyboard" slot="prefix"></sl-icon>
-                            </sl-menu-item>
-                            <sl-menu-item id="menu-connect-item-touch" type="checkbox">
-                                <span data-nosnippet>Touch or mouse</span>
-                                <sl-icon name="hand-index" slot="prefix"></sl-icon>
-                            </sl-menu-item>
-                        </sl-menu>
-                    </sl-dropdown>
-                </sl-tooltip>
-                <sl-dropdown id="dropdown-sound">
-                    <sl-button id="btn-sound" slot="trigger" caret>
-                        <span data-nosnippet>Sound</span>
-                        <sl-icon id="sound-power-icon" class="led-weak" slot="prefix" name="music-note-beamed"></sl-icon>
-                    </sl-button>
-                    <sl-menu id="menu-sound">
-                        <sl-menu-item id="menu-sound-item-unavailable" disabled>
-                            <span data-nosnippet>Sound not available.</span>
-                            <sl-icon name="ban" slot="prefix"></sl-icon>
-                        </sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" value="" type="checkbox" checked hidden>Disabled</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" value="apiano"  type="checkbox" hidden>Acoustic Piano</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" value="epiano1" type="checkbox" hidden>Electric Piano 1</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" value="epiano2" type="checkbox" hidden>Electric Piano 2</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" value="epiano3" type="checkbox" hidden>Electric Piano 3</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" value="organ1" type="checkbox" hidden>B3 Organ Slow</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" value="organ2" type="checkbox" hidden>B3 Organ Fast</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" value="organ3" type="checkbox" hidden>Percussive Organ</sl-menu-item>
-                        <sl-menu-item class="menu-sound-item" value="harpsi" type="checkbox" hidden>Harpsichord</sl-menu-item>
-                    </sl-menu>
-                </sl-dropdown>
-                <sl-dropdown id="dropdown-transpose" stay-open-on-select>
-                    <sl-button id="btn-transpose" slot="trigger" caret>
-                        <span data-nosnippet>Transpose</span>
-                        <sl-icon id="transpose-power-icon" class="led-strong" name="arrow-down-up" slot="prefix" label="Enable transpose"></sl-icon>
-                    </sl-button>
-                    <sl-menu id="menu-transpose">
-                        <!-- <sl-menu-item> -->
-                            <div id="transpose-controls" class="custom-menu-item">
-                                <div>
-                                    <span class="custom-menu-item-label" data-nosnippet>Semitones</span><br />
-                                    <sl-button-group label="Transpose semitones">
-                                        <sl-button id="btn-semitone-minus" pill>
-                                            <sl-icon name="dash" label="Settings"></sl-icon>
-                                        </sl-button>
-                                        <sl-input id="input-semitones" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
-                                        <sl-button id="btn-semitone-plus" pill>
-                                            <sl-icon name="plus" label="Settings"></sl-icon>
-                                        </sl-button>
-                                    </sl-button-group>
-                                </div>
-                                <div>
-                                    <span class="custom-menu-item-label" data-nosnippet>Octaves</span><br />
-                                    <sl-button-group label="Transpose octaves">
-                                        <sl-button id="btn-octave-minus" pill>
-                                            <sl-icon name="dash" label="Settings"></sl-icon>
-                                        </sl-button>
-                                        <sl-input id="input-octaves" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
-                                        <sl-button id="btn-octave-plus" pill>
-                                            <sl-icon name="plus" label="Settings"></sl-icon>
-                                        </sl-button>
-                                    </sl-button-group>
-                                </div>
-                            </div>
-                        <!-- </sl-menu-item> -->
-                        <sl-divider style="margin-top: 8px;"></sl-divider>
-                        <sl-menu-item id="reset-transpose" disabled>
-                            <span data-nosnippet>Reset transposition</span>
-                            <sl-icon slot="prefix" name="arrow-counterclockwise"></sl-icon>
-                        </sl-menu-item>
-                    </sl-menu>
-                </sl-dropdown>
-                <sl-dropdown id="dropdown-size" class="space-before" stay-open-on-select>
-                    <sl-button id="btn-size" slot="trigger" caret>Size</sl-button>
-                    <div id="menu-size" class="custom-dropdown-panel">
-                        <div id="menu-group-number-of-keys" class="custom-menu-item">
-                            <span class="custom-menu-item-label" data-nosnippet>Number of keys:</span><br />
-                            <sl-button-group>
-                                <sl-button class="btn-number-of-keys" value="88" variant="neutral">88</sl-button>
-                                <sl-button class="btn-number-of-keys" value="61">61</sl-button>
-                                <sl-button class="btn-number-of-keys" value="49">49</sl-button>
-                                <sl-button class="btn-number-of-keys" value="37">37</sl-button>
-                                <sl-button class="btn-number-of-keys" value="25">25</sl-button>
-                                <sl-button class="btn-number-of-keys" value="20" hidden>20</sl-button>
-                            </sl-button-group>
-                        </div>
-                        <div id="menu-group-key-depth" class="custom-menu-item">
-                            <span class="custom-menu-item-label" data-nosnippet>Key depth:</span><br />
-                            <sl-button-group>
-                                <sl-button class="btn-key-depth" value="1.0" variant="neutral">Full</sl-button>
-                                <sl-button class="btn-key-depth" value="0.75">3/4</sl-button>
-                                <sl-button class="btn-key-depth" value="0.5" >1/2</sl-button>
-                            </sl-button-group>
-                        </div>
-                    </div>
-                </sl-dropdown>
-                <sl-dropdown id="dropdown-colors" stay-open-on-select>
-                    <sl-button id="btn-colors" slot="trigger" caret>
-                        <span data-nosnippet>Appearance</span>
-                    </sl-button>
-                    <sl-menu>
-                        <sl-menu-item>
-                            <span data-nosnippet>Highlight color</span>
-                            <sl-menu slot="submenu">
-                                <sl-color-picker id="color-pressed" no-format-toggle inline value="#f00" 
-                                    swatches="#f00; #f70; #ff0; #0f0; #0ff; #00f; #70f; #f0f;
-                                              #a00; #a50; #aa0; #0a0; #0aa; #00a; #50a; #a0a;"
-                                    label="Pressed key color">
-                                </sl-color-picker>
-                            </sl-menu>
-                        </sl-menu-item>
-                        <sl-menu-item>
-                            <span data-nosnippet>Highlight opacity</span>
-                            <sl-menu id="menu-highlight-opacity" slot="submenu">
-                                <sl-menu-item type="checkbox" value="100%">Opaque</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="70%">Semiopaque</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="40%">Semitransparent</sl-menu-item>
-                            </sl-menu>
-                        </sl-menu-item>
-                        <sl-divider></sl-divider>
-                        <sl-menu-item>
-                            <span data-nosnippet>White key color</span>
-                            <sl-menu slot="submenu">
-                                <sl-color-picker id="color-white" no-format-toggle inline value="#fff" 
-                                    swatches="#fff; #eee; #ddd; #aaa; #555; #222; #111; #000;"
-                                    label="White key color">
-                                </sl-color-picker>
-                            </sl-menu>
-                        </sl-menu-item>
-                        <sl-menu-item>
-                            <span data-nosnippet>Black key color</span>
-                            <sl-menu slot="submenu">
-                                <sl-color-picker id="color-black" no-format-toggle inline value="#000" 
-                                    swatches="#fff; #eee; #ddd; #aaa; #555; #222; #111; #000;"
-                                    label="Black key color">
-                                </sl-color-picker>
-                            </sl-menu>
-                        </sl-menu-item>
-                        <sl-divider></sl-divider>
-                        <sl-menu-item id="menu-perspective" type="checkbox" checked>
-                            <span data-nosnippet>Perspective view</span>
-                        </sl-menu-item>
-                        <sl-menu-item id="menu-top-felt" type="checkbox" checked>
-                            <span data-nosnippet>Show red felt</span>
-                        </sl-menu-item>
-                    </sl-menu>
-                </sl-dropdown>
-                <sl-dropdown id="dropdown-pedals" stay-open-on-select>
-                    <sl-button id="btn-pedals" slot="trigger" caret>
-                        <span data-nosnippet>Pedals</span>
-                        <div id="pedal-icons" slot="prefix">
-                            <sl-icon id="pedl" class="pedal-indicator led-weak" slot="prefix" src="assets/svg/lped.svg"></sl-icon>
-                            <sl-icon id="pedm" class="pedal-indicator led-weak" slot="prefix" src="assets/svg/mped.svg"></sl-icon>
-                            <sl-icon id="pedr" class="pedal-indicator led-weak" slot="prefix" src="assets/svg/rped.svg"></sl-icon>
-                        </div>
-                    </sl-button>
-                    <sl-menu id="pedal-menu">
-                        <sl-menu-item id="menu-pedal-follow" type="checkbox" checked>
-                            <span data-nosnippet>Follow pedals</span>
-                        </sl-menu-item>
-                        <sl-menu-item id="menu-pedal-dim" type="checkbox" checked>
-                            <span data-nosnippet>Dim pedalized notes</span>
-                        </sl-menu-item>
-                    </sl-menu>
-                </sl-dropdown>
-                <sl-button-group id="btn-labels-group" class="space-before">
-                    <sl-button id="btn-labels-switch">
-                        <span data-nosnippet>Labels</span>
-                        <sl-icon id="labels-power-icon" slot="prefix" name="tags-fill" class="led-strong"></sl-icon>
-                    </sl-button>
-                    <sl-dropdown id="dropdown-labels" placement="bottom-end" stay-open-on-select>
-                        <sl-button id="btn-labels-dropdown" slot="trigger" caret>
-                            <sl-visually-hidden data-nosnippet>More labeling options</sl-visually-hidden>
-                        </sl-button>
-                        <sl-menu id="menu-labels-top">
-                            <sl-menu-item id="menu-labeling-mode" type="checkbox" value="labeling-mode">
-                                Labeling mode
-                                <span slot="suffix" class="menu-keyboard-shortcut">F2</span>
-                            </sl-menu-item>
-                            <sl-divider></sl-divider>
-                            <sl-menu-item>
-                                <span data-nosnippet>Presets</span>
-                                <sl-menu id="menu-labels-which" slot="submenu">
-                                    <sl-menu-item type="checkbox" value="none">None</sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="mc">Middle-C</sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="cs">C-keys</sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="white">White keys</sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="all">All keys</sl-menu-item>
-                                </sl-menu>
-                                <sl-badge slot="suffix" variant="neutral" pill></sl-badge>
-                            </sl-menu-item>
-                            <sl-menu-item>
-                                <span data-nosnippet>Format</span>
-                                <sl-menu id="menu-labels-type" slot="submenu">
-                                    <sl-menu-item type="checkbox" value="english" checked><span data-nosnippet>English</span></sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="german"><span data-nosnippet>German</span></sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="italian"><span data-nosnippet>Italian</span></sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="pc"><span data-nosnippet>Pitch clas</span>s</sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="midi"><span data-nosnippet>MIDI value</span></sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="freq"><span data-nosnippet>Frequency</span></sl-menu-item>
-                                    <sl-divider></sl-divider>
-                                    <sl-menu-item id="menu-item-labels-octave" type="checkbox" value="octave" checked>
-                                        <span data-nosnippet>Show octave</span>
-                                    </sl-menu-item>
-                                </sl-menu>
-                                <sl-badge slot="suffix" variant="neutral" pill>English</sl-badge>
-                            </sl-menu-item>
-                            <sl-menu-item id="menu-labels-played-keys" type="checkbox" value="played-keys">
-                                Show on played keys
-                            </sl-menu-item>
-                        </sl-menu>
-                    </sl-dropdown>
-                </sl-button-group>
-                <sl-button-group id="btn-stickers-group">
-                    <sl-button id="btn-stickers-switch">
-                        <span data-nosnippet>Stickers</span>
-                        <sl-icon id="stickers-power-icon" slot="prefix" name="circle-fill" class="led-weak"></sl-icon>
-                    </sl-button>
-                    <sl-dropdown id="dropdown-stickers" placement="bottom-end" stay-open-on-select>
-                        <sl-button id="btn-stickers-dropdown" slot="trigger" caret>
-                            <sl-visually-hidden data-nosnippet>More sticker options</sl-visually-hidden>
-                        </sl-button>
-                        <sl-menu id="menu-stickers-top">
-                            <sl-menu-item id="menu-sticker-red" type="checkbox" value="red">
-                                Red
-                                <sl-icon slot="prefix" name="circle-fill" style="color: red"></sl-icon>
-                                <span slot="suffix" class="menu-keyboard-shortcut">F3</span>
-                            </sl-menu-item>
-                            <sl-menu-item id="menu-sticker-yellow" type="checkbox" value="yellow">
-                                Yellow
-                                <sl-icon slot="prefix" name="circle-fill" style="color: #dd0"></sl-icon>
-                                <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
-                            </sl-menu-item>
-                            <sl-menu-item id="menu-sticker-green" type="checkbox" value="green">
-                                Green
-                                <sl-icon slot="prefix" name="circle-fill" style="color: #0b0"></sl-icon>
-                                <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
-                            </sl-menu-item>
-                            <sl-menu-item id="menu-sticker-blue" type="checkbox" value="blue">
-                                Blue
-                                <sl-icon slot="prefix" name="circle-fill" style="color: blue"></sl-icon>
-                                <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
-                            </sl-menu-item>
-                            <sl-menu-item id="menu-sticker-violet" type="checkbox" value="violet">
-                                Violet
-                                <sl-icon slot="prefix" name="circle-fill" style="color: violet"></sl-icon>
-                                <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
-                            </sl-menu-item>
-                            <sl-divider></sl-divider>
-                            <sl-menu-item id="menu-stickers-clear">
-                                Clear all
-                            </sl-menu-item>
-                        </sl-menu>
-                    </sl-dropdown>
-                </sl-button-group>
-            </div>
-            <div id="top-toolbar-right">
-                <sl-tooltip content="Panic! (ESC)">
-                    <sl-button id="btn-panic">
-                        <sl-icon name="exclamation-diamond" label="Panic"></sl-icon>
-                    </sl-button>
-                </sl-tooltip>
-                <!-- <sl-tooltip content="Help (F1)">
-                    <sl-button id="btn-help">
-                        <sl-icon name="question-lg" label="Help"></sl-icon>
-                    </sl-button>
-                </sl-tooltip> -->
-                <sl-tooltip content="Hide toolbar (F9)">
-                    <sl-button id="btn-hide-toolbar">
-                        <sl-icon name="chevron-up" label="Hide toolbar"></sl-icon>
-                    </sl-button>
-                </sl-tooltip>
-            </div>
-        </div>
-        <div id="outer-main-area">
-            <div id="main-area">
-                <div id="keyboard-navigator" hidden>
-                    <sl-breadcrumb></sl-breadcrumb>
-                </div>
-                <svg id="piano"></svg>
-                <sl-tooltip content="Show toolbar (F9)">
-                    <sl-button id="btn-show-toolbar" hidden>
-                        <sl-icon name="chevron-down" label="Show toolbar"></sl-icon>
-                    </sl-button>
-                </sl-tooltip>
-            </div>
-        </div>
-        
-        <sl-alert id="alert-sound-connection-fail" variant="danger" duration="10000" countdown="rtl" closable>
-            <span data-nosnippet>
-                <strong>The sound you selected could not be loaded.<br /></strong>
-            </span>
-            <span></span>
-            <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
-        </sl-alert>
+    <header>
+        <h1 class="app-name">Piano Projector</h1>
+        <p>A lightweight web app to display piano keys and highlight pitches in real time.</p>
+    </header>
 
-        <!-- Element templates -->
-        <template id="menu-connect-item-midi-port-template">
-            <sl-menu-item type="checkbox" class="menu-connect-item-midi-input">
-                <span></span>
-                <sl-icon src="assets/svg/midikbd.svg" slot="prefix"></sl-icon>
-            </sl-menu-item>
-        </template>
-        
+    <main>
+        <img src="home/screenshot.png" alt="Piano Projector Screenshot" class="screenshot" />
+
+        <a href="/pwa" class="button">Launch online app</a>
+
+        <h2>What is Piano Projector?</h2>
+        <p>
+            Piano Projector is a progressive web app designed for 
+            music educators, students and performers. It provides a clean visual representation 
+            of a piano keyboard and allows your keyboard or MIDI input to highlight the notes 
+            being played. It's ideal for classroom projection, online lessons, and demonstrations.
+        </p>
+
+        <h2>How to Use</h2>
+        <ul>
+            <li>Launch the app using the button above.</li>
+            <li>Click on the "Control" button to select an input device.</li>
+            <li>If prompted, grant permission for MIDI access.</li>
+            <li>Play on your MIDI keyboard or computer keyboard to see the notes light up.</li>
+            <li>You can resize the browser window or go fullscreen for classroom projection.</li>
+        </ul>
+
+        <h2>Features</h2>
+        <ul>
+            <li>MIDI input support.</li>
+            <li>Recognizes pedal input (sustain, sostenuto and soft).</li>
+            <li>Piano, organ and harpsichord sounds (optional).</li>
+            <li>Adjustable keyboard size and layout.</li>
+            <li>Customizable key labels and stickers.</li>
+            <li>Transposition support.</li>
+            <li>Lightweight and open-source.</li>
+            <li>Works offline (PWA).</li>
+        </ul>
+
+        <h2>Keyboard shortcuts</h2>
+        <ul>
+            <li>F2: toggles labeling mode.</li>
+            <li>F3: toggles sticker mode.</li>
+            <li>CTRL+click: sets label/sticker to all octaves.</li>
+            <li>F9: toggles toolbar visibility.</li>
+            <li>F11: go fullscreen.</li>
+            <li>ALT: opens keyboard navigation menu.</li>
+            <li>ESC: triggers MIDI panic.</li>
+        </ul>
+
+        <h2>Source Code</h2>
+        <p>
+            Piano Projector is open-source and available on GitHub.
+            You can view the repository, report issues, or contribute improvements.
+        </p>
+        <p>
+            <a href="https://github.com/josiasmat/piano-projector">GitHub repository</a>
+        </p>
+    </main>
+
+    <footer>
+        &copy; 2025 Piano Projector — Created by Josias Matschulat.
+    </footer>
     </body>
 </html>

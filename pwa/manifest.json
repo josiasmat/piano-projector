@@ -3,21 +3,21 @@
     "short_name": "Piano Projector",
     "description": "A versatile and easy-to-use on-screen piano keyboard for music education. Control it with a MIDI device, your computer keyboard, mouse or touch.",
     "categories": "music,education",
-    "start_url": "/",
-    "scope": "/",
+    "start_url": "/pwa/",
+    "scope": "/pwa/",
     "icons": [
         {
-            "src": "/assets/icon/favicon.png",
+            "src": "/pwa/assets/icon/favicon.png",
             "sizes": "128x128",
             "type": "image/png"
         },
         {
-            "src": "/assets/icon/favicon-192.png",
+            "src": "/pwa/assets/icon/favicon-192.png",
             "sizes": "192x192",
             "type": "image/png"
         },
         {
-            "src": "/assets/icon/favicon-512.png",
+            "src": "/pwa/assets/icon/favicon-512.png",
             "sizes": "512x512",
             "type": "image/png"
         }

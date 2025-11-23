@@ -59,13 +59,13 @@ export class SmplrPlayer extends InternalSoundPlayer {
                    options: { instrument: "Chordophones/Zithers/Harpsichord, Unk", volume: 100 } },
         organ1:  { loader: Soundfont2Sampler, 
                    options: { createSoundfont: (data) => new SoundFont2(data), 
-                              url: "/assets/sf/organ.sf2", patch: "b3slow", volume: 70 } },
+                              url: "assets/sf/organ.sf2", patch: "b3slow", volume: 70 } },
         organ2:  { loader: Soundfont2Sampler, 
                    options: { createSoundfont: (data) => new SoundFont2(data), 
-                              url: "/assets/sf/organ.sf2", patch: "b3fast", volume: 70 } },
+                              url: "assets/sf/organ.sf2", patch: "b3fast", volume: 70 } },
         organ3:  { loader: Soundfont2Sampler, 
                    options: { createSoundfont: (data) => new SoundFont2(data), 
-                              url: "/assets/sf/organ.sf2", patch: "percorg", volume: 60 } },
+                              url: "assets/sf/organ.sf2", patch: "percorg", volume: 60 } },
     }
     cache = new SmplrCacheStorage("sound_v1");;
 

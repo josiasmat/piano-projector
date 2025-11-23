@@ -8,19 +8,19 @@ console.log(`${ productionMode ? 'production' : 'development' } build`);
 
 // bundle CSS
 const buildCSS = await esbuild.context({
-    entryPoints: [ './src/css/main.css' ],
+    entryPoints: [ 'pwa/css/main.css' ],
     bundle: true,
     format: 'esm',
     target: targetBrowsers,
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
     sourcemap: !productionMode,
-    outfile: './pub/bundle.css'
+    outfile: 'pwa/bundle.css'
 });
 
 // bundle JS
 const buildJS = await esbuild.context({
-    entryPoints: [ './src/js/main.js' ],
+    entryPoints: [ 'pwa/js/main.js' ],
     format: 'esm',
     bundle: true,
     target: targetBrowsers,
@@ -28,7 +28,7 @@ const buildJS = await esbuild.context({
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
     sourcemap: !productionMode,
-    outfile: './pub/bundle.js'
+    outfile: 'pwa/bundle.js'
 });
 
 
