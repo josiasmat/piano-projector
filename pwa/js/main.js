@@ -1885,11 +1885,17 @@ function handlePianoClick(e) {
                 ? Array.from(range(key_num%12, 128, 12))
                 : [key_num];
             if ( marking_mode == "label" ) {
-                const value = !settings.labels.keys.has(key_num);
+                // true if there is at least one note without label
+                const value = notes.some(
+                    (note) => !settings.labels.keys.has(note)
+                );
                 for ( const note of notes )
                     settings.labels.toggle(note, value);
             } else if ( marking_mode == "sticker" ) {
-                const value = !settings.stickers.keys.has(key_num);
+                // true if there is at least one note without sticker
+                const value = notes.some(
+                    (note) => !settings.stickers.keys.has(note)
+                );
                 for ( const note of notes )
                     settings.stickers.toggle(note, value);
             }
