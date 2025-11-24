@@ -1,5 +1,6 @@
 import { argv } from 'node:process';
 import * as esbuild from 'esbuild';
+import { unlinkSync } from 'node:fs';
 
 const productionMode = ('--dev' !== (argv[2] || process.env.NODE_ENV));
 const targetBrowsers = ['chrome130','firefox132'];
@@ -33,6 +34,13 @@ const buildJS = await esbuild.context({
 
 
 if (productionMode) {
+
+  for ( const mapfile of ['pwa/bundle.css.map', 'pwa/bundle.js.map'] ) {
+    try { 
+      unlinkSync(mapfile); 
+      console.log(`deleted ${mapfile}`);
+    } catch {}
+  }
 
   // single production build
   await buildCSS.rebuild();
