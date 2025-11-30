@@ -27,7 +27,6 @@ import { LocalStorageHandler, SessionStorageHandler } from "./storage-handler.js
 import { KbdNav } from "./kbdnav.js";
 import { SmplrPlayer } from "./sound.js";
 
-// import '@shoelace-style/shoelace/dist/shoelace.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/badge/badge.js';
 import '@shoelace-style/shoelace/dist/components/breadcrumb/breadcrumb.js';
@@ -43,8 +42,6 @@ import '@shoelace-style/shoelace/dist/components/menu/menu.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/visually-hidden/visually-hidden.js';
-// import { setDefaultAnimation as shoelaceSetDefaultAnimation } 
-//     from '@shoelace-style/shoelace/dist/utilities/animation-registry.js'
 import { setBasePath as shoelaceSetBaseBath } 
     from '@shoelace-style/shoelace/dist/utilities/base-path.js';
 shoelaceSetBaseBath('assets/shoelace');

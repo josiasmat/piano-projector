@@ -7,6 +7,10 @@ import { resolve } from 'node:path';
 const productionMode = ('--dev' !== (argv[2] || process.env.NODE_ENV));
 const targetBrowsers = ['chrome130','firefox132'];
 
+const SW_FILENAME = 'sw.js';
+const SW_FILE = resolve('pwa', SW_FILENAME);
+const SW_TEMPLATE_FILE = resolve('pwa', `${SW_FILENAME}.template`);
+
 console.log(`${ productionMode ? 'production' : 'development' } build`);
 
 // bundle CSS
@@ -53,22 +57,22 @@ if (productionMode) {
   await buildJS.rebuild();
   buildJS.dispose();
 
-  // Generate cache.json with hashed cache name
-  const precacheFolders = [
-    'assets/'
-  ];
-
-  const precacheInclude = [
-    './',
-    'index.html',
-    'bundle.js',
-    'bundle.css',
-    'manifest.json',
-  ];
-
-  const precacheExclude = [
-    'assets/font/orbitron-license.txt'
-  ];
+  // define assets to precache
+  const precache = {
+    folders: [
+      'assets/'
+    ],
+    include: [
+      './',
+      'index.html',
+      'bundle.js',
+      'bundle.css',
+      'manifest.json',
+    ],
+    exclude: [
+      'assets/font/orbitron-license.txt'
+    ]
+  }
 
   // Recursively collect all files from pwa/assets directory
   function collectAssets(dir, basePrefix) {
@@ -89,19 +93,22 @@ if (productionMode) {
     return files;
   }
 
-  // Collect all assets from folders listed in precacheFolders
-  for (const folder of precacheFolders) {
+  // Initialize precache assets list
+  const precacheAssets = [...precache.include];
+
+  // Collect all assets from folders listed in precache.folders
+  for (const folder of precache.folders) {
     const folderPath = resolve('pwa', folder);
     const allAssets = collectAssets(folderPath, folder).sort();
     
     // Filter out excluded assets
-    const filteredAssets = allAssets.filter(asset => !precacheExclude.includes(asset));
-    precacheInclude.push(...filteredAssets);
+    const filteredAssets = allAssets.filter(asset => !precache.exclude.includes(asset));
+    precacheAssets.push(...filteredAssets);
   }
 
   // Compute hash of all precache assets
   const hash = createHash('md5');
-  for (const asset of precacheInclude) {
+  for (const asset of precacheAssets) {
     if (asset === './') { continue; }
     const assetPath = resolve('pwa', asset);
     try {
@@ -111,25 +118,30 @@ if (productionMode) {
       console.warn(`unable to read ${asset} for hashing:`, error.message);
     }
   }
-  const cacheName = 'pp-' + hash.digest('hex').slice(0, 13);
+  const cacheName = 'pp-' + hash.digest('hex').slice(0, 16);
 
-  const cacheConfig = {
-    cacheName,
-    precacheAssets: precacheInclude
-  };
+  // Generate a production service-worker.js by filling the template
+  try {
+    const template = readFileSync(SW_TEMPLATE_FILE, 'utf8');
+    const swContent = template
+      .replace("'%%CACHE_NAME%%'", JSON.stringify(cacheName))
+      .replace("'%%PRECACHE_ASSETS%%'", JSON.stringify(precacheAssets, null, 2));
 
-  writeFileSync(
-    resolve('pwa', 'cache.json'),
-    JSON.stringify(cacheConfig, null, 2)
-  );
-  console.log(`generated pwa/cache.json with cache name: ${cacheName}`);
+    writeFileSync(SW_FILE, swContent);
+    console.log(`wrote production ${SW_FILENAME} from template with embedded cache list\n`+
+                `  cache name: ${cacheName}\n`+
+                `  precache assets: ${precacheAssets.length} files`
+    );
+  } catch (err) {
+    console.error(`failed to write ${SW_FILENAME} from template:`, err);
+  }
 
 } else {
 
-  // remove cache.json in development mode
+  // in development mode, remove any existing service worker file
   try {
-    unlinkSync(resolve('pwa', 'cache.json'));
-    console.log('deleted pwa/cache.json');
+    unlinkSync(SW_FILE);
+    console.log('deleted', SW_FILE);
   } catch {}
 
   // watch for file changes

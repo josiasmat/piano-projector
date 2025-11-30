@@ -1,0 +1,50 @@
+// production service worker template
+const CACHE_NAME = '%%CACHE_NAME%%';
+const PRECACHE_ASSETS = '%%PRECACHE_ASSETS%%';
+
+// Install: open cache & add assets
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_ASSETS))
+  );
+  self.skipWaiting();
+});
+
+// Activate: delete old caches
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys
+        .filter(k => k !== CACHE_NAME)
+        .map(k => caches.delete(k))
+      )
+    )
+  );
+  self.clients.claim();
+});
+
+// Fetch: cache-first for static, network-first for navigation
+self.addEventListener('fetch', event => {
+  const request = event.request;
+
+  // Navigation requests → network first
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(() => caches.match('/pwa/index.html'))
+    );
+    return;
+  }
+
+  // For static files → cache first
+  event.respondWith(
+    caches.match(request).then(response =>
+      response ||
+      fetch(request).then(fetchRes => {
+        return caches.open(CACHE_NAME).then(cache => {
+          cache.put(request, fetchRes.clone());
+          return fetchRes;
+        });
+      })
+    )
+  );
+});
