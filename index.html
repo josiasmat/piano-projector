@@ -5,16 +5,86 @@
         <meta name="color-scheme" content="dark" />
         <meta name="keywords" content="virtual piano,music,piano,music keyboard,music theory,on-screen piano" />
         <meta name="description" 
-            content="A versatile and easy-to-use on-screen piano keyboard for music education. Control it with a MIDI device, your computer keyboard, mouse or touch."
+            content="A versatile and easy-to-use on-screen piano keyboard for music education. Control it with a MIDI device, computer keyboard, mouse or touch."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title translate="no">Piano Projector - On-screen virtual piano keyboard</title>
-        <link rel="stylesheet" href="home/style.css">
         <link rel="icon" type="image/svg+xml" sizes="any" href="pwa/assets/icon/favicon.svg">
         <link rel="icon" type="image/png" sizes="128x128" href="pwa/assets/icon/favicon.png">
         <link rel="icon" type="image/png" sizes="192x192" href="pwa/assets/icon/favicon-192.png">
         <link rel="icon" type="image/png" sizes="512x512" href="pwa/assets/icon/favicon-512.png">
         <link rel="license" type="text/markdown" href="/LICENSE.md">
+        <style>
+            @font-face {
+                font-family: 'Orbitron';
+                src: url('pwa/assets/font/orbitron.ttf');
+                font-weight: normal;
+                font-style: normal;
+            }
+            .app-name {
+                font-family: "Orbitron", serif;
+                font-weight: lighter;
+            }
+            body {
+                font-family: sans-serif;
+                margin: 0;
+                padding: 0;
+                color: #f9f9f9;
+                background: #333;
+                line-height: 1.6;
+            }
+            header {
+                background: #222;
+                color: white;
+                padding: 1rem 1rem;
+                text-align: center;
+            }
+            main {
+                max-width: 800px;
+                margin: auto;
+                padding: 1rem 1rem;
+            }
+            footer {
+                text-align: center;
+                margin-top: 3rem;
+                padding: 1.5rem;
+                opacity: 50%;
+            }
+            h1 {
+                margin: 0;
+                font-size: 2.5rem;
+            }
+            h2 {
+                margin: 2rem 0 1rem;
+            }
+            code {
+                font-size: 120%;
+                color: #ffa;
+                margin: 0 2px;
+            }
+            a:has(code) {
+                text-decoration: none;
+            }
+            .screenshot {
+                width: 100%;
+                border-radius: 5px;
+                margin: 1rem 0;
+                border: #222 4px solid;
+            }
+            .button {
+                display: block;
+                background: #0078ff;
+                color: white;
+                padding: 0.75rem 1.25rem;
+                border-radius: 6px;
+                text-decoration: none;
+                font-size: 1.15rem;
+                width: fit-content;
+                margin: 1rem auto;
+                transition: background 0.05s ease;
+                &:hover { background: #005fcc; }
+            }
+        </style>
     </head>
     <body>
         <header>
@@ -23,7 +93,7 @@
         </header>
         
         <main>
-            <img src="home/screenshot.png" alt="Piano Projector Screenshot" class="screenshot" />
+            <img src="screenshot.png" alt="Piano Projector Screenshot" class="screenshot" />
 
             <a href="/pwa" class="button">Launch online app</a>
 
@@ -95,7 +165,7 @@
         </main>
 
         <footer>
-            &copy; 2025 Piano Projector — Created by Josias Matschulat.
+            &copy; 2025 Josias Matschulat
         </footer>
     </body>
 </html>
