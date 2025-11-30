@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `piano-projector-${CACHE_VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -7,6 +7,7 @@ const PRECACHE_ASSETS = [
   'manifest.json',
   'bundle.js',
   'bundle.css',
+  'assets/font/orbitron.woff2',
   'assets/icon/favicon.png',
   'assets/icon/favicon-192.png',
   'assets/icon/favicon-512.png',
