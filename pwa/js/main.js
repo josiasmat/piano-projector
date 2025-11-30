@@ -932,15 +932,25 @@ function transpose(params={}) {
         settings.octaves = 0;
     }
     if ( params.set ) {
-        if ( Object.hasOwn(params, "semitones") )
-            settings.semitones = params.semitones;
         if ( Object.hasOwn(params, "octaves") )
-            settings.octaves = params.octaves;
-    } else {
+            settings.octaves = clamp(params.octaves, -2, 2);
         if ( Object.hasOwn(params, "semitones") )
-            settings.semitones = clamp(settings.semitones+params.semitones, -11, 11);
+            settings.semitones = clamp(params.semitones, -11, 11);
+    } else {
         if ( Object.hasOwn(params, "octaves") )
             settings.octaves = clamp(settings.octaves+params.octaves, -2, 2);
+        if ( Object.hasOwn(params, "semitones") ) {
+            settings.semitones = settings.semitones+params.semitones;
+            while ( settings.semitones > 11 && settings.octaves < 2 ) {
+                settings.octaves += 1;
+                settings.semitones -= 12;
+            }
+            while ( settings.semitones < -11 && settings.octaves > -2) {
+                settings.octaves -= 1;
+                settings.semitones += 12;
+            }
+            settings.semitones = clamp(settings.semitones, -11, 11);
+        }
     }
     if ( previous_transpose != settings.transpose ) 
         sound.stopAll(true);
