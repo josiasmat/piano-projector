@@ -16,7 +16,8 @@ const buildCSS = await esbuild.context({
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
     sourcemap: !productionMode,
-    outfile: 'pwa/bundle.css'
+    outfile: 'pwa/bundle.css',
+    external: [ '*.woff2' ],
 });
 
 // bundle JS

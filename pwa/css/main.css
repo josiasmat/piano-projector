@@ -16,15 +16,19 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-/* Import title text font */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
-
 /* Import Shoelace stylesheet */
 @import url('@shoelace-style/shoelace/dist/themes/dark.css');
 
 /* Import other css files */
-@import url('./piano.css');
-@import url('./toolbar.css');
+@import url('piano.css');
+@import url('toolbar.css');
+
+@font-face {
+    font-family: 'Orbitron';
+    src: url('assets/font/orbitron.woff2');
+    font-weight: normal;
+    font-style: normal;
+}
 
 :root {
     touch-action: none;
@@ -85,7 +89,6 @@ body {
     opacity: 60%;
     font-family: "Orbitron", serif;
     font-size: 140%;
-    font-weight: lighter;
     vertical-align: middle;
     margin-right: 10px;
 }
