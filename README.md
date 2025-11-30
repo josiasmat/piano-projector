@@ -2,7 +2,7 @@
 
 A tool to display a music keyboard on screen and control it through a MIDI controller.
 
-![Screenshot](/home/screenshot.png)
+![Screenshot](/screenshot.webp)
 
 ## Online usage
 
