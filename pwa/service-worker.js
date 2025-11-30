@@ -1,62 +1,50 @@
-const CACHE_VERSION = 'v4';
-const CACHE_NAME = `piano-projector-${CACHE_VERSION}`;
+// Dynamically import cache config (production only)
+let CACHE_NAME = null;
+let PRECACHE_ASSETS = [];
 
-const PRECACHE_ASSETS = [
-  './',
-  'index.html',
-  'manifest.json',
-  'bundle.js',
-  'bundle.css',
-  'assets/font/orbitron.woff2',
-  'assets/icon/favicon.png',
-  'assets/icon/favicon-192.png',
-  'assets/icon/favicon-512.png',
-  'assets/svg/lped.svg',
-  'assets/svg/mped.svg',
-  'assets/svg/rped.svg',
-  'assets/svg/midikbd.svg',
-  'assets/shoelace/assets/icons/arrow-counterclockwise.svg',
-  'assets/shoelace/assets/icons/arrow-down-up.svg',
-  'assets/shoelace/assets/icons/ban.svg',
-  'assets/shoelace/assets/icons/chevron-down.svg',
-  'assets/shoelace/assets/icons/chevron-up.svg',
-  'assets/shoelace/assets/icons/circle-fill.svg',
-  'assets/shoelace/assets/icons/dash.svg',
-  'assets/shoelace/assets/icons/exclamation-diamond.svg',
-  'assets/shoelace/assets/icons/exclamation-octagon.svg',
-  'assets/shoelace/assets/icons/hand-index.svg',
-  'assets/shoelace/assets/icons/keyboard.svg',
-  'assets/shoelace/assets/icons/music-note-beamed.svg',
-  'assets/shoelace/assets/icons/plus.svg',
-  'assets/shoelace/assets/icons/power.svg',
-  'assets/shoelace/assets/icons/question-lg.svg',
-  'assets/shoelace/assets/icons/tags-fill.svg',
-  'assets/sf/organ.sf2'
-];
+try {
+  const cacheConfig = await (async () => {
+    const response = await fetch('./cache.json');
+    return response.json();
+  })();
+  CACHE_NAME = cacheConfig.cacheName;
+  PRECACHE_ASSETS = cacheConfig.precacheAssets;
+} catch (error) {
+  console.warn('service worker caching disabled: ', error);
+}
 
-// Install: open cache & add assets
+// Install: open cache & add assets (only if cache config loaded)
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_ASSETS))
-  );
+  if (CACHE_NAME && PRECACHE_ASSETS.length > 0) {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_ASSETS))
+    );
+  }
   self.skipWaiting();
 });
 
-// Activate: delete old caches
+// Activate: delete old caches (only if cache config loaded)
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys
-        .filter(k => k !== CACHE_NAME)
-        .map(k => caches.delete(k))
+  if (CACHE_NAME) {
+    event.waitUntil(
+      caches.keys().then(keys =>
+        Promise.all(keys
+          .filter(k => k !== CACHE_NAME)
+          .map(k => caches.delete(k))
+        )
       )
-    )
-  );
+    );
+  }
   self.clients.claim();
 });
 
 // Fetch: cache-first for static, network-first for navigation
 self.addEventListener('fetch', event => {
+  if (!CACHE_NAME) {
+    // No caching in development mode
+    return;
+  }
+
   const request = event.request;
 
   // Navigation requests → network first
