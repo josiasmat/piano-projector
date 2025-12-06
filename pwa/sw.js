@@ -1,5 +1,5 @@
 // production service worker template
-const CACHE_NAME = "pp-a317802207efa8bb";
+const CACHE_NAME = "pp-6b2ec5ea81fc0354";
 const PRECACHE_ASSETS = [
   "./",
   "index.html",
@@ -53,15 +53,15 @@ self.addEventListener('activate', event => {
         // After removing old caches, try to force a reload of open pages
         return self.clients.matchAll({ type: 'window', includeUncontrolled: true })
         .then(windowClients => {
+          // Instead of forcing a navigation via `client.navigate()` (which
+          // can cause navigation races or blank screens on some Android PWAs),
+          // message clients and let the page reload itself. This is safer and
+          // allows the page to handle UI/visibility concerns before reloading.
           for (const client of windowClients) {
-            // Prefer navigate when available (forces a full navigation/reload)
-            if (typeof client.navigate === 'function') {
-              client.navigate(client.url).catch(() => {
-                // ignore navigation errors — nothing else to do here
-              });
-            } else {
-              // Fallback: send a message so the page can reload itself if it listens
+            try {
               client.postMessage && client.postMessage({ type: 'SW_RELOAD' });
+            } catch (e) {
+              // ignore any messaging errors
             }
           }
         });

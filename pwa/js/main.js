@@ -2157,6 +2157,30 @@ function initializeApp() {
 
 }
 
+// Service worker message handler: listen for reload requests from the SW.
+// Use visibilityState to avoid reloading while the app is resumed in background,
+// which can cause blank-screen races on some Android PWAs.
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data && event.data.type === 'SW_RELOAD') {
+            const doReload = () => {
+                // small timeout helps ensure any in-progress state settles
+                setTimeout(() => window.location.reload(), 50);
+            };
+
+            if (document.visibilityState === 'visible') {
+                doReload();
+            } else {
+                const onVisible = () => {
+                    document.removeEventListener('visibilitychange', onVisible);
+                    doReload();
+                };
+                document.addEventListener('visibilitychange', onVisible);
+            }
+        }
+    });
+}
+
 Promise.allSettled([
     customElements.whenDefined('sl-dropdown'),
     customElements.whenDefined('sl-button'),
