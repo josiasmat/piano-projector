@@ -17,7 +17,23 @@ self.addEventListener('activate', event => {
       Promise.all(keys
         .filter(k => k !== CACHE_NAME)
         .map(k => caches.delete(k))
-      )
+      ).then(() => {
+        // After removing old caches, try to force a reload of open pages
+        return self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then(windowClients => {
+          for (const client of windowClients) {
+            // Prefer navigate when available (forces a full navigation/reload)
+            if (typeof client.navigate === 'function') {
+              client.navigate(client.url).catch(() => {
+                // ignore navigation errors — nothing else to do here
+              });
+            } else {
+              // Fallback: send a message so the page can reload itself if it listens
+              client.postMessage && client.postMessage({ type: 'SW_RELOAD' });
+            }
+          }
+        });
+      })
     )
   );
   self.clients.claim();
