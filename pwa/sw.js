@@ -1,5 +1,5 @@
 // production service worker template
-const CACHE_NAME = "pp-6b2ec5ea81fc0354";
+const CACHE_NAME = "pp-3df3ef4e67539f1f";
 const PRECACHE_ASSETS = [
   "./",
   "index.html",
@@ -59,7 +59,7 @@ self.addEventListener('activate', event => {
           // allows the page to handle UI/visibility concerns before reloading.
           for (const client of windowClients) {
             try {
-              client.postMessage && client.postMessage({ type: 'SW_RELOAD' });
+              client.postMessage?.({ type: 'SW_RELOAD' });
             } catch (e) {
               // ignore any messaging errors
             }

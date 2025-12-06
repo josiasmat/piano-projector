@@ -27,7 +27,7 @@ self.addEventListener('activate', event => {
           // allows the page to handle UI/visibility concerns before reloading.
           for (const client of windowClients) {
             try {
-              client.postMessage && client.postMessage({ type: 'SW_RELOAD' });
+              client.postMessage?.({ type: 'SW_RELOAD' });
             } catch (e) {
               // ignore any messaging errors
             }

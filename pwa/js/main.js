@@ -2165,7 +2165,7 @@ if ('serviceWorker' in navigator) {
         if (event.data && event.data.type === 'SW_RELOAD') {
             const doReload = () => {
                 // small timeout helps ensure any in-progress state settles
-                setTimeout(() => window.location.reload(), 50);
+                setTimeout(() => window.location.reload(), 1000);
             };
 
             if (document.visibilityState === 'visible') {
