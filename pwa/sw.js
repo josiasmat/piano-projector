@@ -75,9 +75,10 @@ async function reloadClients() {
 }
 
 async function activateNewServiceWorker() {
+  const clients = await getUncontrolledClientsList();
+  await clients.claim();
   await reloadClients();
   await deleteOldCaches();
-  await self.clients.claim();
 }
 
 async function get(request) {
