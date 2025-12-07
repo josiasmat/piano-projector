@@ -41,13 +41,14 @@ self.addEventListener("install", event => {
 
 // Activate: reload clients and delete old caches
 self.addEventListener("activate", event => {
-  event.waitUntil(reloadClients().then(deleteOldCaches));
+  event.waitUntil(activateNewServiceWorker());
 });
 
 // Fetch: cache-first
 self.addEventListener("fetch", event => {
   event.respondWith(get(event.request));
 });
+
 
 async function createNewCacheAndActivate() {
   const cache = await caches.open(CACHE_NAME);
@@ -69,9 +70,14 @@ async function getUncontrolledClientsList() {
 }
 
 async function reloadClients() {
-  getUncontrolledClientsList().forEach(c => {
-    c.navigate(c.url).catch(() => {})
-  });
+  const list = await getUncontrolledClientsList();
+  await Promise.all(list.map(c => c.navigate(c.url).catch(() => {})));
+}
+
+async function activateNewServiceWorker() {
+  await reloadClients();
+  await deleteOldCaches();
+  await self.clients.claim();
 }
 
 async function get(request) {
