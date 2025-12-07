@@ -1,5 +1,5 @@
 // production service worker template
-const CACHE_NAME = "pp-3df3ef4e67539f1f";
+const CACHE_NAME = "pp-a317802207efa8bb";
 const PRECACHE_ASSETS = [
   "./",
   "index.html",
@@ -49,23 +49,7 @@ self.addEventListener('activate', event => {
       Promise.all(keys
         .filter(k => k !== CACHE_NAME)
         .map(k => caches.delete(k))
-      ).then(() => {
-        // After removing old caches, try to force a reload of open pages
-        return self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-        .then(windowClients => {
-          // Instead of forcing a navigation via `client.navigate()` (which
-          // can cause navigation races or blank screens on some Android PWAs),
-          // message clients and let the page reload itself. This is safer and
-          // allows the page to handle UI/visibility concerns before reloading.
-          for (const client of windowClients) {
-            try {
-              client.postMessage?.({ type: 'SW_RELOAD' });
-            } catch (e) {
-              // ignore any messaging errors
-            }
-          }
-        });
-      })
+      )
     )
   );
   self.clients.claim();
