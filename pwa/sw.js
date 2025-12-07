@@ -34,49 +34,35 @@ const PRECACHE_ASSETS = [
   "assets/svg/rped.svg"
 ];
 
+async function createNewCache() {
+  const cache = await caches.open(CACHE_NAME);
+  await cache.addAll(PRECACHE_ASSETS);
+}
+
+async function deleteOldCaches() {
+  const deleteCache = async(k) => await caches.delete(k);
+  const keys = await caches.keys();
+  const deletion_list = keys.filter((k) => k !== CACHE_NAME);
+  await Promise.all(deletion_list.map(deleteCache));
+}
+
+async function get(request) {
+  return await caches.match(request) ?? fetch(request);
+}
+
 // Install: open cache & add assets
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_ASSETS))
-  );
-  self.skipWaiting();
+  event.waitUntil(createNewCache());
+  // self.skipWaiting();
 });
 
 // Activate: delete old caches
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys
-        .filter(k => k !== CACHE_NAME)
-        .map(k => caches.delete(k))
-      )
-    )
-  );
+  event.waitUntil(deleteOldCaches());
   self.clients.claim();
 });
 
-// Fetch: cache-first for static, network-first for navigation
-self.addEventListener('fetch', event => {
-  const request = event.request;
-
-  // Navigation requests → network first
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() => caches.match('/pwa/index.html'))
-    );
-    return;
-  }
-
-  // For static files → cache first
-  event.respondWith(
-    caches.match(request).then(response =>
-      response ||
-      fetch(request).then(fetchRes => {
-        return caches.open(CACHE_NAME).then(cache => {
-          cache.put(request, fetchRes.clone());
-          return fetchRes;
-        });
-      })
-    )
-  );
+// Fetch: cache-first
+self.addEventListener("fetch", event => {
+  event.respondWith(get(event.request));
 });
