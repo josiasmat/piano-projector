@@ -34,6 +34,21 @@ const PRECACHE_ASSETS = [
   "assets/svg/rped.svg"
 ];
 
+// Install: open cache & add assets
+self.addEventListener("install", event => {
+  event.waitUntil(createNewCacheAndActivate());
+});
+
+// Activate: reload clients and delete old caches
+self.addEventListener("activate", event => {
+  event.waitUntil(reloadClients().then(deleteOldCaches));
+});
+
+// Fetch: cache-first
+self.addEventListener("fetch", event => {
+  event.respondWith(get(event.request));
+});
+
 async function createNewCacheAndActivate() {
   const cache = await caches.open(CACHE_NAME);
   await cache.addAll(PRECACHE_ASSETS);
@@ -47,29 +62,18 @@ async function deleteOldCaches() {
   await Promise.all(deletion_list.map(deleteCache));
 }
 
+async function getUncontrolledClientsList() {
+  const all = await self.clients.matchAll({includeUncontrolled: true});
+  const controlled = await self.clients.matchAll({includeUncontrolled: false});
+  return all.filter(c => !controlled.some(cc => cc.id === c.id));
+}
+
 async function reloadClients() {
-  const client_list = await self.clients.matchAll({includeUncontrolled: true});
-  client_list.forEach(client => {
-    if ( !client.controller ) 
-      client.navigate(client.url).catch(() => {})
+  getUncontrolledClientsList().forEach(c => {
+    c.navigate(c.url).catch(() => {})
   });
 }
 
 async function get(request) {
   return await caches.match(request) ?? fetch(request);
 }
-
-// Install: open cache & add assets
-self.addEventListener('install', event => {
-  event.waitUntil(createNewCacheAndActivate());
-});
-
-// Activate: reload clients and delete old caches
-self.addEventListener('activate', event => {
-  event.waitUntil(reloadClients().then(deleteOldCaches));
-});
-
-// Fetch: cache-first
-self.addEventListener("fetch", event => {
-  event.respondWith(get(event.request));
-});
