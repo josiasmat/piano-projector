@@ -1,5 +1,5 @@
 // production service worker template
-const CACHE_NAME = "pp-4345d4031a4c9a1e";
+const CACHE_NAME = "pp-a52c09743fdeb98b";
 const PRECACHE_ASSETS = [
   "./",
   "index.html",
@@ -59,7 +59,7 @@ async function doInstall() {
 async function doActivate() {
   await self.clients.claim();
   await deleteOldCaches();
-  reloadClients(self.clients.matchAll({ type: 'window' }));
+  reloadClients();
 }
 
 async function doFetch(request) {
@@ -74,6 +74,7 @@ async function deleteOldCaches() {
   await Promise.all(deletion_list.map(deleteCache));
 }
 
-async function reloadClients(clients) {
+async function reloadClients() {
+  const clients = await self.clients.matchAll({type: 'window'})
   await Promise.all(clients.map(c => c.navigate(c.url).catch(() => {})));
 }
