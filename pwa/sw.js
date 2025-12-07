@@ -1,5 +1,5 @@
 // production service worker template
-const CACHE_NAME = "pp-670bddfa6f882c5e";
+const CACHE_NAME = "pp-9e68fd8290050f6f";
 const PRECACHE_ASSETS = [
   "./",
   "index.html",
@@ -36,25 +36,36 @@ const PRECACHE_ASSETS = [
 
 // Install: open cache & add assets
 self.addEventListener("install", event => {
-  event.waitUntil(createNewCacheAndActivate());
+  event.waitUntil(doInstall());
 });
 
 // Activate: reload clients and delete old caches
 self.addEventListener("activate", event => {
-  event.waitUntil(activateNewServiceWorker());
+  event.waitUntil(doActivate());
 });
 
 // Fetch: cache-first
 self.addEventListener("fetch", event => {
-  event.respondWith(get(event.request));
+  event.respondWith(doFetch(event.request));
 });
 
 
-async function createNewCacheAndActivate() {
+async function doInstall() {
   const cache = await caches.open(CACHE_NAME);
   await cache.addAll(PRECACHE_ASSETS);
   self.skipWaiting();
 }
+
+async function doActivate() {
+  await self.clients.claim();
+  await deleteOldCaches();
+  reloadClients(self.clients);
+}
+
+async function doFetch(request) {
+  return await caches.match(request) ?? fetch(request);
+}
+
 
 async function deleteOldCaches() {
   const deleteCache = async(k) => await caches.delete(k);
@@ -63,24 +74,6 @@ async function deleteOldCaches() {
   await Promise.all(deletion_list.map(deleteCache));
 }
 
-async function getUncontrolledClientsList() {
-  const all = await self.clients.matchAll({includeUncontrolled: true});
-  const controlled = await self.clients.matchAll({includeUncontrolled: false});
-  return all.filter(c => !controlled.some(cc => cc.id === c.id));
-}
-
-async function reloadClients() {
-  const list = await getUncontrolledClientsList();
-  await Promise.all(list.map(c => c.navigate(c.url).catch(() => {})));
-}
-
-async function activateNewServiceWorker() {
-  const clients = await getUncontrolledClientsList();
-  await clients.claim();
-  await reloadClients();
-  await deleteOldCaches();
-}
-
-async function get(request) {
-  return await caches.match(request) ?? fetch(request);
+async function reloadClients(clients) {
+  await Promise.all(clients.map(c => c.navigate(c.url).catch(() => {})));
 }
