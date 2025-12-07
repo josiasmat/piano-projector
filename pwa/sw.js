@@ -1,5 +1,5 @@
 // production service worker template
-const CACHE_NAME = "pp-9e68fd8290050f6f";
+const CACHE_NAME = "pp-4345d4031a4c9a1e";
 const PRECACHE_ASSETS = [
   "./",
   "index.html",
@@ -59,7 +59,7 @@ async function doInstall() {
 async function doActivate() {
   await self.clients.claim();
   await deleteOldCaches();
-  reloadClients(self.clients);
+  reloadClients(self.clients.matchAll({ type: 'window' }));
 }
 
 async function doFetch(request) {

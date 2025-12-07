@@ -27,7 +27,7 @@ async function doInstall() {
 async function doActivate() {
   await self.clients.claim();
   await deleteOldCaches();
-  reloadClients(self.clients);
+  reloadClients(self.clients.matchAll({ type: 'window' }));
 }
 
 async function doFetch(request) {
