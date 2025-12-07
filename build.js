@@ -108,16 +108,23 @@ if (productionMode) {
 
   // Compute hash of all precache assets
   const hash = createHash('md5');
-  for (const asset of precacheAssets) {
-    if (asset === './') { continue; }
-    const assetPath = resolve('pwa', asset);
+  const computeHash = (path) => {
     try {
-      const content = readFileSync(assetPath);
+      const content = readFileSync(path);
       hash.update(content);
     } catch (error) {
       console.warn(`unable to read ${asset} for hashing:`, error.message);
     }
   }
+
+  computeHash(SW_TEMPLATE_FILE);
+
+  for (const asset of precacheAssets) {
+    if (asset === './') { continue; }
+    const assetPath = resolve('pwa', asset);
+    computeHash(assetPath);
+  }
+  
   const cacheName = 'pp-' + hash.digest('hex').slice(0, 16);
 
   // Generate a production service-worker.js by filling the template
