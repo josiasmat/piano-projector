@@ -34,9 +34,10 @@ const PRECACHE_ASSETS = [
   "assets/svg/rped.svg"
 ];
 
-async function createNewCache() {
+async function createNewCacheAndActivate() {
   const cache = await caches.open(CACHE_NAME);
   await cache.addAll(PRECACHE_ASSETS);
+  self.skipWaiting();
 }
 
 async function deleteOldCaches() {
@@ -46,20 +47,26 @@ async function deleteOldCaches() {
   await Promise.all(deletion_list.map(deleteCache));
 }
 
+async function reloadClients() {
+  const client_list = await self.clients.matchAll({includeUncontrolled: true});
+  client_list.forEach(client => {
+    if ( !client.controller ) 
+      client.navigate(client.url).catch(() => {})
+  });
+}
+
 async function get(request) {
   return await caches.match(request) ?? fetch(request);
 }
 
 // Install: open cache & add assets
 self.addEventListener('install', event => {
-  event.waitUntil(createNewCache());
-  // self.skipWaiting();
+  event.waitUntil(createNewCacheAndActivate());
 });
 
-// Activate: delete old caches
+// Activate: reload clients and delete old caches
 self.addEventListener('activate', event => {
-  event.waitUntil(deleteOldCaches());
-  self.clients.claim();
+  event.waitUntil(reloadClients().then(deleteOldCaches));
 });
 
 // Fetch: cache-first
