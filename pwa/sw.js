@@ -1,5 +1,5 @@
 // production service worker template
-const CACHE_NAME = "pp-c22788bfa84b5645";
+const CACHE_NAME = "pp-f2a400dd4f5e0999";
 const PRECACHE_ASSETS = [
   "./",
   "index.html",

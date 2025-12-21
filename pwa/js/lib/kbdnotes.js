@@ -67,9 +67,9 @@ export const KbdNotes = {
         return internal_state.pressed_keys.has(note);
     },
 
-    isNoteSustained(note) {
+    isNoteSustained(note, include_pedal = true) {
         return internal_state.pressed_keys.has(note)
-            || internal_state.sustain_keys.has(note);
+            || (include_pedal && internal_state.sustain_keys.has(note));
     },
 
     isSustainActive() {
@@ -81,7 +81,7 @@ export const KbdNotes = {
         this.onReset?.();
     }
 
-}
+};
 
 
 const internal_state = {
@@ -105,7 +105,7 @@ const internal_state = {
         this.sustain_keys.clear();
         this.sustain = false;
     }
-}
+};
 
 
 function kbdInputEnable() {

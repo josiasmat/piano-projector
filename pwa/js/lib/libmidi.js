@@ -293,7 +293,7 @@ export const Midi = {
         return midi_state.cc[CC_SOFT_PED];
     },
 
-}
+};
 
 
 function onMidiPortStateChange(e) {
@@ -332,7 +332,7 @@ const midi_state = {
         this.sustain = Array(128).fill(false);
         this.sostenuto = Array(128).fill(false);
     }
-}
+};
 
 
 /** @param {MIDIMessageEvent} ev */
@@ -358,7 +358,7 @@ function handleMIDIEvent(ev) {
 /** @param {Number} key */
 function setNoteOn(key, velocity) {
     // console.log(`Note on: ${key}`);
-    const pc = key%12.
+    const pc = key%12;
     if ( !midi_state.keys[key] ) {
         midi_state.keys[key] = Date.now();
         midi_state.pcs[pc] += 1;
@@ -432,7 +432,7 @@ function setAllNotesOff() {
 }
 
 
-function midiPanic() {
+export function midiPanic() {
     setAllNotesOff();
     midi_state.reset();
 }
@@ -447,7 +447,7 @@ export function noteToMidi(note_str) {
         'c': 0, 'c#': 1, 'db': 1, 'd': 2, 'd#': 3, 'eb': 3, 'e': 4, 'fb': 4, 
         'e#': 5, 'f': 5, 'f#': 6, 'gb': 6, 'g': 7, 'g#': 8, 'ab': 8, 'a': 9,
         'a#': 10, 'bb': 10, 'b': 11, 'b#': 12, 'cb': -1
-    }
+    };
     const pc = NOTES[note_str.slice(0, note_str.length-1).toLowerCase()];
     const octave = parseInt(note_str.slice(note_str.length-1));
     return pc + 12*(octave+1);

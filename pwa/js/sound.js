@@ -16,109 +16,72 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { 
-    CacheStorage as SmplrCacheStorage, 
-    SplendidGrandPiano, 
-    ElectricPiano,
-    Versilian,
-    Soundfont2Sampler
-} from 'smplr/dist/index.mjs';
-
-import { SoundFont2 } from "soundfont2";
+import { SmplrPlayer } from "./lib/libsound.js";
+import { settings, writeSettings } from "./settings.js";
+import { updateToolbar, updateSoundMenu } from "./toolbar.js";
+import { Midi } from "./lib/libmidi.js";
+import KbdNotes from "./lib/kbdnotes.js";
 
 
-/** @type {AudioContext?} */
-let audio_ctx = null;
+export const sound = {
+    player: new SmplrPlayer(),
+    led: null,
+    fail_alert: document.getElementById("alert-sound-connection-fail"),
 
+    get type() { return this.player.name; },
+    get loaded() { return this.player.loaded; },
+    get loading() { return this.type && !this.loaded; },
 
-class InternalSoundPlayer {
-    loaded = false;
-    name = "";
-    default_vel = 100;
+    play(note, vel=100) {
+        this.player.play(note+settings.transpose, vel);
+    },
 
-    load(name, callback_ok = null, callback_fail = null) {};
-    unload() {};
+    stop(note, force) {
+        if ( force || !isNoteSustained(note) 
+                && !( this.type == "apiano" && note+settings.transpose > 88 ) )
+            this.player.stop(note+settings.transpose);
+    },
 
-    play(note, vel=this.default_vel) {};
-    stop(note) {};
-    stopAll() {};
-}
+    stopAll(force) {
+        if ( force )
+            this.player.stopAll();
+        else
+            for ( let key = 0; key < 128; key++ )
+                this.stop(key, false);
+    },
 
-export class SmplrPlayer extends InternalSoundPlayer {
-    player = null;
-    sfCreator = () => { (data) => new SoundFont2(data) };
-    instruments = {
-        apiano:  { loader: SplendidGrandPiano, options: { volume: 90 } },
-        epiano1: { loader: ElectricPiano, 
-                   options: { instrument: "TX81Z", volume: 127 } },
-        epiano2: { loader: ElectricPiano, 
-                   options: { instrument: "WurlitzerEP200", volume: 70 } },
-        epiano3: { loader: ElectricPiano, 
-                   options: { instrument: "CP80", volume: 70 } },
-        harpsi:  { loader: Versilian, 
-                   options: { instrument: "Chordophones/Zithers/Harpsichord, Unk", volume: 100 } },
-        organ1:  { loader: Soundfont2Sampler, 
-                   options: { createSoundfont: (data) => new SoundFont2(data), 
-                              url: "assets/sf/organ.sf2", patch: "b3slow", volume: 70 } },
-        organ2:  { loader: Soundfont2Sampler, 
-                   options: { createSoundfont: (data) => new SoundFont2(data), 
-                              url: "assets/sf/organ.sf2", patch: "b3fast", volume: 70 } },
-        organ3:  { loader: Soundfont2Sampler, 
-                   options: { createSoundfont: (data) => new SoundFont2(data), 
-                              url: "assets/sf/organ.sf2", patch: "percorg", volume: 60 } },
-    }
-    cache = new SmplrCacheStorage("sound_v1");;
-
-    play(note, vel=this.default_vel) {
-        if ( this.name == "epiano1" ) note += 12;
-        else if ( this.name == "harpsi" || this.name.startsWith("organ") ) vel = 127;
-        this.player?.start({ note, velocity: vel });
-    }
-
-    stop(note) {
-        if ( this.name == "epiano1" ) note += 12;
-        this.player?.stop(note);
-    }
-
-    stopAll() {
-        this.player?.stop();
-    }
-
-    unload() {
-        this.stopAll();
-        this.player = null;
-        this.name = "";
-        this.loaded = false;
-    }
-
-    load(name, callback_ok = null, callback_fail = null) {
-        this.stopAll();
+    load(name) {
         if ( !name ) {
-            this.unload();
-            callback_ok("");
+            this.player.unload();
+            this.led = 0;
         } else {
-            if ( !Object.hasOwn(this.instruments, name) ) {
-                callback_fail(`Instrument ${name} not found.`);
-                return;
-            }
-            if ( !audio_ctx ) audio_ctx = new AudioContext();
-            const params = this.instruments[name];
-            params.storage = this.cache;
-            this.loaded = false;
-            this.name = name;
-            this.player = new params.loader(audio_ctx, params.options);
-            this.player.load.then(() => {
-                if ( Object.hasOwn(params.options, "patch") )
-                    this.player.loadInstrument(params.options.patch);
-                this.loaded = true;
-                audio_ctx.resume();
-                callback_ok(name);
+            this.led = 1;
+            const interval = setInterval(() => {
+                this.led = ( this.led == 0 ? 1 : 0 );
+                updateToolbar();
+            }, 400);
+            const onLoadFinished = (result) => {
+                clearInterval(interval);
+                this.led = result ? 2 : 0;
+                updateToolbar(); 
+                updateSoundMenu();
+            };
+            this.player.load(name, () => {
+                onLoadFinished(true);
+                writeSettings(this.type);
             }, (reason) => {
-                this.player = null;
-                this.name = "";
-                callback_fail(reason);
+                onLoadFinished(false);
+                this.fail_alert.children[1].innerText = `Reason: ${reason}`;
+                this.fail_alert.toast();
             });
         }
+        updateToolbar();
+        updateSoundMenu();
     }
 
+};
+
+
+function isNoteSustained(note) {
+    return Midi.isNoteOn(note, "both") || KbdNotes.isNoteSustained(note);
 }

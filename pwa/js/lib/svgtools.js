@@ -39,7 +39,7 @@ export const SvgTools = {
      * @returns {SVGSVGElement}
      */
     createRootElement(attributes = {}) {
-        const svg = document.createElementNS(SVGNS, "svg")
+        const svg = document.createElementNS(SVGNS, "svg");
         svg.setAttribute("version", "1.1");
         svg.setAttribute("xmlns", SVGNS);
         for ( const [attr, value] of Object.entries(attributes) )
@@ -176,6 +176,6 @@ export const SvgTools = {
         return marker;
     },
 
-}
+};
 
 export default SvgTools;

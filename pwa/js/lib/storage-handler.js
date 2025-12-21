@@ -75,7 +75,7 @@ class GenericStorageHandler {
             if ( !this.isAvailable() ) throw Error();
             const val = this.#storage_object.getItem(this.#with_prefix(key));
             return (val == null) ? default_value : val;
-        } catch(e) {
+        } catch {
             return default_value;
         }
     }
@@ -90,7 +90,7 @@ class GenericStorageHandler {
         try {
             if ( !this.isAvailable() ) throw Error();
             this.#storage_object.setItem(this.#with_prefix(key), value);
-        } catch(e) {
+        } catch {
             return false;
         }
         return true;
@@ -151,7 +151,7 @@ class GenericStorageHandler {
         try {
             if ( !this.isAvailable() ) throw Error();
             this.#storage_object.removeItem(this.#with_prefix(key));
-        } catch(e) {
+        } catch {
             return false;
         }
         return true;

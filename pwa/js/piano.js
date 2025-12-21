@@ -16,992 +16,616 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-const KBD_HEIGHT = 500;
-const STROKE_WIDTH = 1.3;
-
-const WHITE_KEY_GAP = 1.8;
-const BLACK_KEY_GAP = 2.5;
-
-const BK_OFFSET = 0.13;
-const WHITE_KEY_PRESSED_FACTOR = 1.01;
-const EXTRA_BOTTOM_SPACE = 5;
-
-const BLACK_KEY_SIDE_BEVEL = 3.0;
-
-import SvgTools from "./svgtools.js";
-
-const BK_OFFSETS = [,-BK_OFFSET,,+BK_OFFSET,,,-1.4*BK_OFFSET,,0,,+1.4*BK_OFFSET,];
+import { is_mobile, is_safari } from "./common.js";
+import { drawPianoKeyboard, drawPianoKeyboardLP } from "./pianodraw.js";
+import { clamp, range, degToRad} from "./lib/utils.js";
+import Midi, { noteToMidi } from "./lib/libmidi.js";
+import { toolbar } from "./toolbar.js";
+import { settings, writeSettings } from "./settings.js";
+import KbdNotes from "./lib/kbdnotes.js";
+import { setKbdNavVerticalPosition } from "./keyboard.js";
+import { sound } from "./sound.js";
+import { 
+    getEnglishLabel, getFrequencyLabel, getGermanLabel, getItalianLabel, 
+    isLabelingModeOn, isMarkingModeOn, isStickerModeOn 
+} from "./markings.js";
 
 
-/**
- * @param {SVGElement} svg - SVG element where to draw the piano keyboard
- * @param {[SVGElement?]} keys - Array of keys
- * @param {Object} options - Object that acceps the following properties:
- *      - first_key (integer)
- *      - last_key (integer)
- *      - height_factor (float)
- *      - perspective (boolean)
- *      - top_felt (boolean)
+export const piano = {
+    /** @type {SVGElement} */
+    svg: document.querySelector("svg#piano"),
+    /** @type {HTMLDivElement} */
+    container: document.getElementById("main-area"),
+    /** @type {number?} */
+    first_key: null,
+    /** @type {number?} */
+    last_key: null,
+    /** @type {[SVGElement?]} */
+    keys: Array(128).fill(null),
+    /** @type {[SVGElement?]} */
+    labels: Array(128).fill(null),
+    /** @type {[SVGElement?]} */
+    marking_groups: Array(128).fill(null),
+    /** @type {boolean} */
+    loaded: false,
+    resize: {
+        timeout: null,
+        observer: null,
+    }
+};
+
+const drag = {
+    /** @type {number} 0=off, 1=clicked, 2=started moving.*/
+    state: 0,
+    origin: { x: 0, y: 0 },
+    previous_offset: { x: 0, y: 0 }
+};
+
+export const touch = {
+    enabled: false,
+    /** @type {Map<number,Set<number>} */
+    points: new Map(),
+    /** @param {number?} pointer_id @returns {boolean} */
+    started(pointer_id=null) {
+        if ( pointer_id !== null )
+            return this.points.has(pointer_id);
+        else
+            return ( this.points.size > 0 );
+    },
+    /** @param {number} note @returns {boolean} */
+    has_note(note) {
+        for ( const entry of this.points.values() )
+            if ( entry.has(note) ) return true;
+        return false;
+    },
+    /** @param {number} pointer_id @param {Set<number>} notes */
+    add(pointer_id, notes) {
+        if ( this.points.has(pointer_id) )
+            notes = this.points.get(pointer_id).union(notes);
+        this.points.set(pointer_id, notes);
+        for ( const note of notes.values() ) {
+            sound.play(note);
+            updatePianoKey(note);
+        }
+    },
+    /** 
+     * @param {number} pointer_id 
+     * @param {Set<number>} notes 
+     * @returns {number} +1 if note(s) added; -1 if note(s) removed; 0 if no change */
+    change(pointer_id, notes) {
+        let changed = 0;
+        const previous_notes = new Set().union(this.points.get(pointer_id));
+        this.points.set(pointer_id, notes);
+        for ( const old_note of previous_notes.values() )
+            if ( !notes.has(old_note) ) {
+                sound.stop(old_note);
+                updatePianoKey(old_note);
+                changed = -1;
+            }
+        for ( const new_note of notes.values() )
+            if ( !previous_notes.has(new_note) ) {
+                sound.play(new_note);
+                updatePianoKey(new_note);
+                changed = 1;
+            }
+        return changed;
+    },
+    /** @param {number} pointer_id */
+    remove(pointer_id) {
+        const notes = this.points.get(pointer_id);
+        this.points.delete(pointer_id);
+        for ( const note of notes.values() ) {
+            if ( !this.has_note(note) ) sound.stop(note);
+            updatePianoKey(note);
+        }
+    },
+    reset() {
+        this.points.clear();
+        sound.stopAll();
+    },
+    enable() {
+        this.enabled = true;
+        updatePianoCursor();
+    },
+    disable() {
+        this.reset();
+        this.enabled = false;
+        updatePianoCursor();
+    },
+    last_vibration_time: 0
+};
+
+
+export function createPianoKeyboard() {
+    const first_last_notes = new Map([
+        [88, ["a0", "c8"]],
+        [61, ["c2", "c7"]],
+        [49, ["c2", "c6"]],
+        [37, ["c3", "c6"]],
+        [25, ["c3", "c5"]],
+        [20, ["f3", "c5"]]
+    ]).get(settings.number_of_keys);
+    piano.first_key = noteToMidi(first_last_notes[0]);
+    piano.last_key = noteToMidi(first_last_notes[1]);
+    const options = {
+        height_factor: settings.height_factor,
+        perspective: settings.perspective,
+        top_felt: settings.top_felt,
+        first_key: piano.first_key,
+        last_key: piano.last_key
+    };
+    if ( settings.lowperf )
+        drawPianoKeyboardLP(piano.svg, piano.keys, options);
+    else
+        drawPianoKeyboard(piano.svg, piano.keys, options);
+    for ( const [i,key_elm] of piano.keys.entries() ) {
+        piano.marking_groups[i] = key_elm?.querySelector(".key-marker-group");
+        piano.labels[i] = key_elm?.querySelector(".key-label");
+    }
+    piano.loaded = true;
+    updatePiano();
+}
+
+
+export function updatePianoTopFelt() {
+    document.getElementById("top-felt")?.toggleAttribute("hidden", !settings.top_felt);
+}
+
+
+/** @param {number} key - Key index */
+export function updatePianoKey(key) {
+    const elm = piano.keys[key];
+    if ( elm ) {
+        const j = key-settings.transpose;
+        const touched = touch.has_note(key);
+        const key_pressed = touched || Midi.isKeyPressed(j) || KbdNotes.isNotePressed(j);
+        const note_on = key_pressed 
+                        || Midi.isNoteOn(j, (settings.pedals ? "both" : "none"))
+                        || KbdNotes.isNoteSustained(j, settings.pedals);
+        elm.classList.toggle("active", note_on);
+        elm.classList.toggle("pressed", key_pressed);
+        elm.classList.toggle("dim", settings.pedal_dim && note_on && !key_pressed);
+        const dn = key_pressed ? "d1" : "d0";
+        for ( const child of elm.children )
+            if ( child.hasAttribute(dn) )
+                child.setAttribute("d", child.getAttribute(dn));
+        updatePianoKeyMarkings(key, note_on, key_pressed);
+    }
+}
+
+
+/** @param {number} [keys] */
+export function updatePianoKeys(keys) {
+    if ( keys )
+        for ( const k of keys ) updatePianoKey(k);
+    else
+        for ( let k = 0; k < 128; k++ ) updatePianoKey(k);
+}
+
+
+function updatePianoKeyMarkings(key_num, is_on, is_pressed) {
+
+    const key_elm = piano.keys[key_num];
+    const group_elm = piano.marking_groups[key_num];
+    const label_elm = piano.labels[key_num];
+
+    function setLabelText() {
+        let text = "";
+        switch ( settings.labels.type ) {
+            case "pc" : 
+                text = `${key%12}`; break;
+            case "english": 
+                text = getEnglishLabel(key_num); break;
+            case "german": 
+                text = getGermanLabel(key_num); break;
+            case "italian": 
+                text = getItalianLabel(key_num); break;
+            case "freq":
+                text = getFrequencyLabel(key_num); break;
+            default: 
+                text = `${key_num}`;
+        }
+
+        const lines = text.split('\n');
+        for ( const [i,tspan] of Array.from(label_elm.children).entries() )
+            tspan.textContent = lines[i] ?? '';
+    }
+
+    if ( key_elm ) {
+
+        const has_fixed_label = settings.labels.keys.has(key_num);
+        const label_visible = has_fixed_label || ( settings.labels.played && is_on );
+        const label_temporary = settings.labels.played && !has_fixed_label;
+
+        // if ( label_visible ) setLabelText();
+        setLabelText();
+
+        key_elm.classList.toggle("label-visible", label_visible);
+        key_elm.classList.toggle("has-fixed-label", has_fixed_label);
+        key_elm.classList.toggle("has-temporary-label", label_temporary);
+
+        label_elm.classList.toggle("rotated", settings.labels.type == "freq");
+
+        const has_sticker = settings.stickers.keys.has(key_num);
+        const sticker_color = has_sticker ? settings.stickers.keys.get(key_num) : null;
+        key_elm.classList.toggle("has-sticker", has_sticker);
+        key_elm.classList.toggle("has-sticker-red", sticker_color == "red");
+        key_elm.classList.toggle("has-sticker-yellow", sticker_color == "yellow");
+        key_elm.classList.toggle("has-sticker-green", sticker_color == "green");
+        key_elm.classList.toggle("has-sticker-blue", sticker_color == "blue");
+        key_elm.classList.toggle("has-sticker-violet", sticker_color == "violet");
+
+        if ( is_pressed && group_elm.hasAttribute("press_transform") )
+            group_elm.style.setProperty("transform", group_elm.getAttribute("press_transform"));
+        else 
+            group_elm.style.removeProperty("transform");
+
+    }
+}
+
+
+export function updatePianoCursor() {
+    piano.svg.classList.toggle("touch-input", touch.enabled);
+    piano.svg.classList.toggle("grabbing", [1,2].includes(drag.state));
+    piano.svg.classList.toggle("marking-mode", isMarkingModeOn());
+    piano.svg.classList.toggle("labeling-mode", isLabelingModeOn());
+    piano.svg.classList.toggle("sticker-mode", isStickerModeOn());
+}
+
+
+export function updatePiano() {
+    updatePianoKeys();
+    updatePianoTopFelt();
+    updatePianoPosition();
+    updatePianoCursor();
+}
+
+
+export function updatePianoPosition() {
+    const max_zoom = piano.container.clientHeight / piano.svg.clientHeight;
+    if ( settings.zoom > 1 ) {
+        if ( settings.zoom > max_zoom ) settings.zoom = max_zoom;
+        piano.svg.style.transform = `scale(${settings.zoom}, ${settings.zoom})`;
+    } else
+        piano.svg.style.removeProperty("transform");
+
+    const kbd_rect = piano.svg.getBoundingClientRect();
+    const cnt_rect = piano.container.getBoundingClientRect();
+
+    // compute vertical position
+    const py = (cnt_rect.height - kbd_rect.height) * settings.offset.y;
+    piano.svg.style.top = `${py}px`;
+
+    // compute horizontal position
+    const px = Math.round((kbd_rect.width - cnt_rect.width) * settings.offset.x);
+    piano.container.scroll(px, 0);
+
+    setKbdNavVerticalPosition(settings.offset.y > 0.5);
+}
+
+
+export function updateNote(note) {
+    const key = note+settings.transpose;
+    if ( key >= 0 && key < 128 )
+        updatePianoKey(key);
+}
+
+
+// Pointer move events
+
+piano.svg.oncontextmenu = (e) => {
+    if ( drag.state > 0 ) e.preventDefault();
+    drag.state = 0;
+};
+
+piano.svg.addEventListener("pointerdown", (e) => {
+    toolbar.dropdowns.closeAll();
+    if ( e.pointerType != "touch" && e.button != 0 || !touch.enabled ) {
+        if ( !isMarkingModeOn() || e.button != 0 ) {
+            drag.state = 1;
+            drag.origin.x = e.screenX;
+            drag.origin.y = e.screenY;
+            drag.previous_offset.x = settings.offset.x;
+            drag.previous_offset.y = settings.offset.y;
+            piano.svg.setPointerCapture(e.pointerId);
+            updatePianoCursor();
+        }
+    }
+}, { capture: true, passive: false });
+
+piano.svg.addEventListener("pointerup", (e) => {
+    if ( e.pointerType != "touch" && drag.state ) {
+        drag.state = ( drag.state == 2 && e.button == 2 ) ? 3 : 0;
+        piano.svg.releasePointerCapture(e.pointerId);
+        updatePianoPosition();
+        updatePianoCursor();
+        writeSettings();
+    }
+}, { capture: true, passive: false });
+
+piano.svg.addEventListener("pointermove", (e) => {
+    if ( e.pointerType != "touch" && drag.state ) {
+
+        const SNAP_THRESHOLD = 0.06;
+
+        const kbd_rect = piano.svg.getBoundingClientRect();
+        const cnt_rect = piano.container.getBoundingClientRect();
+
+        drag.state = 2;
+
+        // X-axis - scroll container
+        const offset_x = e.screenX - drag.origin.x;
+        const ratio_x = offset_x / (kbd_rect.width - cnt_rect.width);
+        settings.offset.x = clamp(drag.previous_offset.x - ratio_x, 0.0, 1.0);
+
+        // Y-axis - move keyboard (only if not almost maximally zoomed in)
+        const max_zoom = piano.container.clientHeight / piano.svg.clientHeight;
+        if ( settings.zoom < max_zoom - ((max_zoom - 1.0) / 10) ) {
+            const offset_y = e.screenY - drag.origin.y;
+            const ratio_y = offset_y / (cnt_rect.height - kbd_rect.height);
+            settings.offset.y = clamp(drag.previous_offset.y + ratio_y, 0.0, 1.0);
+    
+            // Snap vertically
+            if ( !e.ctrlKey ) {
+                if ( settings.offset.y < SNAP_THRESHOLD ) settings.offset.y = 0.0;
+                if ( settings.offset.y > 1-SNAP_THRESHOLD ) settings.offset.y = 1.0;
+                if ( Math.abs(0.5-settings.offset.y) < SNAP_THRESHOLD ) settings.offset.y = 0.5;
+            }
+        }
+
+        updatePianoPosition();
+        updatePianoCursor();
+    }
+}, { capture: false, passive: true });
+
+piano.container.addEventListener("wheel", (e) => {
+    if ( !drag.state && !touch.started() && !e.ctrlKey ) {
+        // make zoom out faster than zoom in
+        const amount = -e.deltaY / (e.deltaY <= 0 ? 1000 : 500);
+        const max_zoom = piano.container.clientHeight / piano.svg.clientHeight;
+        const new_zoom = clamp(settings.zoom + amount, 1.0, max_zoom);
+        if ( settings.zoom != new_zoom ) {
+            const kbd_rect = piano.svg.getBoundingClientRect();
+            const cnt_rect = piano.container.getBoundingClientRect();
+            const new_width = Math.round(cnt_rect.width * new_zoom);
+            settings.offset.x = 
+                (e.clientX - (e.clientX - kbd_rect.left) / kbd_rect.width * new_width - cnt_rect.left) 
+                    / (cnt_rect.width - new_width);
+            settings.zoom = new_zoom;
+        }
+        const scroll_amount = e.deltaX / 1000;
+        if ( scroll_amount ) {
+            settings.offset.x = clamp(settings.offset.x - scroll_amount, 0.0, 1.0);
+        }
+        updatePianoPosition();
+    }
+    e.preventDefault();
+}, { capture: false, passive: false });
+
+if ( !is_mobile ) {
+    var btn_show_toolbar_timeout = null;
+    piano.container.addEventListener("pointermove", (e) => {
+        if ( e.pointerType == "touch" ) return;
+        if ( btn_show_toolbar_timeout ) clearTimeout(btn_show_toolbar_timeout);
+        toolbar.buttons.show_toolbar.toggleAttribute("visible", true);
+        piano.container.toggleAttribute("cursor-hidden", false);
+        piano.svg.toggleAttribute("cursor-hidden", false);
+        btn_show_toolbar_timeout = setTimeout(() => {
+            toolbar.buttons.show_toolbar.toggleAttribute("visible", false);
+            if ( !touch.enabled ) {
+                piano.container.toggleAttribute("cursor-hidden", true);
+                piano.svg.toggleAttribute("cursor-hidden", true);
+            }
+        }, 4000);
+    }, { capture: false, passive: true });
+}
+
+
+// Pointer & touch control events
+
+/** 
+ * @param {number} x
+ * @param {number} y
+ * @returns {number?}
  */
-export function drawPianoKeyboard(svg, keys, options = {}) {
+function findKeyUnderPoint(x, y) {
+    const parent = document.elementFromPoint(x, y)?.parentElement;
+    return ( parent?.classList.contains("key") )
+        ? parseInt(parent.getAttribute("value"))
+        : null;
+}
 
-    const height = KBD_HEIGHT;
-    const height_factor = options.height_factor ?? 1.0;
+/** 
+ * @param {number} x
+ * @param {number} y
+ * @param {number} rx
+ * @param {number} ry
+ * @param {number} a_deg
+ * @returns {Set<number>}
+ */
+function findKeysUnderArea(x, y, rx, ry, a_deg) {
+    const a_rad = degToRad(a_deg);
+    const sin_a = Math.sin(a_rad);
+    const cos_a = Math.cos(a_rad);
 
-    const first_key = options.first_key ?? noteToMidi("a0");
-    const last_key = options.last_key ?? noteToMidi("c8");
-    const keys_count = last_key - first_key;
-    const middle_key = (first_key + last_key) / 2;
+    // For some reason, Safari appears to
+    // inflate touch area
+    if ( is_safari ) {
+        rx /= 10;
+        ry /= 10;
+    }
 
-    const white_key_height = height * height_factor;
-    const black_key_height = white_key_height * (0.14 * height_factor + 0.51);
+    // Vertices of the major axis
+    const [x1,y1] = (rx >= ry)
+        ? [x+(rx*cos_a), y+(rx*sin_a)]
+        : [x-(ry*sin_a), y+(ry*cos_a)];
+    const [x2,y2] = (rx >= ry)
+        ? [x-(rx*cos_a), y-(rx*sin_a)]
+        : [x+(ry*sin_a), y-(ry*cos_a)];
+    // Vertices of the minor axis
+    const [x3,y3] = (rx >= ry)
+        ? [x-(ry*sin_a), y+(ry*cos_a)]
+        : [x+(rx*cos_a), y+(rx*sin_a)];
+    const [x4,y4] = (rx >= ry)
+        ? [x+(ry*sin_a), y-(ry*cos_a)]
+        : [x-(rx*cos_a), y-(rx*sin_a)];
 
-    const stroke_width_half = STROKE_WIDTH / 2;
-    const white_key_gap_half = WHITE_KEY_GAP / 2;
+    const k1 = findKeyUnderPoint(x1, y1);
+    const k2 = findKeyUnderPoint(x2, y2);
+    const k3 = findKeyUnderPoint(x3, y3);
+    const k4 = findKeyUnderPoint(x4, y4);
+    const keys = new Set([k1,k2,k3,k4]);
     
-    const white_key_width = height * 2.2 / 15.5;
-    const black_key_width = height * 1.4 / 15.5;
-    const white_key_width_half = white_key_width / 2;
-    const white_key_width_third = white_key_width / 3;
-    const black_key_width_half = black_key_width / 2;
+    const kmin = Math.min(k1,k2,k3,k4);
+    const kmax = Math.max(k1,k2,k3,k4);
+    const span = kmax-kmin;
 
-    const white_key_rounding = white_key_width / 15;
-    const black_key_rounding = black_key_width / 20;
-
-    const white_key_highlight_inset = 2;
-    const black_key_highlight_inset = 2;
-
-    const top_felt = {
-        top: -4,
-        height: 7,
-        get bottom() { return this.top + this.height }
-    }
-    
-    const white_key_top = top_felt.bottom-1;
-    const black_key_top = top_felt.bottom-5;
-    const black_key_base_top = top_felt.bottom+1;
-    const black_key_top1 = black_key_top + (black_key_base_top - black_key_top) / 4;
-
-    const black_key_bevel = {
-        bottom_height: black_key_width/1.8*(Math.max(height_factor-0.5,0)/2+0.75),
-        bottom_height1: 0,
-        side_width_bottom: BLACK_KEY_SIDE_BEVEL*2,
-        side_width_top: BLACK_KEY_SIDE_BEVEL,
-        side_width_min: 0,
-        side_width_max: 0
-    }
-    black_key_bevel.side_width_min = Math.min(black_key_bevel.side_width_top,
-                                              black_key_bevel.side_width_bottom);
-    black_key_bevel.side_width_max = Math.max(black_key_bevel.side_width_top,
-                                              black_key_bevel.side_width_bottom);
-    black_key_bevel.bottom_height1 = black_key_bevel.bottom_height / 2;
-
-    const white_key_label_y = white_key_height - white_key_width_half*height_factor;
-    const white_key_label_y1 = white_key_label_y*WHITE_KEY_PRESSED_FACTOR;
-    const black_key_label_y = black_key_height - black_key_bevel.bottom_height
-            - white_key_width_third*height_factor;
-    const black_key_label_y1 = black_key_height - black_key_bevel.bottom_height1
-            - white_key_width_third*height_factor;
-
-    const sticker_width = white_key_width/4;
-    const sticker_radius = sticker_width/2;
-    const white_key_sticker_top_offset = sticker_radius + white_key_width_third*height_factor;
-    const black_key_sticker_top_offset = white_key_sticker_top_offset*0.8 + black_key_bevel.bottom_height;
-
-    svg.innerHTML = "";
-
-    for ( let key = 0; key < 128; key++ )
-        if ( key < first_key || key > last_key )
-            keys[key] = null;
-
-    const white_keys_g = SvgTools.createGroup();
-    const black_keys_g = SvgTools.createGroup();
-
-    function drawWhiteKey(key, note, offset, width, height, round) {
-        const left = offset + stroke_width_half + white_key_gap_half;
-        const right = offset + width - stroke_width_half - white_key_gap_half;
-        const center = left + (right-left)/2;
-        const height1 = height * WHITE_KEY_PRESSED_FACTOR;
-        const cut_point = black_key_height + stroke_width_half + BLACK_KEY_GAP;
-        const cut_point1 = cut_point * WHITE_KEY_PRESSED_FACTOR;
-
-        const black_before = key > first_key && [2,4,7,9,11].includes(note);
-        const black_after = key < last_key && [0,2,5,7,9].includes(note);
-        
-        const left_offset = offset + stroke_width_half + ( black_before 
-            ? black_key_width_half + (black_key_width * BK_OFFSETS[note-1]) + BLACK_KEY_GAP 
-            : white_key_gap_half );
-        const right_offset = offset + width - stroke_width_half - ( black_after 
-            ? black_key_width_half - (black_key_width * BK_OFFSETS[note+1]) + BLACK_KEY_GAP 
-            : white_key_gap_half );
-            
-        const press_h_shrink_factor = 0.015;
-        const press_h_shrink = width * press_h_shrink_factor;
-        const press_h_shrink_cut_point = press_h_shrink * cut_point / height;
-        
-        const left_offset1 = left_offset + ((center - left_offset)/width*press_h_shrink_cut_point);
-        const right_offset1 = right_offset - ((right_offset - center)/width*press_h_shrink_cut_point);
-
-        //   a----b
-        //   |    |
-        //   |    |
-        // g-h    c-d
-        // |        |
-        // |        |
-        // f--------e
-
-        const normal = {
-            ax: left_offset, ay: white_key_top,
-            bx: right_offset, by: white_key_top,
-            cx: right_offset, cy: cut_point,
-            dx: right, dy: cut_point,
-            ex: right, ey: height,
-            fx: left, fy: height,
-            gx: left, gy: cut_point,
-            hx: left_offset, hy: cut_point
+    // If vertices are more than one key apart, find
+    // other keys intersected by the axis
+    if ( span > 1 ) {
+        const [xmin,ymin] = (kmin == k1) ? [x1,y1] : 
+                            (kmin == k2) ? [x2,y2] : 
+                            (kmin == k3) ? [x3,y3] : 
+                                           [x4,y4];
+        const [xmax,ymax] = (kmax == k1) ? [x1,y1] : 
+                            (kmax == k2) ? [x2,y2] : 
+                            (kmax == k3) ? [x3,y3] : 
+                                           [x4,y4];
+        const step_x = (xmax - xmin) / span;
+        const step_y = (ymax - ymin) / span;
+        for ( let n = 0.5; n < span; n += 0.5 ) {
+            const [xn,yn] = [xmin+(step_x*n), ymin+(step_y*n)];
+            const kn = findKeyUnderPoint(xn, yn);
+            keys.add(kn);
         }
+    }
+    keys.delete(null);
+    return keys;
+}
 
-        const pressed = {
-            ax: normal.ax, ay: normal.ay,
-            bx: normal.bx, by: normal.by,
-            cx: right_offset1, cy: cut_point1,
-            dx: right - press_h_shrink_cut_point, dy: cut_point1,
-            ex: right - press_h_shrink, ey: height1,
-            fx: left + press_h_shrink, fy: height1,
-            gx: left + press_h_shrink_cut_point, gy: cut_point1,
-            hx: left_offset1, hy: cut_point1,
+/** @param {PointerEvent} e */
+function handlePianoPointerDown(e) {
+    toolbar.dropdowns.closeAll();
+    if ( e.pointerType != "touch" && touch.enabled && !isMarkingModeOn()
+         && e.button === 0 && !touch.started(e.pointerId)) {
+        const note = findKeyUnderPoint(e.clientX, e.clientY);
+        if ( note ) { 
+            touch.add(e.pointerId, new Set([note]));
+            e.preventDefault();
         }
-
-        const round_quarter = round/4;
-
-        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key white-key", value: key });
-
-        const key_touch_area = SvgTools.makePath([
-                'M', normal.ax, normal.ay,
-                'H', normal.bx,
-                black_after ? [
-                    'V', normal.cy,
-                    'H', normal.dx
-                ] : null,
-                'V', normal.ey,
-                'H', normal.fx,
-                black_before ? [
-                    'V', normal.gy,
-                    'H', normal.hx
-                ] : null,
-                'Z'
-            ],
-            { class: "key-touch-area invisible", value: key }
-        );
-
-        const key_fill = makeDualPath([
-                'M', normal.ax, normal.ay,
-                'H', normal.bx,
-                black_after ? [
-                    'L', normal.cx, normal.cy,
-                    'H', normal.dx
-                ] : null,
-                'L', normal.ex, normal.ey-round,
-                'Q', normal.ex-round_quarter, normal.ey-round_quarter, 
-                    normal.ex-round, normal.ey,
-                'H', normal.fx+round,
-                'Q', normal.fx+round_quarter, normal.fy-round_quarter, 
-                    normal.fx, normal.fy-round,
-                black_before ? [
-                    'L', normal.gx, normal.gy,
-                    'H', normal.hx
-                ] : null,
-                'Z'
-            ], [
-                'M', pressed.ax, pressed.ay,
-                'H', pressed.bx,
-                black_after ? [
-                    'L', pressed.cx, pressed.cy,
-                    'H', pressed.dx
-                ] : null,
-                'L', pressed.ex, pressed.ey-round,
-                'Q', pressed.ex-round_quarter, pressed.ey-round_quarter, 
-                     pressed.ex-round, pressed.ey,
-                'H', pressed.fx+round,
-                'Q', pressed.fx+round_quarter, pressed.fy-round_quarter, 
-                     pressed.fx, pressed.fy-round,
-                black_before ? [
-                    'L', pressed.gx, pressed.gy,
-                    'H', pressed.hx
-                ] : null,
-                'Z'
-            ],
-            { class: "key-fill" }
-        );
-
-        const inset = white_key_highlight_inset;
-        const key_highlight = makeDualPath([
-                'M', normal.ax+inset, normal.ay-stroke_width_half,
-                'H', normal.bx-inset, 
-                black_after ? [
-                    'L', normal.cx-inset, normal.cy+inset,
-                    'H', normal.dx-inset
-                ] : null,
-                'L', normal.ex-inset, normal.ey-inset-round+stroke_width_half,
-                'Q', normal.ex-round_quarter-inset+stroke_width_half, normal.ey-round_quarter-inset,
-                     normal.ex-round-inset+stroke_width_half, normal.ey-inset,
-                'H', normal.fx+inset+round-stroke_width_half,
-                'Q', normal.fx+round_quarter+inset, normal.fy-inset-round_quarter+stroke_width_half,
-                     normal.fx+inset, normal.fy-inset-round+stroke_width_half,
-                black_before ? [
-                    'L', normal.gx+inset, normal.gy+inset,
-                    'H', normal.hx+inset
-                ] : null,
-                'Z'
-            ], [
-                'M', pressed.ax+inset, pressed.ay-stroke_width_half,
-                'H', pressed.bx-inset, 
-                black_after ? [
-                    'L', pressed.cx-inset, pressed.cy+inset,
-                    'H', pressed.dx-inset
-                ] : null,
-                'L', pressed.ex-inset, pressed.ey-inset-round+stroke_width_half,
-                'Q', pressed.ex-round_quarter-inset+stroke_width_half, pressed.ey-round_quarter-inset,
-                     pressed.ex-round-inset+stroke_width_half, pressed.ey-inset,
-                'H', pressed.fx+inset+round-stroke_width_half,
-                'Q', pressed.fx+round_quarter+inset, pressed.fy-inset-round_quarter+stroke_width_half,
-                     pressed.fx+inset, pressed.fy-inset-round+stroke_width_half,
-                black_before ? [
-                    'L', pressed.gx+inset, pressed.gy+inset,
-                    'H', pressed.hx+inset
-                ] : null,
-                'Z'
-            ],
-            { class: "key-highlight" }
-        );
-
-        const light_border = makeDualPath([
-                'M', normal.ax, normal.ay+stroke_width_half,
-                black_before ? [
-                    'L', normal.hx, normal.hy,
-                    'H', normal.gx
-                ] : null,
-                'L', normal.fx, normal.fy-round-stroke_width_half,
-                black_after ? [
-                    'M', normal.cx, normal.cy,
-                    'H', normal.dx
-                ] : null
-            ], [
-                'M', pressed.ax, pressed.ay+stroke_width_half,
-                black_before ? [
-                    'L', pressed.hx, pressed.hy,
-                    'H', pressed.gx
-                ] : null,
-                'L', pressed.fx, pressed.fy-round-stroke_width_half,
-                black_after ? [
-                    'M', pressed.cx, pressed.cy,
-                    'H', pressed.dx
-                ] : null
-            ],
-            { class: "key-light-border white-key-border" }
-        );
-
-        const dark_border = makeDualPath([
-                'M', normal.fx, normal.fy-round,
-                'Q', normal.fx+round_quarter, normal.fy-round_quarter, 
-                     normal.fx+round, normal.fy,
-                'H', normal.ex-round,
-                'Q', normal.ex-round_quarter, normal.ey-round_quarter, 
-                     normal.ex, normal.ey-round,
-                black_after ? [
-                    'L', normal.dx, normal.dy,
-                    'M', normal.cx, normal.cy,
-                ] : null,
-                'L', normal.bx, normal.by+stroke_width_half
-            ], [
-                'M', pressed.fx, pressed.fy-round,
-                'Q', pressed.fx+round_quarter, pressed.fy-round_quarter, 
-                     pressed.fx+round, pressed.fy,
-                'H', pressed.ex-round,
-                'Q', pressed.ex-round_quarter, pressed.ey-round_quarter, 
-                     pressed.ex, pressed.ey-round,
-                black_after ? [
-                    'L', pressed.dx, pressed.dy,
-                    'M', pressed.cx, pressed.cy,
-                ] : null,
-                'L', pressed.bx, pressed.by+stroke_width_half
-            ],
-            { class: "key-dark-border white-key-border" }
-        );
-
-        const label = createWhiteKeyLabel(key, offset);
-
-        const sticker_x = offset+width/2;
-        const sticker_y = white_key_height - white_key_sticker_top_offset;
-        const sticker = SvgTools.makeCircle(
-            sticker_x, sticker_y, sticker_radius, { class: `key-sticker white-key-sticker` }
-        );
-        
-        const key_marker_group = SvgTools.createGroup({ 
-            class: "key-marker-group",
-            press_transform: `translateY(${white_key_label_y1-white_key_label_y}px)`,
-        });
-        key_marker_group.appendChild(label);
-        key_marker_group.appendChild(sticker);
-
-        key_group.appendChild(key_fill);
-        key_group.appendChild(key_highlight);
-        key_group.appendChild(dark_border);
-        key_group.appendChild(light_border);
-        key_group.appendChild(key_marker_group);
-        key_group.appendChild(key_touch_area);
-        return key_group;
     }
+}
 
-    function computeLateralDisplacement(key) {
-        if ( !options.perspective || isWhiteKey(key) ) return 0;
-        // Restrict maximum displacement based on number of keys
-        const perspective_factor = (key - middle_key) / ((88 + keys_count) / 4);
-        return perspective_factor * black_key_bevel.side_width_max;
+/** @param {PointerEvent} e */
+function handlePianoPointerUp(e) {
+    if ( e.pointerType != "touch" && touch.started(e.pointerId) && e.button === 0 ) {
+        e.preventDefault();
+        touch.remove(e.pointerId);
     }
+}
 
-    function drawBlackKey(key, offset, width, height, round, white_gap) {
-        const left = offset;
-        const right = left + width;
-        const round_half = round/2;
-        const round_quarter = round/4;
+/** @param {PointerEvent} e */
+function handlePianoPointerMove(e) {
+    if ( e.pointerType != "touch" && touch.started(e.pointerId) ) {
+        const note = findKeyUnderPoint(e.clientX, e.clientY);
+        touch.change(e.pointerId, new Set([note]));
+        e.preventDefault();
+    }
+}
 
-        const lateral_displacement = computeLateralDisplacement(key) * 1.5;
-        const lateral_displacement1_bottom = lateral_displacement/2;
-        const lateral_displacement1_top = lateral_displacement/1.2;
+/** @param {TouchEvent} e */
+function handlePianoTouchStart(e) {
+    if ( touch.enabled && !isMarkingModeOn() ) {
+        for ( const t of e.changedTouches )
+            if ( !touch.started(t.identifier) ) {
+                const notes = findKeysUnderArea(
+                    t.clientX, t.clientY, t.radiusX, t.radiusY, t.rotationAngle
+                );
+                if ( notes.size ) {
+                    touch.add(t.identifier, notes);
+                    if ( e.timeStamp - touch.last_vibration_time > 40 ) {
+                        navigator.vibrate(40);
+                        touch.last_vibration_time = e.timeStamp;
+                    }
+                    e.preventDefault();
+                }
+            }
+    }
+}
 
-        const side_bevel = options.perspective ? {
-            left_top: Math.max(0, black_key_bevel.side_width_top + lateral_displacement),
-            left_bottom: Math.max(0, black_key_bevel.side_width_bottom + lateral_displacement),
-            right_top: Math.max(0, black_key_bevel.side_width_top - lateral_displacement),
-            right_bottom: Math.max(0, black_key_bevel.side_width_bottom - lateral_displacement),
-            left_top1: Math.max(0, black_key_bevel.side_width_top + lateral_displacement1_top),
-            left_bottom1: Math.max(0, black_key_bevel.side_width_bottom + lateral_displacement1_bottom),
-            right_top1: Math.max(0, black_key_bevel.side_width_top - lateral_displacement1_top),
-            right_bottom1: Math.max(0, black_key_bevel.side_width_bottom - lateral_displacement1_bottom)
-        } : {
-            left_top: black_key_bevel.side_width_top,
-            left_bottom: black_key_bevel.side_width_bottom,
-            right_top: black_key_bevel.side_width_top,
-            right_bottom: black_key_bevel.side_width_bottom,
-            left_top1: black_key_bevel.side_width_top,
-            left_bottom1: black_key_bevel.side_width_bottom,
-            right_top1: black_key_bevel.side_width_top,
-            right_bottom1: black_key_bevel.side_width_bottom
-        };
-
-        const body = options.perspective ? {
-            left_top: Math.min(left, left + black_key_bevel.side_width_top + lateral_displacement),
-            left_bottom: Math.min(left, left + black_key_bevel.side_width_bottom + lateral_displacement),
-            right_top: Math.max(right, right - black_key_bevel.side_width_top + lateral_displacement),
-            right_bottom: Math.max(right, right - black_key_bevel.side_width_bottom + lateral_displacement),
-            left_top1: Math.min(left, left + black_key_bevel.side_width_top + lateral_displacement1_top),
-            left_bottom1: Math.min(left, left + black_key_bevel.side_width_bottom + lateral_displacement1_bottom),
-            right_top1: Math.max(right, right - black_key_bevel.side_width_top + lateral_displacement1_top),
-            right_bottom1: Math.max(right, right - black_key_bevel.side_width_bottom + lateral_displacement1_bottom)
-        } : {
-            left_top: left,
-            left_bottom: left,
-            right_top: right,
-            right_bottom: right,
-            left_top1: left,
-            left_bottom1: left,
-            right_top1: right,
-            right_bottom1: right
+/** @param {TouchEvent} e */
+function handlePianoTouchEnd(e) {
+    for ( const t of e.changedTouches )
+        if ( touch.started(t.identifier) ) {
+            touch.remove(t.identifier);
+            e.preventDefault();
         }
+}
 
-        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key black-key", value: key });
-
-        const key_touch_area = SvgTools.makePath(
-            [
-                'M', body.left_top1, black_key_base_top,
-                'L', body.left_top1+side_bevel.left_top1, black_key_top1,
-                'H', body.right_top1-side_bevel.right_top1,
-                'L', body.right_top1, black_key_base_top,
-                'L', body.right_bottom1, height-black_key_bevel.bottom_height1-round,
-                'L', right, height,
-                'H', left,
-                'L', body.left_bottom1, height-black_key_bevel.bottom_height1-round,
-                'Z'
-            ],
-            { class: "key-touch-area invisible", value: key }
-        );
-
-        const key_fill = makeDualPath([
-                'M', body.left_top, black_key_base_top,
-                'L', body.left_top+side_bevel.left_top, black_key_top,
-                'H', body.right_top-side_bevel.right_top,
-                'L', body.right_top, black_key_base_top,
-                'L', body.right_bottom, height-black_key_bevel.bottom_height-round,
-                'L', right, height,
-                'H', left,
-                'L', body.left_bottom, height-black_key_bevel.bottom_height-round,
-                'Z'
-            ], [
-                'M', body.left_top1, black_key_base_top,
-                'L', body.left_top1+side_bevel.left_top1, black_key_top1,
-                'H', body.right_top1-side_bevel.right_top1,
-                'L', body.right_top1, black_key_base_top,
-                'L', body.right_bottom1, height-black_key_bevel.bottom_height1-round,
-                'L', right, height,
-                'H', left,
-                'L', body.left_bottom1, height-black_key_bevel.bottom_height1-round,
-                'Z'
-            ],
-            { class: "key-fill" }
-        );
-
-        const inset = black_key_highlight_inset;
-        const key_highlight = makeDualPath([
-                'M', body.left_top+inset, black_key_base_top,
-                'L', Math.max(
-                        body.left_top+inset,
-                        body.left_top+side_bevel.left_top
-                    ), black_key_top,
-                'H', Math.min(
-                        body.right_top-inset,
-                        body.right_top-side_bevel.right_top
-                    ),
-                'L', body.right_top-inset, black_key_base_top,
-                'L', body.right_bottom-inset, height-inset-black_key_bevel.bottom_height-round_half,
-                'L', right-inset, height-inset,
-                'H', left+inset,
-                'L', body.left_bottom+inset, height-inset-black_key_bevel.bottom_height-round_half,
-                'Z'
-            ], [
-                'M', body.left_top1+inset, black_key_base_top,
-                'L', Math.max(
-                        body.left_top1+inset,
-                        body.left_top1+side_bevel.left_top1
-                    ), black_key_top1,
-                'H', Math.min(
-                        body.right_top1-inset,
-                        body.right_top1-side_bevel.right_top1
-                    ),
-                'L', body.right_top1-inset, black_key_base_top,
-                'L', body.right_bottom1-inset, height-inset-black_key_bevel.bottom_height1-round_half,
-                'L', right-inset, height-inset,
-                'H', left+inset,
-                'L', body.left_bottom1+inset, height-inset-black_key_bevel.bottom_height1-round_half,
-                'Z'
-            ],
-            { class: "key-highlight" }
-        );
-
-        key_group.appendChild(key_fill);
-        key_group.appendChild(key_highlight);
-
-        if ( side_bevel.left_bottom > 0 || side_bevel.left_top > 0 ) {
-            const bevel_left = makeDualPath([
-                'M', body.left_top, black_key_base_top,
-                'L', body.left_bottom, height,
-                'L', body.left_bottom+side_bevel.left_bottom, height-black_key_bevel.bottom_height-round,
-                'L', body.left_top+side_bevel.left_top, black_key_top,
-                'Z'
-            ], [
-                'M', body.left_top1, black_key_base_top,
-                'L', body.left_bottom1, height,
-                'L', body.left_bottom1+side_bevel.left_bottom1, height-black_key_bevel.bottom_height1-round,
-                'L', body.left_top1+side_bevel.left_top1, black_key_top1,
-                'Z'
-            ], { class: "key-left-bevel black-key-bevel" });
-            key_group.appendChild(bevel_left);
-        }
-
-        if ( side_bevel.right_bottom > 0 || side_bevel.right_top > 0 ) {
-            const bevel_right = makeDualPath([
-                'M', body.right_top, black_key_base_top,
-                'L', body.right_bottom, height,
-                'L', body.right_bottom-side_bevel.right_bottom, height-black_key_bevel.bottom_height-round,
-                'L', body.right_top-side_bevel.right_top, black_key_top,
-                'Z'
-            ], [
-                'M', body.right_top1, black_key_base_top,
-                'L', body.right_bottom1, height,
-                'L', body.right_bottom1-side_bevel.right_bottom1, height-black_key_bevel.bottom_height1-round,
-                'L', body.right_top1-side_bevel.right_top1, black_key_top1,
-                'Z'
-            ], { class: "key-right-bevel black-key-bevel" });
-            key_group.appendChild(bevel_right);
-        }
-
-        const bevel_bottom = makeDualPath([
-            'M', left, height,
-            'H', right,
-            'L', body.right_bottom-side_bevel.right_bottom-round, height-black_key_bevel.bottom_height,
-            'H', body.left_bottom+side_bevel.left_bottom+round,
-            'Z'
-        ], [
-            'M', left, height,
-            'H', right,
-            'L', body.right_bottom1-side_bevel.right_bottom1-round, height-black_key_bevel.bottom_height1,
-            'H', body.left_bottom1+side_bevel.left_bottom1+round,
-            'Z'
-        ], { class: "key-bottom-bevel black-key-bevel" });
-        key_group.appendChild(bevel_bottom);
-
-        const bevel_round_left = makeDualPath([
-            'M', left, height,
-            'L', body.left_bottom+side_bevel.left_bottom, height-black_key_bevel.bottom_height-round,
-            'Q', body.left_bottom+side_bevel.left_bottom+round_quarter, height-black_key_bevel.bottom_height-round_quarter,
-                 body.left_bottom+side_bevel.left_bottom+round, height-black_key_bevel.bottom_height,
-            'Z'
-        ], [
-            'M', left, height,
-            'L', body.left_bottom1+side_bevel.left_bottom1, height-black_key_bevel.bottom_height1-round,
-            'Q', body.left_bottom1+side_bevel.left_bottom1+round_quarter, height-black_key_bevel.bottom_height1-round_quarter,
-                 body.left_bottom1+side_bevel.left_bottom1+round, height-black_key_bevel.bottom_height1,
-            'Z'
-        ], { class: "key-left-round-bevel black-key-bevel" });
-        key_group.appendChild(bevel_round_left);
-
-        const bevel_round_right = makeDualPath([
-            'M', right, height,
-            'L', body.right_bottom-side_bevel.right_bottom, height-black_key_bevel.bottom_height-round,
-            'Q', body.right_bottom-side_bevel.right_bottom-round_quarter, height-black_key_bevel.bottom_height-round_quarter,
-                 body.right_bottom-side_bevel.right_bottom-round, height-black_key_bevel.bottom_height,
-            'Z'
-        ], [
-            'M', right, height,
-            'L', body.right_bottom1-side_bevel.right_bottom1, height-black_key_bevel.bottom_height1-round,
-            'Q', body.right_bottom1-side_bevel.right_bottom1-round_quarter, height-black_key_bevel.bottom_height1-round_quarter,
-                 body.right_bottom1-side_bevel.right_bottom1-round, height-black_key_bevel.bottom_height1,
-            'Z'
-        ], { class: "key-right-round-bevel black-key-bevel" });
-        key_group.appendChild(bevel_round_right);
-
-        // const reflection_height = black_key_bevel.bottom_height * 0.8;
-        // const reflection_height1 = black_key_bevel.bottom_height1 * 0.8;
-        // const bottom_reflection = makeDualPath([
-        //         'M', white_gap-white_key_gap_half, height-reflection_height,
-        //         'h', WHITE_KEY_GAP,
-        //         'v', reflection_height,
-        //         'h', -WHITE_KEY_GAP,
-        //         'Z'
-        //     ], [
-        //         'M', white_gap-white_key_gap_half, height-reflection_height1,
-        //         'h', WHITE_KEY_GAP,
-        //         'v', reflection_height1,
-        //         'h', -WHITE_KEY_GAP,
-        //         'Z'
-        //     ],
-        //     { class: "gap-reflection" }
-        // );
-        // key_group.appendChild(bottom_reflection);
-        
-        const label = createBlackKeyLabel(key, offset);
-
-        const sticker_x = offset+width/2+lateral_displacement;
-        const sticker_y = black_key_height - black_key_sticker_top_offset;
-        const sticker = SvgTools.makeCircle(
-            sticker_x, sticker_y, sticker_radius, { class: `key-sticker black-key-sticker` }
-        );
-
-        const key_marker_group = SvgTools.createGroup({ 
-            class: "key-marker-group",
-            press_transform: `translateX(${(lateral_displacement1_bottom-lateral_displacement)*0.7}px) translateY(${black_key_label_y1-black_key_label_y}px)`,
-        });
-        key_marker_group.appendChild(label);
-        key_marker_group.appendChild(sticker);
-
-        key_group.appendChild(key_marker_group);
-        key_group.appendChild(key_touch_area);
-
-        return key_group;
-    }
-
-    function createWhiteKeyLabel(keynum, left) {
-        const center = left + white_key_width_half;
-        const elm = SvgTools.createElement("text", {
-            x: center, y: white_key_label_y,
-            id: `keylabel${keynum}`, class: "key-label white-key-label"
-        });
-        elm.appendChild(SvgTools.createElement("tspan", { x: center }));
-        return elm;
-    }
-
-    function createBlackKeyLabel(keynum, left) {
-        const center = left + black_key_width_half + computeLateralDisplacement(keynum)/2;
-        const elm = SvgTools.createElement("text", {
-            x: center, y: black_key_label_y,
-            id: `keylabel${keynum}`, class: "key-label black-key-label"
-        });
-        elm.appendChild(SvgTools.createElement("tspan", { x: center }));
-        elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-0.9lh" }));
-        elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-1.0lh" }));
-        return elm;
-    }
-
-    let width = 0;
-    let white_left = 0;
-
-    for ( let key = first_key; key <= last_key; key++ ) {
-        const note = key % 12;
-
-        if ( isWhiteKey(note) ) {
-            const white_key = drawWhiteKey(key, note,
-                white_left, white_key_width, white_key_height, white_key_rounding
+/** @param {TouchEvent} e */
+function handlePianoTouchMove(e) {
+    for ( const t of e.changedTouches )
+        if ( touch.started(t.identifier) ) {
+            const notes = findKeysUnderArea(
+                t.clientX, t.clientY, t.radiusX, t.radiusY, t.rotationAngle
             );
-            white_keys_g.appendChild(white_key);
-            keys[key] = white_key;
-            width += white_key_width;
-            white_left += white_key_width;
-        } else {
-            const black_left = white_left - black_key_width_half + (BK_OFFSETS[note]*black_key_width);
-            const black_key = drawBlackKey(key,
-                black_left, black_key_width, black_key_height, black_key_rounding, white_left
-            );
-            black_keys_g.appendChild(black_key);
-            keys[key] = black_key;
+            if ( touch.change(t.identifier, notes) == 1 &&
+                 e.timeStamp - touch.last_vibration_time > 40 )
+            {
+                navigator.vibrate(40);
+                touch.last_vibration_time = e.timeStamp;
+            }
+            e.preventDefault();
+        }
+}
+
+
+piano.svg.addEventListener("pointerdown", handlePianoPointerDown, { capture: true, passive: false });
+piano.svg.addEventListener("touchstart", handlePianoTouchStart, { capture: true, passive: false });
+window.addEventListener("pointerup", handlePianoPointerUp, { capture: false, passive: false });
+window.addEventListener("pointercancel", handlePianoPointerUp, { capture: false, passive: false });
+window.addEventListener("touchend", handlePianoTouchEnd, { capture: false, passive: false });
+window.addEventListener("touchcancel", handlePianoTouchEnd, { capture: false, passive: false });
+window.addEventListener("pointermove", handlePianoPointerMove, { capture: false, passive: false });
+window.addEventListener("touchmove", handlePianoTouchMove, { capture: false, passive: false });
+
+
+// Adding and removing labels or markers with pointer
+
+/** @param {PointerEvent} e */
+function handlePianoClick(e) {
+    if ( e.button === 0 ) {
+        const key_num = findKeyUnderPoint(e.clientX, e.clientY);
+        if ( key_num ) {
+            const notes = e.ctrlKey
+                ? Array.from(range(key_num%12, 128, 12))
+                : [key_num];
+            if ( isLabelingModeOn()) {
+                // true if there is at least one note without label
+                const value = notes.some(
+                    (note) => !settings.labels.keys.has(note)
+                );
+                for ( const note of notes )
+                    settings.labels.toggle(note, value);
+            } else if ( isStickerModeOn() ) {
+                // true if there is at least one note without sticker
+                const value = notes.some(
+                    (note) => !settings.stickers.keys.has(note)
+                );
+                for ( const note of notes )
+                    settings.stickers.toggle(note, value);
+            }
         }
     }
-    
-    svg.appendChild(white_keys_g);
-    svg.appendChild(SvgTools.makeRect(
-        width, top_felt.height, 0, top_felt.top, null, null, 
-        { id: "top-felt" })
-    );
-    svg.appendChild(black_keys_g);
-
-    const viewbox = {
-        left: -2,
-        top: -4,
-        width: width+STROKE_WIDTH+2,
-        height: (white_key_height * Math.max(WHITE_KEY_PRESSED_FACTOR, 1.0)) + STROKE_WIDTH + EXTRA_BOTTOM_SPACE
-    }
-
-    svg.setAttribute("viewBox", `${viewbox.left} ${viewbox.top} ${viewbox.width} ${viewbox.height}`);
-
-    function makeGradient(id, stops, vertical=false, attrs={}) {
-        const grad = SvgTools.createElement("linearGradient", 
-            vertical ? { id: id, x2: "0%", y2: "100%" } : { id: id });
-        for ( const stop_attr of stops )
-            grad.appendChild(SvgTools.createElement("stop", stop_attr));
-        for ( const [k,v] of Object.entries(attrs) )
-            grad.setAttribute(k, v);
-        return grad;
-    }
-
-    const svg_defs = SvgTools.createElement("defs");
-    svg_defs.appendChild(makeGradient("white-key-gradient", [
-        { offset: "30%", "stop-color": "color-mix(in oklch, var(--color-white-key), white 10%)" },
-        { offset: "100%", "stop-color": "color-mix(in oklch, var(--color-white-key), black 10%)" }
-    ], false, { gradientTransform: "rotate(45)" }));
-    svg_defs.appendChild(makeGradient("black-key-gradient", [
-        { offset: "30%", "stop-color": "color-mix(in oklch, var(--color-black-key), white 15%)" },
-        { offset: "100%", "stop-color": "color-mix(in oklch, var(--color-black-key), black 15%)" }
-    ], false, { gradientTransform: "rotate(45)" }));
-    svg_defs.appendChild(makeGradient("pressed-white-key-highlight-gradient", [
-        { offset: "0%", "stop-color": "var(--color-highlight-alpha)", "stop-opacity": "60%" },
-        { offset: "40%", "stop-color": "var(--color-highlight-alpha)" }
-    ], true));
-    svg_defs.appendChild(makeGradient("pressed-black-key-highlight-gradient", [
-        { offset: "0%", "stop-color": "var(--color-highlight-alpha)", "stop-opacity": "60%" },
-        { offset: "50%", "stop-color": "var(--color-highlight-alpha)" }
-    ], true));
-    svg_defs.appendChild(makeGradient("top-felt-gradient", [
-        { offset: "50%", "stop-color": "var(--color-felt-top)" },
-        { offset: "100%", "stop-color": "var(--color-felt-bottom)" }
-    ], true));
-    // svg_defs.appendChild(makeGradient("gap-reflection-gradient", [
-    //     { offset: "0%", "stop-color": "var(--color-background)", "stop-opacity": "0%" },
-    //     { offset: "100%", "stop-color": "var(--color-background)", "stop-opacity": "100%" },
-    // ], true));
-
-    svg.appendChild(svg_defs);
-
 }
 
-
-/**
- * @param {SVGElement} svg - SVG element where to draw the piano keyboard
- * @param {[SVGElement?]} keys - Array of keys
- * @param {Object} options - Object that acceps the following properties:
- *      - first_key (integer)
- *      - last_key (integer)
- *      - height_factor (float)
- *      - perspective (boolean)
- *      - top_felt (boolean)
- */
-export function drawPianoKeyboardLP(svg, keys, options = {}) {
-
-    const height = KBD_HEIGHT;
-    const height_factor = options.height_factor ?? 1.0;
-
-    const first_key = options.first_key ?? noteToMidi("a0");
-    const last_key = options.last_key ?? noteToMidi("c8");
-
-    const white_key_height = height * height_factor;
-    const black_key_height = white_key_height * (0.14 * height_factor + 0.51);
-
-    const stroke_width_half = STROKE_WIDTH / 2;
-    const white_key_gap_half = WHITE_KEY_GAP / 2;
-    
-    const white_key_width = height * 2.2 / 15.5;
-    const black_key_width = height * 1.4 / 15.5;
-    const white_key_width_half = white_key_width / 2;
-    const white_key_width_third = white_key_width / 3;
-    const black_key_width_half = black_key_width / 2;
-
-    const white_key_rounding = white_key_width / 17;
-
-    const white_key_highlight_inset = 2;
-    const black_key_highlight_inset = 2;
-
-    const top_felt = {
-        top: -4,
-        height: 7,
-        get bottom() { return this.top + this.height }
-    }
-    
-    const white_key_top = top_felt.bottom-1;
-    const black_key_top = top_felt.bottom-5;
-
-    const white_key_label_y = white_key_height - white_key_width_half*height_factor;
-    const black_key_label_y = black_key_height - white_key_width_half*height_factor;
-
-    const sticker_width = white_key_width/4;
-    const sticker_radius = sticker_width/2;
-    const white_key_sticker_top_offset = sticker_radius + white_key_width_third*height_factor;
-    const black_key_sticker_top_offset = white_key_sticker_top_offset;
-
-    svg.innerHTML = "";
-
-    for ( let key = 0; key < 128; key++ )
-        if ( key < first_key || key > last_key )
-            keys[key] = null;
-
-    const white_keys_g = SvgTools.createGroup();
-    const black_keys_g = SvgTools.createGroup();
-
-    function drawWhiteKey(key, note, offset, width, height, round) {
-        const left = offset + stroke_width_half + white_key_gap_half;
-        const right = offset + width - stroke_width_half - white_key_gap_half;
-        const cut_point = black_key_height + stroke_width_half + BLACK_KEY_GAP;
-
-        const black_before = key > first_key && [2,4,7,9,11].includes(note);
-        const black_after = key < last_key && [0,2,5,7,9].includes(note);
-        
-        const left_offset = offset + stroke_width_half + ( black_before 
-            ? black_key_width_half + (black_key_width * BK_OFFSETS[note-1]) + BLACK_KEY_GAP 
-            : white_key_gap_half );
-        const right_offset = offset + width - stroke_width_half - ( black_after 
-            ? black_key_width_half - (black_key_width * BK_OFFSETS[note+1]) + BLACK_KEY_GAP 
-            : white_key_gap_half );
-
-        const key_group = SvgTools.createGroup(
-            { id: `key${key}`, class: "key white-key lowperf", value: key }
-        );
-
-        const key_fill = SvgTools.makePath([
-                'M', left_offset, white_key_top,
-                'H', right_offset,
-                black_after ? [
-                    'V', cut_point,
-                    'H', right
-                ] : null,
-                'V', height-round,
-                'L', right-round, height,
-                'H', left+round,
-                'L', left, height-round,
-                black_before ? [
-                    'V', cut_point,
-                    'H', left_offset
-                ] : null,
-                'Z'
-            ],
-            { class: "key-fill key-touch-area lowperf" }
-        );
-
-        const inset = white_key_highlight_inset;
-        const key_highlight = SvgTools.makePath([
-                'M', left_offset+inset, white_key_top-stroke_width_half,
-                'H', right_offset-inset, 
-                black_after ? [
-                    'V', cut_point+inset,
-                    'H', right-inset
-                ] : null,
-                'V', height-inset-round+stroke_width_half,
-                'L', right-round-inset+stroke_width_half, height-inset,
-                'H', left+inset+round-stroke_width_half,
-                'L', left+inset, height-inset-round+stroke_width_half,
-                black_before ? [
-                    'V', cut_point+inset,
-                    'H', left_offset+inset
-                ] : null,
-                'Z'
-            ],
-            { class: "key-highlight lowperf" }
-        );
-
-        const label = createWhiteKeyLabel(key, offset);
-
-        const sticker_x = offset+width/2;
-        const sticker_y = white_key_height - white_key_sticker_top_offset;
-        const sticker = SvgTools.makeCircle(
-            sticker_x, sticker_y, sticker_radius, { class: "key-sticker white-key-sticker lowperf" }
-        );
-        
-        const key_marker_group = SvgTools.createGroup({ 
-            class: "key-marker-group lowperf",
-        });
-        key_marker_group.appendChild(label);
-        key_marker_group.appendChild(sticker);
-
-        key_group.appendChild(key_fill);
-        key_group.appendChild(key_highlight);
-        key_group.appendChild(key_marker_group);
-        return key_group;
-    }
-
-    function drawBlackKey(key, offset, width, height) {
-        const left = offset;
-        const right = left + width;
-
-        const key_group = SvgTools.createGroup({ id: `key${key}`, class: "key black-key lowperf", value: key });
-
-        const key_fill = SvgTools.makePath([
-                'M', left, black_key_top,
-                'H', right,
-                'V', height,
-                'H', left,
-                'Z'
-            ],
-            { class: "key-fill key-touch-area lowperf" }
-        );
-
-        const inset = black_key_highlight_inset;
-        const key_highlight = SvgTools.makePath([
-                'M', left+inset, black_key_top+inset,
-                'H', right-inset,
-                'V', height-inset,
-                'H', left+inset,
-                'Z'
-            ],
-            { class: "key-highlight lowperf" }
-        );
-
-        const label = createBlackKeyLabel(key, offset);
-
-        const sticker_x = offset+width/2;
-        const sticker_y = black_key_height - black_key_sticker_top_offset;
-        const sticker = SvgTools.makeCircle(
-            sticker_x, sticker_y, sticker_radius, { class: "key-sticker black-key-sticker lowperf" }
-        );
-
-        const key_marker_group = SvgTools.createGroup({ 
-            class: "key-marker-group lowperf",
-        });
-        key_marker_group.appendChild(label);
-        key_marker_group.appendChild(sticker);
-        
-        key_group.appendChild(key_fill);
-        key_group.appendChild(key_highlight);
-        key_group.appendChild(key_marker_group);
-
-        return key_group;
-    }
-
-    function createWhiteKeyLabel(keynum, left) {
-        const center = left + white_key_width_half;
-        const elm = SvgTools.createElement("text", {
-            x: center, y: white_key_label_y,
-            id: `keylabel${keynum}`, class: "key-label white-key-label lowperf"
-        });
-        elm.appendChild(SvgTools.createElement("tspan", { x: center }));
-        return elm;
-    }
-
-    function createBlackKeyLabel(keynum, left) {
-        const center = left + black_key_width_half;
-        const elm = SvgTools.createElement("text", {
-            x: center, y: black_key_label_y,
-            id: `keylabel${keynum}`, class: "key-label black-key-label lowperf"
-        });
-        elm.appendChild(SvgTools.createElement("tspan", { x: center }));
-        elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-0.9lh" }));
-        elm.appendChild(SvgTools.createElement("tspan", { x: center, dy: "-1.0lh" }));
-        return elm;
-    }
-
-    let width = 0;
-    let white_left = 0;
-
-    for ( let key = first_key; key <= last_key; key++ ) {
-        const note = key % 12;
-
-        if ( isWhiteKey(note) ) {
-            const white_key = drawWhiteKey(key, note,
-                white_left, white_key_width, white_key_height, white_key_rounding
-            );
-            white_keys_g.appendChild(white_key);
-            keys[key] = white_key;
-            width += white_key_width;
-            white_left += white_key_width;
-        } else {
-            const black_left = white_left - black_key_width_half + (BK_OFFSETS[note]*black_key_width);
-            const black_key = drawBlackKey(key,
-                black_left, black_key_width, black_key_height
-            );
-            black_keys_g.appendChild(black_key);
-            keys[key] = black_key;
-        }
-    }
-    
-    svg.appendChild(white_keys_g);
-    svg.appendChild(SvgTools.makeRect(
-        width, top_felt.height, 0, top_felt.top, null, null, 
-        { id: "top-felt", class: "lowperf" })
-    );
-    svg.appendChild(black_keys_g);
-
-    const viewbox = {
-        left: -2,
-        top: -4,
-        width: width+STROKE_WIDTH+2,
-        height: (white_key_height * WHITE_KEY_PRESSED_FACTOR) + STROKE_WIDTH + 4
-    }
-
-    svg.setAttribute("viewBox", `${viewbox.left} ${viewbox.top} ${viewbox.width} ${viewbox.height}`);
-
+export function handlePianoContainerResize() {
+    if ( piano.resize.timeout ) clearTimeout(piano.resize.timeout);
+    piano.resize_timeout = setTimeout(() => {
+        updatePianoPosition();
+        piano.resize.timeout = null;
+    }, settings.lowperf ? 50 : 5);
 }
 
+piano.svg.addEventListener("click", handlePianoClick, { capture: false, passive: true });
 
-/**
- * @param {Array} d0 - _d_ attribute for unpressed key.
- * @param {Array} d1 - _d_ attribute for pressed key.
- * @param {Object} attributes
- * @returns {SVGPathElement}
- */
-function makeDualPath(d0, d1, attributes = {}) {
-    const path = SvgTools.createElement("path", attributes);
-    d0 = d0.filter((x) => x != null)
-           .map((x) => Array.isArray(x) ? x.join(' ') : x)
-           .join(' ');
-    d1 = d1.filter((x) => x != null)
-           .map((x) => Array.isArray(x) ? x.join(' ') : x)
-           .join(' ');
-    path.setAttribute('d0', d0);
-    path.setAttribute('d1', d1);
-    // path.setAttribute('d', d0);
-    return path;
-}
-
-
-const WHITE_NOTE = [true,false,true,false,true,true,false,true,false,true,false,true];
-
-/**
- * @param {number} key - 0-127
- * @returns {boolean}
- */
-export function isWhiteKey(key) {
-    return WHITE_NOTE[key%12];
-}
-
-/**
- * @param {number} key - 0-127
- * @returns {boolean}
- */
-export function isBlackKey(key) {
-    return !isWhiteKey(key);
-}
