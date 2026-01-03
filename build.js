@@ -3,6 +3,7 @@ import * as esbuild from 'esbuild';
 import { unlinkSync, writeFileSync, readdirSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
+import { minifyTemplates, writeFiles } from "esbuild-minify-templates";
 
 const productionMode = ('--dev' !== (argv[2] || process.env.NODE_ENV));
 const targetBrowsers = ['chrome130','firefox132'];
@@ -17,13 +18,12 @@ console.log(`${ productionMode ? 'production' : 'development' } build`);
 const buildCSS = await esbuild.context({
     entryPoints: [ 'pwa/css/main.css' ],
     bundle: true,
-    format: 'esm',
     target: targetBrowsers,
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
     sourcemap: !productionMode,
     outfile: 'pwa/bundle.css',
-    external: [ '*.woff2' ],
+    external: [ '*.woff2' ]
 });
 
 // bundle JS
@@ -36,7 +36,12 @@ const buildJS = await esbuild.context({
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
     sourcemap: !productionMode,
-    outfile: 'pwa/bundle.js'
+    outfile: 'pwa/bundle.js',
+    write: false,
+    plugins: [
+      minifyTemplates({ taggedOnly: true }), 
+      writeFiles()
+    ],
 });
 
 
