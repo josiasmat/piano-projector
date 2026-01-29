@@ -203,11 +203,11 @@ export function updatePianoKeys(keys) {
 }
 
 
-function updatePianoKeyMarkings(key_num, is_on, is_pressed) {
+function updatePianoKeyMarkings(key, is_on, is_pressed) {
 
-    const key_elm = piano.keys[key_num];
-    const group_elm = piano.marking_groups[key_num];
-    const label_elm = piano.labels[key_num];
+    const key_elm = piano.keys[key];
+    const group_elm = piano.marking_groups[key];
+    const label_elm = piano.labels[key];
 
     function setLabelText() {
         let text = "";
@@ -215,15 +215,15 @@ function updatePianoKeyMarkings(key_num, is_on, is_pressed) {
             case "pc" : 
                 text = `${key%12}`; break;
             case "english": 
-                text = getEnglishLabel(key_num); break;
+                text = getEnglishLabel(key); break;
             case "german": 
-                text = getGermanLabel(key_num); break;
+                text = getGermanLabel(key); break;
             case "italian": 
-                text = getItalianLabel(key_num); break;
+                text = getItalianLabel(key); break;
             case "freq":
-                text = getFrequencyLabel(key_num); break;
+                text = getFrequencyLabel(key); break;
             default: 
-                text = `${key_num}`;
+                text = `${key}`;
         }
 
         const lines = text.split('\n');
@@ -233,7 +233,7 @@ function updatePianoKeyMarkings(key_num, is_on, is_pressed) {
 
     if ( key_elm ) {
 
-        const has_fixed_label = settings.labels.keys.has(key_num);
+        const has_fixed_label = settings.labels.keys.has(key);
         const label_visible = has_fixed_label || ( settings.labels.played && is_on );
         const label_temporary = settings.labels.played && !has_fixed_label;
 
@@ -246,8 +246,8 @@ function updatePianoKeyMarkings(key_num, is_on, is_pressed) {
 
         label_elm.classList.toggle("rotated", settings.labels.type == "freq");
 
-        const has_sticker = settings.stickers.keys.has(key_num);
-        const sticker_color = has_sticker ? settings.stickers.keys.get(key_num) : null;
+        const has_sticker = settings.stickers.keys.has(key);
+        const sticker_color = has_sticker ? settings.stickers.keys.get(key) : null;
         key_elm.classList.toggle("has-sticker", has_sticker);
         key_elm.classList.toggle("has-sticker-red", sticker_color == "red");
         key_elm.classList.toggle("has-sticker-yellow", sticker_color == "yellow");
