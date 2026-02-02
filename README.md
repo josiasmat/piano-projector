@@ -48,3 +48,5 @@ This software is licensed under the terms of the [GNU Affero General Public Lice
 
 - [Shoelace](https://github.com/shoelace-style/shoelace)
 - [smplr](https://github.com/danigb/smplr)
+- [soundfont2](https://github.com/Mrtenz/soundfont2)
+- [TourGuide JS](https://tourguidejs.com/)
