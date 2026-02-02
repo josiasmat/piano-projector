@@ -1,3 +1,5 @@
 private/
 node_modules/
 pwa/*.map
+pwa/bundle.*
+pwa/sw.js
