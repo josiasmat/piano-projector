@@ -55,14 +55,14 @@ import {
 } from './connect.js';
 
 import { 
-    clearStickers, getLabelsCurrentPresetOption, isLabelingModeOn, isStickerModeOn, 
-    setLabelsPreset, setLabelsType, toggleLabelingMode, toggleLabelsOctave, 
-    toggleLabelsPlayed, toggleStickerMode 
+    clearStickers, clearLabels, isLabelingModeOn, isStickerModeOn, setLabelsType, 
+    toggleLabelingMode, toggleLabelsOctave, toggleLabelsPlayed, toggleStickerMode 
 } from './markings.js';
 
 import { 
     createPianoKeyboard, touch, updatePianoKeys, updatePianoPosition, updatePianoTopFelt 
 } from './piano.js';
+import { updateOnboardingTour } from './onboarding.js';
 
 
 export const toolbar = {
@@ -102,7 +102,7 @@ export const toolbar = {
         labels_group: document.getElementById("btn-labels-group"),
         labels_left: document.getElementById("btn-labels-switch"),
         labels_right: document.getElementById("btn-labels-dropdown"),
-        stickers_group: document.getElementById("btn-labels-group"),
+        stickers_group: document.getElementById("btn-stickers-group"),
         stickers_left: document.getElementById("btn-stickers-switch"),
         stickers_right: document.getElementById("btn-stickers-dropdown"),
         panic: document.getElementById("btn-panic"),
@@ -155,9 +155,10 @@ export const toolbar = {
             top: document.getElementById("menu-labels-top"),
             labeling_mode: document.getElementById("menu-labeling-mode"),
             played: document.getElementById("menu-labels-played-keys"),
-            presets: document.getElementById("menu-labels-which"),
+            // presets: document.getElementById("menu-labels-which"),
             type: document.getElementById("menu-labels-type"),
             octave: document.getElementById("menu-item-labels-octave"),
+            clear: document.getElementById("menu-labels-clear")
         },
         stickers: {
             top: document.getElementById("menu-stickers-top"),
@@ -350,19 +351,13 @@ export function updatePedalIcons() {
 export function updateLabelsMenu() {
     toolbar.menus.labels.labeling_mode.checked = isLabelingModeOn();
     toolbar.menus.labels.played.checked = settings.labels.played;
-    const preset_name = getLabelsCurrentPresetOption();
-    for ( const item of toolbar.menus.labels.presets.children ) 
-        item.checked = ( item.value === preset_name );
-    toolbar.menus.labels.presets.nextElementSibling.innerText = {
-            none: "None", mc: "Middle-C", cs: "C's", 
-            white: "White", all: "All", custom: "Custom"
-        }[preset_name];
     for ( const item of toolbar.menus.labels.type.children )
         if ( item.value != "octave" )
             item.checked = ( item.value === settings.labels.type );
     toolbar.menus.labels.type.nextElementSibling.innerText = settings.labels.type_badge;
     toolbar.menus.labels.octave.disabled = ["pc","midi","freq"].includes(settings.labels.type);
     toolbar.menus.labels.octave.checked = settings.labels.octave;
+    toolbar.menus.labels.clear.disabled = settings.labels.keys.size == 0;
 }
 
 
@@ -418,6 +413,7 @@ export function handleToolbarResize() {
     if ( toolbar.resize.timeout ) clearTimeout(toolbar.resize.timeout);
     toolbar.resize_timeout = setTimeout(() => {
         updateToolbarBasedOnWidth();
+        updateOnboardingTour();
         toolbar.resize.timeout = null;
     }, settings.lowperf ? 50 : 5);
 }
@@ -555,11 +551,11 @@ toolbar.menus.colors.picker_color_pressed
     writeSettings();
 });
 
-toolbar.menus.labels.presets
-.addEventListener("sl-select", (e) => {
-    setLabelsPreset(e.detail.item.value);
-    if ( is_mobile ) toolbar.dropdowns.labels.hide();
-});
+// toolbar.menus.labels.presets
+// .addEventListener("sl-select", (e) => {
+//     setLabelsPreset(e.detail.item.value);
+//     if ( is_mobile ) toolbar.dropdowns.labels.hide();
+// });
 
 toolbar.menus.labels.type
 .addEventListener("sl-select", (e) => {
@@ -603,6 +599,11 @@ toolbar.buttons.stickers_left
 toolbar.menus.stickers.clear
 .addEventListener("click", () => {
     clearStickers();
+});
+
+toolbar.menus.labels.clear
+.addEventListener("click", () => {
+    clearLabels();
 });
 
 toolbar.menus.pedals.top

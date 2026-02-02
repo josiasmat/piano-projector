@@ -86,7 +86,7 @@ export class KbdNav {
         if ( this.#visible ) this.#build();
     }
 
-    #show() {
+    show() {
         if ( this.#visible == false ) {
             this.#visible = true;
             this.#current_path = [0];
@@ -158,7 +158,7 @@ export class KbdNav {
         breadcrumb_top.appendChild(menu_elm);
     }
 
-    #hide() {
+    hide() {
         if ( this.#visible ) {
             this.#visible = false;
             this.#container.hidden = true;
@@ -172,7 +172,7 @@ export class KbdNav {
         if ( e.repeat ) return;
         if ( this.#triggerMatchKey(e) ) {
             e.preventDefault();
-            this.#show();
+            this.show();
         } else if ( this.#triggerMatchHold(e) ) {
             let match = false;
             const k = e.key.toLowerCase();
@@ -200,13 +200,13 @@ export class KbdNav {
     #keyUpHandler(e) {
         if ( this.#triggerMatchKey(e) ) {
             e.preventDefault();
-            this.#hide();
+            this.hide();
         }
     }
 
     #blurHandler() {
         if ( this.#visible )
-            this.#hide();
+            this.hide();
     }
 
     /** @param {string} t @param {KeyboardEvent} e */

@@ -23,6 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 @import url('piano.css');
 @import url('toolbar.css');
 
+@import "@sjmc11/tourguidejs/src/scss/tour.scss";
+
 @font-face {
     font-family: 'Orbitron';
     src: url('assets/font/orbitron.woff2');

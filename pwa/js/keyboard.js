@@ -23,7 +23,8 @@ import { triggerPanic } from "./panic.js";
 import { setTransposition } from "./transpose.js";
 
 import { 
-    clearStickers, getLabelsCurrentPresetOption, isLabelingModeOn, isMarkingModeOn, isStickerModeOn, setLabelsPreset, 
+    clearLabels,
+    clearStickers, isLabelingModeOn, isMarkingModeOn, isStickerModeOn,
     setLabelsType, setMarkingMode, toggleLabelingMode, 
     toggleLabelsOctave, toggleLabelsPlayed, toggleStickerMode 
 } from "./markings.js";
@@ -37,7 +38,9 @@ import { touch } from "./piano.js";
 
 // Keyboard events
 
-window.addEventListener("keydown", handleKeyDown);
+export function attachKeyboardHandlers() {
+    window.addEventListener("keydown", handleKeyDown);
+}
 
 
 /** @param {KeyboardEvent} e */
@@ -109,6 +112,16 @@ export function initializeKbdNavigator() {
 }
 
 
+export function showKbdNavigator() {
+    kbdnav.show();
+}
+
+
+export function hideKbdNavigator() {
+    kbdnav.hide();
+}
+
+
 export function updateKbdNavigator() {
     kbdnav?.replaceStructure(buildKbdNavStructure());
 }
@@ -152,7 +165,6 @@ function buildKbdNavStructure() {
     const getKeyDepthStr = () => {
         return settings.height_factor == 1.0 ? "Full" : settings.height_factor == 0.5 ? "1/2" : "3/4";
     };
-    const labels_preset = getLabelsCurrentPresetOption();
     const sticker_mode = isStickerModeOn();
     return [
         ['', [
@@ -186,14 +198,6 @@ function buildKbdNavStructure() {
             ]],
             ["&Labels", [
                 ["&Toggle Labeling mode (F2)", () => toggleLabelingMode(), {checked: isLabelingModeOn()}],
-                ["&Show on played keys", () => toggleLabelsPlayed(), {checked: settings.labels.played}],
-                ["&Presets", [
-                    ["&None", () => setLabelsPreset("none"), {checked: labels_preset == "none"}],
-                    ["&Middle-C", () => setLabelsPreset("mc"), {checked: labels_preset == "mc"}],
-                    ["&C-keys", () => setLabelsPreset("cs"), {checked: labels_preset == "cs"}],
-                    ["&White keys", () => setLabelsPreset("white"), {checked: labels_preset == "white"}],
-                    ["&All keys", () => setLabelsPreset("all"), {checked: labels_preset == "all"}],
-                ]],
                 ["&Format", [
                     ["&English", () => setLabelsType("english"), {checked: settings.labels.type == "english"}],
                     ["&German", () => setLabelsType("german"), {checked: settings.labels.type == "german"}],
@@ -203,6 +207,8 @@ function buildKbdNavStructure() {
                     ["&Frequency", () => setLabelsType("freq"), {checked: settings.labels.type == "freq"}],
                     ["Show &octave", () => toggleLabelsOctave(), {checked: settings.labels.octave}]
                 ]],
+                ["&Show on played keys", () => toggleLabelsPlayed(), {checked: settings.labels.played}],
+                ["&Clear", () => clearLabels()],
             ]],
             ["Stic&kers", [
                 ["&Red", () => toggleStickerMode(undefined, "red"), {checked: sticker_mode && settings.stickers.color == "red"}],

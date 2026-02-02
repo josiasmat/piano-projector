@@ -17,7 +17,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { midiToFreq } from "./lib/libmidi";
-import { range } from "./lib/utils";
 import { touch, updatePianoCursor, updatePianoKeys } from "./piano";
 import { isWhiteKey } from "./pianodraw";
 import { settings, writeSettings } from "./settings";
@@ -40,15 +39,6 @@ export function isLabelingModeOn() {
 
 export function isStickerModeOn() {
     return marking_mode === "sticker";
-}
-
-
-/** @param {string} value */
-export function setLabelsPreset(value) {
-    settings.labels.keys = buildLabelsPreset(value);
-    updateLabelsMenu();
-    updatePianoKeys();
-    writeSettings();
 }
 
 
@@ -96,6 +86,14 @@ export function clearStickers() {
 }
 
 
+export function clearLabels() {
+    settings.labels.keys.clear();
+    updatePianoKeys();
+    updateLabelsMenu();
+    writeSettings();
+}
+
+
 /** @param {boolean} value */
 export function toggleLabelsPlayed(value = undefined) {
     settings.labels.played = ( value === undefined )
@@ -115,41 +113,6 @@ export function toggleLabelsOctave(value = undefined) {
     updateLabelsMenu();
     updatePianoKeys();
     writeSettings();
-}
-
-
-
-function buildLabelsPreset(value) {
-    const preset = new Set();
-    switch ( value ) {
-        case "mc":
-            preset.add(60);
-            break;
-        case "cs":
-            for ( const key of range(0,128,12) )
-                preset.add(key);
-            break;
-        case "white":
-            for ( const key of range(0,128) )
-                if ( isWhiteKey(key) )
-                    preset.add(key);
-            break;
-        case "all":
-            for ( const key of range(0,128) )
-                preset.add(key);
-            break;
-    }
-    return preset;
-}
-
-
-export function getLabelsCurrentPresetOption() {
-    for ( const option of ["none","mc","cs","white","all"] ) {
-        const preset = buildLabelsPreset(option);
-        if ( settings.labels.keys.symmetricDifference(preset).size == 0 )
-            return option;
-    }
-    return "custom";
 }
 
 

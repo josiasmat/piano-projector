@@ -580,16 +580,6 @@ function handlePianoTouchMove(e) {
 }
 
 
-piano.svg.addEventListener("pointerdown", handlePianoPointerDown, { capture: true, passive: false });
-piano.svg.addEventListener("touchstart", handlePianoTouchStart, { capture: true, passive: false });
-window.addEventListener("pointerup", handlePianoPointerUp, { capture: false, passive: false });
-window.addEventListener("pointercancel", handlePianoPointerUp, { capture: false, passive: false });
-window.addEventListener("touchend", handlePianoTouchEnd, { capture: false, passive: false });
-window.addEventListener("touchcancel", handlePianoTouchEnd, { capture: false, passive: false });
-window.addEventListener("pointermove", handlePianoPointerMove, { capture: false, passive: false });
-window.addEventListener("touchmove", handlePianoTouchMove, { capture: false, passive: false });
-
-
 // Adding and removing labels or markers with pointer
 
 /** @param {PointerEvent} e */
@@ -627,5 +617,15 @@ export function handlePianoContainerResize() {
     }, settings.lowperf ? 50 : 5);
 }
 
-piano.svg.addEventListener("click", handlePianoClick, { capture: false, passive: true });
 
+export function attachPianoPointerAndTouchHandlers() {
+    piano.svg.addEventListener("pointerdown", handlePianoPointerDown, { capture: true, passive: false });
+    piano.svg.addEventListener("touchstart", handlePianoTouchStart, { capture: true, passive: false });
+    window.addEventListener("pointerup", handlePianoPointerUp, { capture: false, passive: false });
+    window.addEventListener("pointercancel", handlePianoPointerUp, { capture: false, passive: false });
+    window.addEventListener("touchend", handlePianoTouchEnd, { capture: false, passive: false });
+    window.addEventListener("touchcancel", handlePianoTouchEnd, { capture: false, passive: false });
+    window.addEventListener("pointermove", handlePianoPointerMove, { capture: false, passive: false });
+    window.addEventListener("touchmove", handlePianoTouchMove, { capture: false, passive: false });
+    piano.svg.addEventListener("click", handlePianoClick, { capture: false, passive: true });
+}

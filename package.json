@@ -7,8 +7,10 @@
     "soundfont2": "^0.5.0"
   },
   "devDependencies": {
+    "@sjmc11/tourguidejs": "^0.0.27",
     "esbuild": "0.27.x",
-    "esbuild-minify-templates": "^0.13.x"
+    "esbuild-minify-templates": "^0.13.x",
+    "esbuild-sass-plugin": "^3.6.0"
   },
   "scripts": {
     "build": "node ./build.js",

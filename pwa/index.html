@@ -70,7 +70,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         <div id="top-toolbar">
             <div id="top-toolbar-left">
                 <span id="toolbar-title" class="title-text">Piano Projector</span>
-                <sl-tooltip id="dropdown-connect-tooltip" content="" trigger="manual" distance="10" placement="bottom-start">
+                <sl-tooltip id="dropdown-connect-tooltip" content="" trigger="manual" distance="10" placement="bottom-start" index="0">
                     <sl-dropdown id="dropdown-connect">
                         <sl-button id="btn-connect" slot="trigger" caret>
                             <span data-nosnippet>Control</span>
@@ -272,17 +272,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                                 Labeling mode
                                 <span slot="suffix" class="menu-keyboard-shortcut">F2</span>
                             </sl-menu-item>
-                            <sl-divider></sl-divider>
-                            <sl-menu-item>
-                                <span data-nosnippet>Presets</span>
-                                <sl-menu id="menu-labels-which" slot="submenu">
-                                    <sl-menu-item type="checkbox" value="none">None</sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="mc">Middle-C</sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="cs">C-keys</sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="white">White keys</sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="all">All keys</sl-menu-item>
-                                </sl-menu>
-                                <sl-badge slot="suffix" variant="neutral" pill></sl-badge>
+                            <sl-menu-item id="menu-labels-played-keys" type="checkbox" value="played-keys">
+                                Show on played keys
                             </sl-menu-item>
                             <sl-menu-item>
                                 <span data-nosnippet>Format</span>
@@ -290,7 +281,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                                     <sl-menu-item type="checkbox" value="english" checked><span data-nosnippet>English</span></sl-menu-item>
                                     <sl-menu-item type="checkbox" value="german"><span data-nosnippet>German</span></sl-menu-item>
                                     <sl-menu-item type="checkbox" value="italian"><span data-nosnippet>Italian</span></sl-menu-item>
-                                    <sl-menu-item type="checkbox" value="pc"><span data-nosnippet>Pitch clas</span>s</sl-menu-item>
+                                    <sl-menu-item type="checkbox" value="pc"><span data-nosnippet>Pitch class</span></sl-menu-item>
                                     <sl-menu-item type="checkbox" value="midi"><span data-nosnippet>MIDI value</span></sl-menu-item>
                                     <sl-menu-item type="checkbox" value="freq"><span data-nosnippet>Frequency</span></sl-menu-item>
                                     <sl-divider></sl-divider>
@@ -300,8 +291,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                                 </sl-menu>
                                 <sl-badge slot="suffix" variant="neutral" pill>English</sl-badge>
                             </sl-menu-item>
-                            <sl-menu-item id="menu-labels-played-keys" type="checkbox" value="played-keys">
-                                Show on played keys
+                            <sl-divider></sl-divider>
+                            <sl-menu-item id="menu-labels-clear">
+                                Clear all
                             </sl-menu-item>
                         </sl-menu>
                     </sl-dropdown>

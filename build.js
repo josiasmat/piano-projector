@@ -4,6 +4,7 @@ import { unlinkSync, writeFileSync, readdirSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { minifyTemplates, writeFiles } from "esbuild-minify-templates";
+import { sassPlugin } from 'esbuild-sass-plugin';
 
 const productionMode = ('--dev' !== (argv[2] || process.env.NODE_ENV));
 const targetBrowsers = ['chrome130','firefox132'];
@@ -22,6 +23,12 @@ const buildCSS = await esbuild.context({
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
     sourcemap: !productionMode,
+    loader: {
+      ".scss": "css",
+    },
+    plugins: [sassPlugin({
+      filter: /\.scss$/
+    })],
     outfile: 'pwa/bundle.css',
     external: [ '*.woff2' ]
 });
@@ -39,9 +46,15 @@ const buildJS = await esbuild.context({
     outfile: 'pwa/bundle.js',
     write: false,
     plugins: [
+      sassPlugin({
+        filter: /\.scss$/
+      }),
       minifyTemplates({ taggedOnly: true }), 
       writeFiles()
     ],
+    loader: {
+      ".scss": "css",
+    }
 });
 
 

@@ -35,14 +35,17 @@ import {
     handleToolbarResize, updateToolbarBasedOnWidth
 } from "./toolbar.js";
 
+import { createOnboardingTour, startOnboardingTour, updateOnboardingTour } from "./onboarding.js";
+
 import { 
     piano, createPianoKeyboard, updatePianoPosition, 
-    handlePianoContainerResize 
+    handlePianoContainerResize, 
+    attachPianoPointerAndTouchHandlers
 } from "./piano.js";
 
 import { sound } from "./sound.js";
 import { getUrlQueryValue } from "./lib/utils.js";
-import { initializeKbdNavigator } from "./keyboard.js";
+import { attachKeyboardHandlers, hideKbdNavigator, initializeKbdNavigator, showKbdNavigator } from "./keyboard.js";
 
 
 // Initialization
@@ -88,6 +91,7 @@ function initializeApp() {
 
     updateToolbar();
     createPianoKeyboard();
+    createOnboardingTour();
 
     if ( !settings.device_name ) {
         const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
@@ -98,15 +102,8 @@ function initializeApp() {
                 "Play your keyboard using your fingers! " +
                 "Or change the input method by tapping this button."
             );
-        } else {
-            connect_tooltip.setAttribute("content", 
-                "Click on this button to select an input method."
-            );
         }
-        connect_tooltip.open = true;
-        window.addEventListener("click", () => {
-            connect_tooltip.open = false;
-        }, { once: true });
+        
     } else {
         if ( ["pckbd","touch"].includes(settings.device_name) )
             connectInput(settings.device_name);
@@ -124,7 +121,28 @@ function initializeApp() {
         updatePianoPosition();
         piano.resize.observer = new ResizeObserver(handlePianoContainerResize);
         piano.resize.observer.observe(piano.container);
-        initializeKbdNavigator();
+        if ( !is_mobile ) {
+            initializeKbdNavigator();
+            startOnboardingTour({
+                onStepChange: (step) => {
+                    switch ( step ) {
+                        case 11:
+                            showKbdNavigator();
+                            document.getElementById("keyboard-navigator").style.visibility = "hidden";
+                            break;
+                        case 12:
+                            document.getElementById("keyboard-navigator").style.removeProperty("visibility");
+                    }
+                },
+                onFinish: () => {
+                    hideKbdNavigator();
+                    attachKeyboardHandlers();
+                    attachPianoPointerAndTouchHandlers();
+                }
+            });
+        } else {
+            attachPianoPointerAndTouchHandlers();
+        }
     };
 
     if ( document.readyState != "complete" )
