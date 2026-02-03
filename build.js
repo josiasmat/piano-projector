@@ -30,7 +30,6 @@ const SW_TEMPLATE_FILE = resolve(SRC_PATH, `${SW_FILENAME}.template`);
 const SW_OUT_FILEPATH = resolve(PWA_PATH, SW_FILENAME);
 
 const ASSETS_DIRNAME = 'assets';
-const ASSETS_DIRPATH = resolve(PWA_PATH, ASSETS_DIRNAME);
 
 const FILES_TO_COPY = [
   {src: join(SRC_PATH, 'index.html'), dest: join(PWA_PATH, 'index.html')},
