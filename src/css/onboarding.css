@@ -1,0 +1,102 @@
+/*
+Piano Projector
+Copyright (C) 2026 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+@import "@sjmc11/tourguidejs/src/scss/tour.scss";
+
+
+.tg-backdrop {
+    border: 2px solid var(--sl-color-primary-200) !important;
+}
+
+.tg-dialog, .tg-dialog-loading {
+    background: var(--sl-color-primary-200) !important;
+    color: var(--sl-color-primary-950);
+
+    * {
+        font-family: var(--sl-font-sans);
+        font-size: 1.15em;
+    }
+
+    .tg-dialog-body p {
+        font-size: inherit;
+        margin: 0;
+        &:not(:first-child) {
+            margin-top: 0.6lh;
+        }
+    }
+
+    .tg-dialog-header,
+    .td-dialog-progress-bar,
+    .tg-dialog-body,
+    .tg-dialog-footer {
+        background: inherit !important;
+        color: var(--sl-color-primary-950) !important;
+    }
+
+    .tg-arrow {
+        background: inherit !important;
+    }
+
+    .tg-dialog-header {
+        .tg-dialog-title {
+            font-size: 100% !important;
+            font-style: var(--sl-font-sans);
+        }
+        .tg-dialog-close-btn {
+            transform: translateY(-15px) scale(150%);
+            opacity: 0.7 !important;
+            svg {
+                fill: var(--sl-color-primary-950);
+            }
+        }
+    }
+
+    .tg-dialog-footer .tg-dialog-btn {
+        background: var(--sl-color-primary-100);
+        border-color: var(--sl-color-primary-900) !important;
+        color: var(--sl-color-primary-950) !important;
+        cursor: pointer;
+        font-size: inherit !important;
+        padding: 10px 15px !important;
+        user-select: none !important;
+        transition-property: all;
+        transition-timing-function: ease;
+        transition-duration: 0.1s;
+        &:hover {
+            transition: none;
+        }
+        &:hover, &:active:not(:hover) {
+            background: var(--sl-color-primary-300);
+            border-color: var(--sl-color-primary-700) !important;
+            box-shadow: 0px 0px 5px #fff5 !important;
+        }
+        &:hover:active {
+            background: var(--sl-color-primary-200) !important;
+            border-color: var(--sl-color-primary-500) !important;
+            color: var(--sl-color-primary-800) !important;
+        }
+    }
+
+    .tg-dot-active {
+        background: var(--sl-color-primary-500) !important;
+    }
+
+    .tg-step-progress {
+        user-select: none !important;
+    }
+}

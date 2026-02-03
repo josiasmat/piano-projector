@@ -22,8 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 /* Import other css files */
 @import url('piano.css');
 @import url('toolbar.css');
-
-@import "@sjmc11/tourguidejs/src/scss/tour.scss";
+@import url('onboarding.css');
 
 @font-face {
     font-family: 'Orbitron';
