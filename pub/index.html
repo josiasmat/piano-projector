@@ -27,6 +27,9 @@
                 font-family: "Orbitron", serif;
                 font-weight: lighter;
             }
+            header .app-name {
+                user-select: none;
+            }
             body {
                 font-family: sans-serif;
                 margin: 0;
@@ -75,16 +78,27 @@
             }
             .button {
                 display: block;
-                background: #0078ff;
+                background: #136fa9;
                 color: white;
-                padding: 0.75rem 1.25rem;
+                padding: 0.75rem 1.5rem;
                 border-radius: 6px;
                 text-decoration: none;
                 font-size: 1.15rem;
                 width: fit-content;
                 margin: 1rem auto;
-                transition: background 0.05s ease;
-                &:hover { background: #005fcc; }
+                user-select: none;
+                transition-property: all;
+                transition-timing-function: ease;
+                transition-duration: 0.3s;
+                &:hover { 
+                    &:not(:active) {
+                        background: #0f84cd;
+                        box-shadow: 2px 4px 5px #0006;
+                        transform: translateY(-2px);
+                    }
+                    background: #117bbd; 
+                    transition-duration: 0.05s;
+                }
             }
         </style>
     </head>
