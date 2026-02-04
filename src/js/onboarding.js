@@ -36,7 +36,6 @@ export function createOnboardingTour() {
     tg.addSteps([
         {
             group: "main",
-            order: 0,
             content: "This short tour will help you learn how to use the app. "+
                      "Follow the steps to get started.",
             title: "Welcome to Piano Projector!",
@@ -44,7 +43,16 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 1,
+            content: "<p>This is the piano projection area. When connected to a MIDI "+
+                     "controller, the keys you play are highlighted here.</p><p>Click and drag "+
+                     "the piano up or down to change its position on the screen. If you are "+
+                     "using Touch control mode, you can still move the keyboard with the middle "+
+                     "or right mouse button.</p><p>Use the mouse wheel to zoom in or out.</p>",
+            title: "Piano projection",
+            target: piano.svg
+        },
+        {
+            group: "main",
             content: "<p>Click the Control button to choose how you want to play "+
                      "the piano. You can use a MIDI keyboard, your mouse or touch "+
                      "screen, or your computer keyboard.</p><p>The first time you "+
@@ -56,7 +64,6 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 2,
             content: "Click the Sound button to choose a sound for the piano. If you "+
                      "prefer a silent keyboard, or if you already have sound on your "+
                      "controller, you can leave this turned off.",
@@ -65,7 +72,6 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 3,
             content: "<p>Click the Transpose button to transpose by semitones or octaves. "+
                     "You can also use Page Up and Page Down; hold Shift to transpose by "+
                     "octaves.</p><p>When transposed, a yellow light will turn on.</p>",
@@ -74,7 +80,6 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 4,
             content: "Click the Size button to change how many keys are shown on the "+
                      "screen or how tall the keys appear.",
             title: "Size button",
@@ -82,7 +87,6 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 5,
             content: "Click the Appearance button to change the colors of the keys and "+
                      "other visual details.",
             title: "Appearance button",
@@ -90,7 +94,6 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 6,
             content: "Click the Pedals button to control how the app reacts to pedal "+
                      "input. The app supports both sustain and sostenuto pedals.",
             title: "Pedals button",
@@ -98,7 +101,6 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 7,
             content: "<p>Click the Labels button (or press F2) to turn on Labeling mode. Then "+
                      "click any key to show or hide its label.</p><p>Hold Ctrl while clicking "+
                      "to apply the label to that same note in all octaves.</p><p>Use the menu "+
@@ -109,7 +111,6 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 8,
             content: "<p>Click the Stickers button (or press F3) to turn on Sticker mode. Then "+
                      "click a key to place or remove a colored sticker. Hold Ctrl while clicking "+
                      "to apply a sticker to that same note in all octaves.</p><p>Use the menu "+
@@ -119,7 +120,6 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 9,
             content: "If a key seems stuck or a note keeps sounding, click the Panic button "+
                      "(or press Esc). This will reset the keyboard.",
             title: "Panic button",
@@ -127,7 +127,6 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 10,
             content: "You can hide the top toolbar by clicking the small button on its right "+
                      "side or by pressing F9. To show it again, move the mouse to the top-right "+
                      "corner of the screen.",
@@ -136,18 +135,6 @@ export function createOnboardingTour() {
         },
         {
             group: "main",
-            order: 11,
-            content: "<p>This is the piano projection area. When connected to a MIDI "+
-                     "controller, the keys you play are highlighted here.</p><p>Click and drag "+
-                     "the piano up or down to change its position on the screen. If you are "+
-                     "using Touch control mode, you can still move the keyboard with the middle "+
-                     "or right mouse button.</p><p>Use the mouse wheel to zoom in or out.</p>",
-            title: "Piano projection",
-            target: piano.svg
-        },
-        {
-            group: "main",
-            order: 12,
             content: "<p>Hold the Alt key to show the keyboard navigation bar. This lets you "+
                      "move through the app's functionality using your computer keyboard.</p>",
             title: "Keyboard navigation",
