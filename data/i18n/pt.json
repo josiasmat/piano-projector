@@ -150,7 +150,7 @@
         "onboarding-main-panic-text": "Se uma tecla parecer travada ou uma nota continuar tocando, clique no botão Pânico (ou pressione Esc). Isso redefinirá o teclado.",
         "onboarding-main-toggle-toolbar-title": "Ocultar e mostrar barra de ferramentas",
         "onboarding-main-toggle-toolbar-text": "Você pode ocultar a barra de ferramentas superior clicando no pequeno botão do seu lado direito ou pressionando F9. Para mostrá-la novamente, mova o mouse para o canto superior direito da tela.",
-        "onboarding-main-kbdnav-title": "Navegação do teclado",
+        "onboarding-main-kbdnav-title": "Navegação pelo teclado",
         "onboarding-main-kbdnav-text": "Mantenha pressionada a tecla Alt para mostrar a barra de navegação do teclado. Isso permite que você navegue pela funcionalidade do aplicativo usando o teclado do seu computador."
     }
 }
