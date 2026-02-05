@@ -16,6 +16,11 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+// Shoelace localization files
+import '@shoelace-style/shoelace/dist/translations/en.js';
+import '@shoelace-style/shoelace/dist/translations/pt.js';
+
+// Shoelace components
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/badge/badge.js';
 import '@shoelace-style/shoelace/dist/components/breadcrumb/breadcrumb.js';
@@ -31,6 +36,8 @@ import '@shoelace-style/shoelace/dist/components/menu/menu.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/visually-hidden/visually-hidden.js';
+
+// Shoelace set base path
 import { setBasePath as shoelaceSetBaseBath } 
     from '@shoelace-style/shoelace/dist/utilities/base-path.js';
 shoelaceSetBaseBath('assets/shoelace');
