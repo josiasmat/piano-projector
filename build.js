@@ -128,12 +128,11 @@ if ( productionMode ) {
   await buildCSS.watch();
   await buildJS.watch();
 
-  const watchCallback = () => {
-    buildCSS.rebuild();
-    buildJS.rebuild();
-  }
-
-  fs.watchFile(resolve(SRC_PATH, 'index.html'), () => copyFilesAndDirs(COPY_LIST));
+  COPY_LIST.forEach(entry => fs.watch(
+    entry.src, 
+    {recursive: true}, 
+    () => copyFilesAndDirs(COPY_LIST)
+  ));
 
   // development server
   await buildCSS.serve({
@@ -177,7 +176,10 @@ async function copyFilesAndDirs(files) {
     files.map(({src, dest}) => {
       const isDir = fs.existsSync(src) && fs.lstatSync(src).isDirectory();
       if ( isDir )
-        return cp(src, dest, {recursive: true});
+        return cp(src, dest, {
+          recursive: true,
+          preserveTimestamps: true
+        });
       else
         return copyFile(src, dest);
     })
