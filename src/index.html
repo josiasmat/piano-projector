@@ -38,16 +38,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 });
             }
         </script>
-        <link rel="manifest" href="manifest.json" />
-        <link rel="preload" href="i18n/en.json" as="fetch" type="application/json" crossorigin="anonymous" hreflang="en">
-        <link rel="preload" href="i18n/pt.json" as="fetch" type="application/json" crossorigin="anonymous" hreflang="pt">
-        <link rel="stylesheet" blocking="render" href="bundle.css">
+        <link rel="manifest" href="manifest.json" crossorigin />
+        <link rel="preload" href="i18n/en.json" as="fetch" type="application/json" hreflang="en" crossorigin />
+        <link rel="preload" href="i18n/pt.json" as="fetch" type="application/json" hreflang="pt" crossorigin />
+        <link rel="stylesheet" blocking="render" href="bundle.css" />
         <script type="module" src="bundle.js" ></script>
-        <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icon/favicon.svg">
-        <link rel="icon" type="image/png" sizes="128x128" href="assets/icon/favicon.png">
-        <link rel="icon" type="image/png" sizes="192x192" href="assets/icon/favicon-192.png">
-        <link rel="icon" type="image/png" sizes="512x512" href="assets/icon/favicon-512.png">
-        <link rel="license" type="text/markdown" href="/LICENSE.md">
+        <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icon/favicon.svg" crossorigin />
+        <link rel="icon" type="image/png" sizes="128x128" href="assets/icon/favicon.png" crossorigin />
+        <link rel="icon" type="image/png" sizes="192x192" href="assets/icon/favicon-192.png" crossorigin />
+        <link rel="icon" type="image/png" sizes="512x512" href="assets/icon/favicon-512.png" crossorigin />
+        <link rel="license" type="text/markdown" href="/LICENSE.md" crossorigin />
     </head>
     <body>
         <div id="loading-title" class="title-text">Piano Projector</div>
