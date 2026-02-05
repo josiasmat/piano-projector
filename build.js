@@ -2,14 +2,16 @@ import { argv } from 'node:process';
 import * as esbuild from 'esbuild';
 import BuildOptions from 'esbuild';
 import fs from 'node:fs';
-import { copyFile, cp, constants } from 'node:fs/promises';
+import { copyFile, cp } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { join, resolve } from 'node:path';
+import { join, resolve, relative } from 'node:path';
 import { minifyTemplates, writeFiles } from "esbuild-minify-templates";
 import { sassPlugin } from 'esbuild-sass-plugin';
 
 const productionMode = ('--dev' !== (argv[2] || process.env.NODE_ENV));
 const targetBrowsers = ['chrome130','firefox132'];
+
+const BASE_PATH = resolve();
 
 const SRC_PATH = resolve('.', 'src');
 const PUB_PATH = resolve('.', 'pub');
@@ -42,8 +44,6 @@ const COPY_LIST = [
   {src: join(DATA_DIRNAME, ASSETS_DIRNAME), dest: join(PWA_PATH, ASSETS_DIRNAME)},
   {src: join(DATA_DIRNAME, I18N_DIRNAME), dest: join(PWA_PATH, I18N_DIRNAME)},
 ];
-
-console.log(`${ productionMode ? 'production' : 'development' } build`);
 
 /** CSS bundle parameters @type {BuildOptions} */
 const cssBuildOptions = {
@@ -100,11 +100,18 @@ const PRECACHE = {
 }
 
 
+// Begin build
+
+console.log(`Starting ${ productionMode ? 'Production' : 'Development' } build...`);
+
 createDirectory(PUB_PATH);
 createDirectory(PWA_PATH);
-copyFilesAndDirs(COPY_LIST);
+await copyFilesAndDirs(COPY_LIST);
 
 if ( productionMode ) {
+
+  // Production build:
+  // generates a service worker to cache files for offline usage
 
   deleteSourceMaps();
   await bundleCssAndJs(cssBuildOptions, jsBuildOptions);
@@ -115,16 +122,14 @@ if ( productionMode ) {
 
 } else {
 
-  // in development mode, remove any existing service worker file
-  try {
-    fs.unlinkSync(SW_OUT_FILEPATH);
-    console.log('deleted', SW_OUT_FILEPATH);
-  } catch {}
+  // Development build:
+  // builds and watches for changes while running a HTTP server
 
-  // watch for file changes
+  deleteServiceWorker();
+
   const buildCSS = await esbuild.context(cssBuildOptions);
   const buildJS = await esbuild.context(jsBuildOptions);
-
+  
   await buildCSS.watch();
   await buildJS.watch();
 
@@ -134,7 +139,6 @@ if ( productionMode ) {
     () => copyFilesAndDirs(COPY_LIST)
   ));
 
-  // development server
   await buildCSS.serve({
     servedir: PUB_PATH
   });
@@ -154,11 +158,22 @@ function deleteSourceMaps() {
 }
 
 
+function deleteServiceWorker() {
+  try {
+    fs.unlinkSync(SW_OUT_FILEPATH);
+    console.log('deleted', relative(BASE_PATH, SW_OUT_FILEPATH));
+  } catch {}
+}
+
+
 function createDirectory(dir) {
   try {
     fs.mkdirSync(dir);
+    console.log(`Created directory "${relative(BASE_PATH, dir)}".`);
   } catch (e) {
-    if ( e.code !== 'EEXIST' )
+    if ( e.code == 'EEXIST' )
+      console.log(`Directory "${relative(BASE_PATH, dir)}" already exists.`);
+    else
       throw e;
   }
 }
@@ -179,13 +194,19 @@ async function copyFilesAndDirs(files) {
         return cp(src, dest, {
           recursive: true,
           preserveTimestamps: true
-        });
+        }).then(
+          () => console.log(`  directory "${relative(BASE_PATH, src)}" copied to "${relative(BASE_PATH, dest)}".`),
+          (e) => console.error(`  error when copying dir "${relative(BASE_PATH, src)}": ${e}`)
+        );
       else
-        return copyFile(src, dest);
+        return copyFile(src, dest).then(
+          () => console.log(`  file "${relative(BASE_PATH, src)}" copied to "${relative(BASE_PATH, dest)}".`),
+          (e) => console.error(`  error when copying file "${relative(BASE_PATH, src)}": ${e}`)
+        );
     })
   );
   console.log(( result[0].errors || result[1].errors )
-    ? "finished with errors" : "finished without errors"
+    ? "finished copy with errors." : "finished copy without errors."
   );
 }
 
@@ -206,11 +227,11 @@ async function bundleCssAndJs(cssOptions, jsOptions) {
   ]);
 
   if ( cssResult.errors.length || jsResult.errors.length ) {
-    console.error("finished with errors:");
+    console.error("finished bundle with errors:");
     console.error(cssResult.errors.toString());
     console.error(jsResult.errors.toString());
   } else {
-    console.log("finished without errors.");
+    console.log("finished bundle without errors.");
   }
 }
 
@@ -277,13 +298,15 @@ function computeHexHash(files) {
     try {
       const content = fs.readFileSync(path);
       hash.update(content);
+      successCount++;
 
     } catch (error) {
-      console.warn(`unable to read ${path} for hashing:`, error.message);
+      errorCount++;
+      console.warn(`  unable to read ${relative(BASE_PATH, path)} for hashing:`, error.message);
     }
   }
 
-  console.log("\nComputing hash for asset files:");
+  console.log("\nComputing hash for asset files...");
   const hash = createHash('md5');
 
   for (const asset of files) {
