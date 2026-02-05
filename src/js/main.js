@@ -35,7 +35,7 @@ import {
     handleToolbarResize, updateToolbarBasedOnWidth
 } from "./toolbar.js";
 
-import { createOnboardingTour, startOnboardingTour, updateOnboardingTour } from "./onboarding.js";
+import { prepareOnboardingTour, startOnboardingTour, updateOnboardingTour } from "./onboarding.js";
 
 import { 
     piano, createPianoKeyboard, updatePianoPosition, 
@@ -100,7 +100,7 @@ function initializeApp() {
 
     updateToolbar();
     createPianoKeyboard();
-    createOnboardingTour();
+    prepareOnboardingTour();
 
     if ( !settings.device_name ) {
         /** @type {SlTooltip} */

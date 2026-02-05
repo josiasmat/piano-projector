@@ -20,9 +20,10 @@ import { is_mobile } from "./common.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./lib/storage-handler.js";
 import { nextOf } from "./lib/utils.js";
 import { createPianoKeyboard, updatePianoKey, updatePianoKeys } from "./piano.js";
-import { updatePedalsMenu, updateSizeMenu } from "./toolbar.js";
+import { updatePedalsMenu, updateSizeMenu, updateToolbarBasedOnWidth } from "./toolbar.js";
 import { i18n } from "./lib/i18n.js";
 import { updateKbdNavigator } from "./keyboard.js";
+import { updateOnboardingTour } from "./onboarding.js";
 
 
 // Initialize storage handlers
@@ -230,6 +231,8 @@ export function changeLanguage(code) {
         document.documentElement.setAttribute("lang", code);
         i18n.translateDOM(document.body);
         updateKbdNavigator();
+        updateToolbarBasedOnWidth();
+        updateOnboardingTour();
     }
     return new_code;
 }
