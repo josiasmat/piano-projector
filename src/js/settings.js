@@ -21,6 +21,9 @@ import { LocalStorageHandler, SessionStorageHandler } from "./lib/storage-handle
 import { nextOf } from "./lib/utils.js";
 import { createPianoKeyboard, updatePianoKey, updatePianoKeys } from "./piano.js";
 import { updatePedalsMenu, updateSizeMenu } from "./toolbar.js";
+import { i18n } from "./lib/i18n.js";
+import { updateKbdNavigator } from "./keyboard.js";
+
 
 // Initialize storage handlers
 export const settings_storage = new LocalStorageHandler("piano-projector");
@@ -30,6 +33,7 @@ export const session_storage = new SessionStorageHandler("piano-projector-sessio
 export const settings = {
     first_time: true,
     lowperf: false,
+    language: null,
     number_of_keys: 88,
     height_factor: 1,
     device_name: null,
@@ -66,8 +70,12 @@ export const settings = {
         },
         get type_badge() {
             return {
-                english: "English", german: "German", italian: "Italian",
-                pc: "Pitch-class", midi: "MIDI", freq: "Frequency"
+                english: i18n.get("labels-menu-format-english", "English"), 
+                german: i18n.get("labels-menu-format-german", "German"), 
+                italian: i18n.get("labels-menu-format-italian", "Italian"),
+                pc: i18n.get("labels-menu-format-pc", "Pitch-class"), 
+                midi: i18n.get("labels-menu-format-midi", "MIDI"), 
+                freq: i18n.get("labels-menu-format-freq", "Frequency")
             }[this.type];
         }
     },
@@ -149,6 +157,7 @@ export const settings = {
 
 export function writeSettings(sound_type = null) {
     settings_storage.writeBool("first-time", false);
+    settings_storage.writeString("language", settings.language);
     settings_storage.writeNumber("height-factor", settings.height_factor);
     settings_storage.writeNumber("number-of-keys", settings.number_of_keys);
     settings_storage.writeString("color-pressed", settings.color_highlight);
@@ -177,6 +186,7 @@ export function writeSettings(sound_type = null) {
 export function loadSettings() {
     settings.first_time = settings_storage.readBool("first-time", true);
     settings.lowperf = settings_storage.readBool("lowperf", settings.lowperf);
+    settings.language = settings_storage.readString("language", settings.language);
     settings.height_factor = settings_storage.readNumber("height-factor", is_mobile ? 0.75 : settings.height_factor);
     settings.number_of_keys = settings_storage.readNumber("number-of-keys", is_mobile ? 20 : settings.number_of_keys);
     settings.color_white = settings_storage.readString("color-white", settings.color_white);
@@ -211,6 +221,17 @@ export function loadSessionSettings() {
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
     settings.toolbar = session_storage.readBool("toolbar", settings.toolbar);
+}
+
+
+export function changeLanguage(code) {
+    const new_code = i18n.setLanguage(code);
+    if ( new_code === code ) {
+        document.documentElement.setAttribute("lang", code);
+        i18n.translateDOM(document.body);
+        updateKbdNavigator();
+    }
+    return new_code;
 }
 
 

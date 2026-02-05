@@ -31,11 +31,22 @@ export class KbdNav {
     /** @type {string} */
     #trigger;
 
+    /** @type {string} */
+    #back_label = "Back";
+
     #enabled = false;
     #visible = false;
 
     get visible() {
         return this.#visible;
+    }
+
+    get back_label() {
+        return this.#back_label;
+    }
+
+    set back_label(s) {
+        this.#back_label = s;
     }
 
     /** @type {function()} */
@@ -140,13 +151,26 @@ export class KbdNav {
                 checked: item[2]?.checked,
             });
         }
-        if ( this.#current_path.length > 1 )
+        if ( this.#current_path.length > 1 ) {
+            // Find the best ampersand position for the Back label
+            let back_label_with_ampersand = this.#back_label;
+            const shortcut_keys = this.#current_menu.flatMap(item => item.keys);
+            let back_label_keys = ["0"];
+            for ( let i = 0; i < this.#back_label.length; i++ ) {
+                const c = this.#back_label[i].toLowerCase();
+                if ( shortcut_keys.includes(c) ) continue;
+                back_label_keys.push(c);
+                back_label_with_ampersand = 
+                    this.#back_label.slice(0, i) + '&' + this.#back_label.slice(i);
+                break;
+            }
             this.#current_menu.push({
-                html: replaceAmpersand("&0: Back"),
-                text: "Back",
+                html: replaceAmpersand(`&0: ${back_label_with_ampersand}`),
+                text: this.#back_label,
                 action: () => this.#back(),
-                keys: ["0"],
+                keys: back_label_keys,
             });
+        }
         // Build menu part
         const html = this.#current_menu.map(
                 item => item.checkbox

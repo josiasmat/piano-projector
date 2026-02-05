@@ -34,6 +34,7 @@ import {
     togglePedalsDim, togglePedalsFollow
 } from "./settings.js";
 import { touch } from "./piano.js";
+import { i18n } from "./lib/i18n.js";
 
 
 // Keyboard events
@@ -99,7 +100,7 @@ export function initializeKbdNavigator() {
     );
 
     kbdnav.onmenuenter = (s) => {
-        midi.setWatchdog(( s == "Control" ) 
+        midi.setWatchdog(( s === i18n.get("kbdnav-control-noampersand", "Control") )
             ? MIDI_WATCHDOG_FAST_INTERVAL 
             : MIDI_WATCHDOG_SLOW_INTERVAL);
         kbdnav.replaceStructure(buildKbdNavStructure());
@@ -123,7 +124,10 @@ export function hideKbdNavigator() {
 
 
 export function updateKbdNavigator() {
-    kbdnav?.replaceStructure(buildKbdNavStructure());
+    if ( kbdnav ) {
+        kbdnav.back_label = i18n.get("kbdnav-back", "Back");
+        kbdnav.replaceStructure(buildKbdNavStructure());
+    }
 }
 
 
@@ -145,30 +149,38 @@ function buildKbdNavStructure() {
             {checked: ( settings.device_name == p.name )}
         ]);
         list.push([
-            "Computer keyboard", 
+            i18n.get("control-menu-computer-kbd", "Computer keyboard"), 
             () => toggleInput("pckbd", true), 
             {checked: settings.pc_keyboard_connected}
         ]);
         list.push([
-            "Touch or mouse", 
+            i18n.get("control-menu-touch-mouse", "Touch or mouse"), 
             () => toggleInput("touch", true), 
             {checked: touch.enabled}
         ]);
         return list;
     };
     const getTranspositionStr = () => {
-        if ( !settings.transpose ) return "not transposed";
-        const semitones = `${settings.semitones} semitone${settings.semitones != 1 ? 's' : ''}`;
-        const octaves = `${settings.octaves} octave${settings.octaves != 1 ? 's' : ''}`;
+        if ( !settings.transpose ) return i18n.get("kbdnav-not-transposed", "not transposed");
+        const semitones = (settings.semitones === 1)
+            ? i18n.get("kbdnav-transpose-value-semitone", "1 semitone")
+            : i18n.getp("kbdnav-transpose-value-semitones", "%0 semitones", [settings.semitones]);
+        const octaves = (settings.octaves === 1)
+            ? i18n.get("kbdnav-transpose-value-octave", "1 octave")
+            : i18n.getp("kbdnav-transpose-value-octaves", "%0 octaves", [settings.octaves]);
         return `${semitones}, ${octaves}`;
     };
     const getKeyDepthStr = () => {
-        return settings.height_factor == 1.0 ? "Full" : settings.height_factor == 0.5 ? "1/2" : "3/4";
+        return settings.height_factor == 1.0 
+            ? i18n.get("kbdnav-size-depth-full", "Full") 
+            : settings.height_factor == 0.5 
+                ? it8n.get("kbdnav-size-depth-3/4", "1/2") 
+                : it8n.get("kbdnav-size-depth-1/2", "3/4");
     };
     const sticker_mode = isStickerModeOn();
     return [
         ['', [
-            ["&Control", populateControlNav()],
+            [i18n.get("kbdnav-control", "&Control"), populateControlNav()],
             // ["&Sound", sound.loading ? [["Loading...", null]] : [
             //     ["&Disabled", () => sound.load(''), {checked: (sound.type == '')}],
             //     ["&1. Acoustic piano", () => sound.load('apiano'), {checked: (sound.type == 'apiano')}],
@@ -176,50 +188,53 @@ function buildKbdNavStructure() {
             //     ["&3. Electric piano 2", () => sound.load('epiano2'), {checked: (sound.type == 'epiano2')}],
             //     ["&4. Electric piano 3", () => sound.load('epiano3'), {checked: (sound.type == 'epiano3')}]
             // ]],
-            ["&Transpose", [
-                ["[↑] Semitone up", () => setTransposition({semitones:+1}), {noindex:true, key:'arrowup'}],
-                ["[↓] Semitone down", () => setTransposition({semitones:-1}), {noindex:true, key:'arrowdown'}],
-                ["[→] Octave up", () => setTransposition({octaves:+1}), {noindex:true, key:'arrowright'}],
-                ["[←] Octave down", () => setTransposition({octaves:-1}), {noindex:true, key:'arrowleft'}],
-                ["&Reset", () => setTransposition({reset:true}), {noindex:true}],
-                [`State: ${getTranspositionStr()}`, null]
+            [i18n.get("kbdnav-transpose", "&Transpose"), [
+                [i18n.get("kbdnav-transpose-semitone-up", "[↑] Semitone up"), () => setTransposition({semitones:+1}), {noindex:true, key:'arrowup'}],
+                [i18n.get("kbdnav-transpose-semitone-down", "[↓] Semitone down"), () => setTransposition({semitones:-1}), {noindex:true, key:'arrowdown'}],
+                [i18n.get("kbdnav-transpose-octave-up", "[→] Octave up"), () => setTransposition({octaves:+1}), {noindex:true, key:'arrowright'}],
+                [i18n.get("kbdnav-transpose-octave-down", "[←] Octave down"), () => setTransposition({octaves:-1}), {noindex:true, key:'arrowleft'}],
+                [i18n.get("kbdnav-transpose-reset", "&Reset"), () => setTransposition({reset:true}), {noindex:true}],
+                [i18n.getp("kbdnav-transpose-state", "State: %0", [getTranspositionStr()]), null]
             ]],
-            ["&Size", [
-                ["&88 keys", () => setNumberOfKeys(88), {noindex: true, checked: (settings.number_of_keys == 88)}],
-                ["&61 keys", () => setNumberOfKeys(61), {noindex: true, checked: (settings.number_of_keys == 61)}],
-                ["&49 keys", () => setNumberOfKeys(49), {noindex: true, checked: (settings.number_of_keys == 49)}],
-                ["&37 keys", () => setNumberOfKeys(37), {noindex: true, checked: (settings.number_of_keys == 37)}],
-                ["&25 keys", () => setNumberOfKeys(25), {noindex: true, checked: (settings.number_of_keys == 25)}],
-                [`Change key &depth (current: ${getKeyDepthStr()})`, () => switchKeyDepth(), {noindex: true}]
+            [i18n.get("kbdnav-size", "&Size"), [
+                [i18n.get("kbdnav-size-keys-88", "&88 keys"), () => setNumberOfKeys(88), {noindex: true, checked: (settings.number_of_keys == 88)}],
+                [i18n.get("kbdnav-size-keys-61", "&61 keys"), () => setNumberOfKeys(61), {noindex: true, checked: (settings.number_of_keys == 61)}],
+                [i18n.get("kbdnav-size-keys-49", "&49 keys"), () => setNumberOfKeys(49), {noindex: true, checked: (settings.number_of_keys == 49)}],
+                [i18n.get("kbdnav-size-keys-37", "&37 keys"), () => setNumberOfKeys(37), {noindex: true, checked: (settings.number_of_keys == 37)}],
+                [i18n.get("kbdnav-size-keys-25", "&25 keys"), () => setNumberOfKeys(25), {noindex: true, checked: (settings.number_of_keys == 25)}],
+                [i18n.getp("kbdnav-size-depth", "Change key &depth (current: %0)", [getKeyDepthStr()]), () => switchKeyDepth(), {noindex: true}]
             ]],
-            ["&Pedals", [
-                ["&Follow pedals", () => togglePedalsFollow(), {checked: settings.pedals}],
-                ["&Dim pedalized notes", () => togglePedalsDim(), {checked: settings.pedal_dim}]
+            [i18n.get("kbdnav-pedals", "&Pedals"), [
+                [i18n.get("kbdnav-pedals-follow", "&Follow pedals"), () => togglePedalsFollow(), {checked: settings.pedals}],
+                [i18n.get("kbdnav-pedals-dim", "&Dim pedalized notes"), () => togglePedalsDim(), {checked: settings.pedal_dim}]
             ]],
-            ["&Labels", [
-                ["&Toggle Labeling mode (F2)", () => toggleLabelingMode(), {checked: isLabelingModeOn()}],
-                ["&Format", [
-                    ["&English", () => setLabelsType("english"), {checked: settings.labels.type == "english"}],
-                    ["&German", () => setLabelsType("german"), {checked: settings.labels.type == "german"}],
-                    ["&Italian", () => setLabelsType("italian"), {checked: settings.labels.type == "italian"}],
-                    ["&Pitch-class", () => setLabelsType("pc"), {checked: settings.labels.type == "pc"}],
-                    ["&MIDI value", () => setLabelsType("midi"), {checked: settings.labels.type == "midi"}],
-                    ["&Frequency", () => setLabelsType("freq"), {checked: settings.labels.type == "freq"}],
-                    ["Show &octave", () => toggleLabelsOctave(), {checked: settings.labels.octave}]
+            [i18n.get("kbdnav-labels", "&Labels"), [
+                [i18n.get("kbdnav-labels-labeling-mode", "&Toggle Labeling mode (F2)"), () => toggleLabelingMode(), {checked: isLabelingModeOn()}],
+                [i18n.get("kbdnav-labels-format", "&Format"), [
+                    [i18n.get("kbdnav-labels-format-english", "&English"), () => setLabelsType("english"), {checked: settings.labels.type == "english"}],
+                    [i18n.get("kbdnav-labels-format-german", "&German"), () => setLabelsType("german"), {checked: settings.labels.type == "german"}],
+                    [i18n.get("kbdnav-labels-format-italian", "&Italian"), () => setLabelsType("italian"), {checked: settings.labels.type == "italian"}],
+                    [i18n.get("kbdnav-labels-format-pc", "&Pitch-class"), () => setLabelsType("pc"), {checked: settings.labels.type == "pc"}],
+                    [i18n.get("kbdnav-labels-format-midi", "&MIDI value"), () => setLabelsType("midi"), {checked: settings.labels.type == "midi"}],
+                    [i18n.get("kbdnav-labels-format-freq", "&Frequency"), () => setLabelsType("freq"), {checked: settings.labels.type == "freq"}],
+                    [i18n.get("kbdnav-labels-octave", "Show &octave"), () => toggleLabelsOctave(), {checked: settings.labels.octave}]
                 ]],
-                ["&Show on played keys", () => toggleLabelsPlayed(), {checked: settings.labels.played}],
-                ["&Clear", () => clearLabels()],
+                [i18n.get("kbdnav-labels-played-keys", "&Show on played keys"), () => toggleLabelsPlayed(), {checked: settings.labels.played}],
+                [i18n.get("kbdnav-labels-clear", "&Clear"), () => clearLabels()],
             ]],
-            ["Stic&kers", [
-                ["&Red", () => toggleStickerMode(undefined, "red"), {checked: sticker_mode && settings.stickers.color == "red"}],
-                ["&Yellow", () => toggleStickerMode(undefined, "yellow"), {checked: sticker_mode && settings.stickers.color == "yellow"}],
-                ["&Green", () => toggleStickerMode(undefined, "green"), {checked: sticker_mode && settings.stickers.color == "green"}],
-                ["&Blue", () => toggleStickerMode(undefined, "blue"), {checked: sticker_mode && settings.stickers.color == "blue"}],
-                ["&Violet", () => toggleStickerMode(undefined, "violet"), {checked: sticker_mode && settings.stickers.color == "violet"}],
-                ["&Clear", () => clearStickers()],
+            [i18n.get("kbdnav-stickers", "Stic&kers"), [
+                [i18n.get("kbdnav-stickers-red", "&Red"), () => toggleStickerMode(undefined, "red"), {checked: sticker_mode && settings.stickers.color == "red"}],
+                [i18n.get("kbdnav-stickers-yellow", "&Yellow"), () => toggleStickerMode(undefined, "yellow"), {checked: sticker_mode && settings.stickers.color == "yellow"}],
+                [i18n.get("kbdnav-stickers-green", "&Green"), () => toggleStickerMode(undefined, "green"), {checked: sticker_mode && settings.stickers.color == "green"}],
+                [i18n.get("kbdnav-stickers-blue", "&Blue"), () => toggleStickerMode(undefined, "blue"), {checked: sticker_mode && settings.stickers.color == "blue"}],
+                [i18n.get("kbdnav-stickers-violet", "&Violet"), () => toggleStickerMode(undefined, "violet"), {checked: sticker_mode && settings.stickers.color == "violet"}],
+                [i18n.get("kbdnav-stickers-clear", "&Clear"), () => clearStickers()],
             ]],
-            ["Panic!", triggerPanic],
-            [`${settings.toolbar ? "Hide" : "Show"} toolbar [<u>F9</u>]`, toggleToolbarVisibility, {key: "f9"}]
+            [i18n.get("kbdnav-panic", "Panic!"), triggerPanic],
+            [(settings.toolbar 
+                ? i18n.get("kbdnav-hide-toolbar", "Hide toolbar [<u>F9</u>]")
+                : i18n.get("kbdnav-show-toolbar", "Show toolbar [<u>F9</u>]")
+             ), toggleToolbarVisibility, {key: "f9"}]
         ]]
     ];
 }

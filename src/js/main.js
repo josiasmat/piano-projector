@@ -46,9 +46,16 @@ import {
 import { sound } from "./sound.js";
 import { getUrlQueryValue } from "./lib/utils.js";
 import { attachKeyboardHandlers, hideKbdNavigator, initializeKbdNavigator, showKbdNavigator } from "./keyboard.js";
+import { i18n } from "./lib/i18n.js";
+import { changeLanguage } from "./settings.js";
+import { SlTooltip } from "@shoelace-style/shoelace";
 
 
 // Initialization
+
+const I18N_FILES = Array.from(document.head.querySelectorAll("link"))
+                    .map((elm) => elm.getAttribute("href"))
+                    .filter((href) => href?.startsWith("i18n/") && href?.endsWith(".json"));
 
 Promise.allSettled([
     customElements.whenDefined('sl-dropdown'),
@@ -56,7 +63,10 @@ Promise.allSettled([
     customElements.whenDefined('sl-button-group'),
     customElements.whenDefined('sl-icon'),
     customElements.whenDefined('sl-menu'),
-    customElements.whenDefined('sl-menu-item')
+    customElements.whenDefined('sl-menu-item'),
+    Promise.all(I18N_FILES.map(
+        (datafile) => i18n.fetchDataFile(datafile)
+    ))
 ]).finally(initializeApp);
 
 
@@ -66,9 +76,8 @@ function initializeApp() {
 
     loadSettings();
     checkUrlQueryStrings();
+    changeLanguage(settings.language ?? i18n.getPreferredLanguage());
 
-    document.body.classList.add('ready');
-    
     if ( is_mobile ) {
         document.documentElement.classList.add("mobile");
         toolbar.buttons.show_toolbar.classList.add("mobile");
@@ -94,14 +103,18 @@ function initializeApp() {
     createOnboardingTour();
 
     if ( !settings.device_name ) {
+        /** @type {SlTooltip} */
         const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
+        const connect_tooltip_text = connect_tooltip.querySelector("span[slot='content']");
         if ( is_mobile ) {
             // Select touch input by default on mobile
             connectInput("touch", true);
-            connect_tooltip.setAttribute("content", 
+            connect_tooltip_text.setAttribute("i18n", "connect-tooltip-touch");
+            connect_tooltip_text.textContent = i18n.get("connect-tooltip-touch",
                 "Play your keyboard using your fingers! " +
                 "Or change the input method by tapping this button."
             );
+            connect_tooltip.open = true;
         }
         
     } else {
@@ -115,6 +128,7 @@ function initializeApp() {
     }
 
     const postInit = () => {
+        document.body.classList.add('ready');
         updateToolbarBasedOnWidth();
         toolbar.resize.observer = new ResizeObserver(handleToolbarResize);
         toolbar.resize.observer.observe(toolbar.self);
@@ -165,5 +179,9 @@ function checkUrlQueryStrings() {
     else if ( ["hp","highperf"].includes(perf_mode) ) {
         settings.lowperf = false;
         settings_storage.writeBool("lowperf", false);
+    }
+    const lang = getUrlQueryValue("lang", "").toLowerCase();
+    if ( lang ) {
+        settings.language = lang;
     }
 }
