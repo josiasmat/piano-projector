@@ -551,12 +551,6 @@ toolbar.menus.colors.picker_color_pressed
     writeSettings();
 });
 
-// toolbar.menus.labels.presets
-// .addEventListener("sl-select", (e) => {
-//     setLabelsPreset(e.detail.item.value);
-//     if ( is_mobile ) toolbar.dropdowns.labels.hide();
-// });
-
 toolbar.menus.labels.type
 .addEventListener("sl-select", (e) => {
     if ( e.detail.item.value == toolbar.menus.labels.octave.value )
