@@ -174,8 +174,8 @@ function buildKbdNavStructure() {
         return settings.height_factor == 1.0 
             ? i18n.get("kbdnav-size-depth-full", "Full") 
             : settings.height_factor == 0.5 
-                ? it8n.get("kbdnav-size-depth-3/4", "1/2") 
-                : it8n.get("kbdnav-size-depth-1/2", "3/4");
+                ? i18n.get("kbdnav-size-depth-3/4", "1/2") 
+                : i18n.get("kbdnav-size-depth-1/2", "3/4");
     };
     const sticker_mode = isStickerModeOn();
     return [
