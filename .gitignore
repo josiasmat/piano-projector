@@ -1,6 +1,4 @@
 private/
 node_modules/
-pub/pwa/index.html
-pub/pwa/sw.js
-pub/pwa/bundle.*
-pub/LICENSE.md
+pub/
+*.bk

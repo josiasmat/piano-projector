@@ -1,8 +1,8 @@
 import { argv } from 'node:process';
 import * as esbuild from 'esbuild';
 import BuildOptions from 'esbuild';
-import { unlinkSync, writeFileSync, readdirSync, readFileSync, watchFile } from 'node:fs';
-import { copyFile, constants } from 'node:fs/promises';
+import fs from 'node:fs';
+import { copyFile, cp, constants } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, resolve } from 'node:path';
 import { minifyTemplates, writeFiles } from "esbuild-minify-templates";
@@ -29,11 +29,18 @@ const SW_FILENAME = 'sw.js';
 const SW_TEMPLATE_FILE = resolve(SRC_PATH, `${SW_FILENAME}.template`);
 const SW_OUT_FILEPATH = resolve(PWA_PATH, SW_FILENAME);
 
+const DATA_DIRNAME = 'data';
+const LANDING_DIRNAME = 'landing';
 const ASSETS_DIRNAME = 'assets';
+const I18N_DIRNAME = 'i18n';
 
-const FILES_TO_COPY = [
+const COPY_LIST = [
+  {src: LANDING_DIRNAME, dest: PUB_PATH},
+  {src: 'LICENSE.md', dest: resolve(PUB_PATH, 'LICENSE.md')},
   {src: join(SRC_PATH, 'index.html'), dest: join(PWA_PATH, 'index.html')},
-  {src: 'LICENSE.md', dest: resolve(PUB_PATH, 'LICENSE.md')}
+  {src: join(SRC_PATH, 'manifest.json'), dest: join(PWA_PATH, 'manifest.json')},
+  {src: join(DATA_DIRNAME, ASSETS_DIRNAME), dest: join(PWA_PATH, ASSETS_DIRNAME)},
+  {src: join(DATA_DIRNAME, I18N_DIRNAME), dest: join(PWA_PATH, I18N_DIRNAME)},
 ];
 
 console.log(`${ productionMode ? 'production' : 'development' } build`);
@@ -77,7 +84,8 @@ const jsBuildOptions = {
 // define assets to precache
 const PRECACHE = {
   folders: [
-    ASSETS_DIRNAME
+    ASSETS_DIRNAME,
+    I18N_DIRNAME
   ],
   include: [
     './',
@@ -92,10 +100,13 @@ const PRECACHE = {
 }
 
 
+createDirectory(PUB_PATH);
+createDirectory(PWA_PATH);
+copyFilesAndDirs(COPY_LIST);
+
 if ( productionMode ) {
 
   deleteSourceMaps();
-  await copyFiles(FILES_TO_COPY);
   await bundleCssAndJs(cssBuildOptions, jsBuildOptions);
   const precacheAssets = buildPrecacheAssetsList(PRECACHE, PWA_PATH);
   const hash = computeHexHash([SW_TEMPLATE_FILE, ...precacheAssets]);
@@ -106,11 +117,9 @@ if ( productionMode ) {
 
   // in development mode, remove any existing service worker file
   try {
-    unlinkSync(SW_OUT_FILEPATH);
+    fs.unlinkSync(SW_OUT_FILEPATH);
     console.log('deleted', SW_OUT_FILEPATH);
   } catch {}
-
-  copyFiles(FILES_TO_COPY);
 
   // watch for file changes
   const buildCSS = await esbuild.context(cssBuildOptions);
@@ -124,7 +133,7 @@ if ( productionMode ) {
     buildJS.rebuild();
   }
 
-  watchFile(resolve(SRC_PATH, 'index.html'), () => copyFiles(FILES_TO_COPY));
+  fs.watchFile(resolve(SRC_PATH, 'index.html'), () => copyFilesAndDirs(COPY_LIST));
 
   // development server
   await buildCSS.serve({
@@ -139,11 +148,20 @@ function deleteSourceMaps() {
   console.log("\nDeleting existing map files...");
   for ( const mapfile of [CSS_MAP_FILEPATH, JS_MAP_FILEPATH] ) {
     try { 
-      unlinkSync(mapfile); 
-      console.log(`deleted ${mapfile}`);
+      fs.unlinkSync(mapfile); 
     } catch {}
   }
   console.log("done");
+}
+
+
+function createDirectory(dir) {
+  try {
+    fs.mkdirSync(dir);
+  } catch (e) {
+    if ( e.code !== 'EEXIST' )
+      throw e;
+  }
 }
 
 
@@ -153,10 +171,16 @@ function deleteSourceMaps() {
  * @param {string} files[].src
  * @param {string} files[].dest
  */
-async function copyFiles(files) {
-  console.log("\nCopying files...");
+async function copyFilesAndDirs(files) {
+  console.log("\nCopying files/directories...");
   const result = await Promise.allSettled(
-    files.map(({src, dest}) => copyFile(src, dest))
+    files.map(({src, dest}) => {
+      const isDir = fs.existsSync(src) && fs.lstatSync(src).isDirectory();
+      if ( isDir )
+        return cp(src, dest, {recursive: true});
+      else
+        return copyFile(src, dest);
+    })
   );
   console.log(( result[0].errors || result[1].errors )
     ? "finished with errors" : "finished without errors"
@@ -201,7 +225,7 @@ function buildPrecacheAssetsList(obj, basePath) {
 
   const collectAssets = (dir, basePrefix) => {
     const files = [];
-    const entries = readdirSync(dir, { withFileTypes: true });
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
     
     for (const entry of entries) {
       const fullPath = resolve(dir, entry.name);
@@ -249,7 +273,7 @@ function computeHexHash(files) {
  
   const computeFileHash = (path) => {
     try {
-      const content = readFileSync(path);
+      const content = fs.readFileSync(path);
       hash.update(content);
 
     } catch (error) {
@@ -281,12 +305,12 @@ function computeHexHash(files) {
 function generateServiceWorker(templateFile, cacheName, assetsList) {
   try {
     console.log("\nGenerating service worker file:");
-    const template = readFileSync(templateFile, 'utf8');
+    const template = fs.readFileSync(templateFile, 'utf8');
     const swContent = template
       .replace("'%%CACHE_NAME%%'", JSON.stringify(cacheName))
       .replace("'%%PRECACHE_ASSETS%%'", JSON.stringify(assetsList, null, 2));
 
-    writeFileSync(SW_OUT_FILEPATH, swContent);
+    fs.writeFileSync(SW_OUT_FILEPATH, swContent);
     console.log(`wrote production ${SW_FILENAME} from template with embedded cache list\n`+
                 `  cache name: ${cacheName}\n`+
                 `  precache assets: ${assetsList.length} files`
