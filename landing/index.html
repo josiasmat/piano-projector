@@ -9,6 +9,12 @@
         />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title translate="no">Piano Projector - On-screen virtual piano keyboard</title>
+        <link rel="alternate" hreflang="pt" href="/pt/" />
+        <link rel="alternate" hreflang="en" href="/" />
+        <link rel="alternate" hreflang="x-default" href="/" />
+        <link rel="canonical" href="https://pianoprojector.app/" />
+        <link rel="stylesheet" blocking="render" href="style.css">
+        <script src="script.js" blocking="render"></script>
         <link rel="icon" type="image/svg+xml" sizes="any" href="pwa/assets/icon/favicon.svg">
         <link rel="icon" type="image/png" sizes="128x128" href="pwa/assets/icon/favicon.png">
         <link rel="icon" type="image/png" sizes="192x192" href="pwa/assets/icon/favicon-192.png">
@@ -16,91 +22,6 @@
         <link rel="preload" as="font" href="pwa/assets/font/orbitron.woff2" type="font/woff2" crossorigin>
         <link rel="preload" as="image" href="screenshot.webp" type="image/webp">
         <link rel="license" type="text/markdown" href="/LICENSE.md">
-        <style>
-            @font-face {
-                font-family: 'Orbitron';
-                src: url('pwa/assets/font/orbitron.woff2');
-                font-weight: normal;
-                font-style: normal;
-            }
-            .app-name {
-                font-family: "Orbitron", serif;
-                font-weight: lighter;
-            }
-            header .app-name {
-                user-select: none;
-            }
-            body {
-                font-family: sans-serif;
-                margin: 0;
-                padding: 0;
-                color: #f9f9f9;
-                background: #333;
-                line-height: 1.6;
-            }
-            header {
-                background: #222;
-                color: white;
-                padding: 1rem 1rem;
-                text-align: center;
-            }
-            main {
-                max-width: 800px;
-                margin: auto;
-                padding: 1rem 1rem;
-            }
-            footer {
-                text-align: center;
-                margin-top: 3rem;
-                padding: 1.5rem;
-                opacity: 50%;
-            }
-            h1 {
-                margin: 0;
-                font-size: 2.5rem;
-            }
-            h2 {
-                margin: 2rem 0 1rem;
-            }
-            code {
-                font-size: 120%;
-                color: #ffa;
-                margin: 0 2px;
-            }
-            a:has(code) {
-                text-decoration: none;
-            }
-            .screenshot {
-                width: 100%;
-                border-radius: 5px;
-                margin: 1rem 0;
-                border: #222 4px solid;
-            }
-            .button {
-                display: block;
-                background: #136fa9;
-                color: white;
-                padding: 0.75rem 1.5rem;
-                border-radius: 6px;
-                text-decoration: none;
-                font-size: 1.15rem;
-                width: fit-content;
-                margin: 1rem auto;
-                user-select: none;
-                transition-property: all;
-                transition-timing-function: ease;
-                transition-duration: 0.3s;
-                &:hover { 
-                    &:not(:active) {
-                        background: #0f84cd;
-                        box-shadow: 2px 4px 5px #0006;
-                        transform: translateY(-2px);
-                    }
-                    background: #117bbd; 
-                    transition-duration: 0.05s;
-                }
-            }
-        </style>
     </head>
     <body>
         <header>
@@ -181,7 +102,13 @@
         </main>
 
         <footer>
-            &copy; 2025 Josias Matschulat
+            <div class="lang-switcher">
+                <a href="/" class="active">English</a>
+                <a href="/pt/">Português</a>
+            </div>
+            <div class="copyright">
+                &copy; 2025 Josias Matschulat
+            </div>
         </footer>
     </body>
 </html>
