@@ -266,7 +266,7 @@ function updatePianoKeyMarkings(key, is_on, is_pressed) {
 
 export function updatePianoCursor() {
     piano.svg.classList.toggle("touch-input", touch.enabled);
-    piano.svg.classList.toggle("grabbing", [1,2].includes(drag.state));
+    piano.svg.classList.toggle("grabbing", drag.state != 0);
     piano.svg.classList.toggle("marking-mode", isMarkingModeOn());
     piano.svg.classList.toggle("labeling-mode", isLabelingModeOn());
     piano.svg.classList.toggle("sticker-mode", isStickerModeOn());
@@ -313,14 +313,10 @@ export function updateNote(note) {
 
 // Pointer move events
 
-piano.svg.oncontextmenu = (e) => {
-    if ( drag.state > 0 ) e.preventDefault();
-    drag.state = 0;
-};
-
 piano.svg.addEventListener("pointerdown", (e) => {
     toolbar.dropdowns.closeAll();
-    if ( e.pointerType != "touch" && e.button != 0 || !touch.enabled ) {
+    if ( e.pointerType === "touch" ) return;
+    if ( e.button != 0 || !touch.enabled ) {
         if ( !isMarkingModeOn() || e.button != 0 ) {
             drag.state = 1;
             drag.origin.x = e.screenX;
@@ -335,7 +331,7 @@ piano.svg.addEventListener("pointerdown", (e) => {
 
 piano.svg.addEventListener("pointerup", (e) => {
     if ( e.pointerType != "touch" && drag.state ) {
-        drag.state = ( drag.state == 2 && e.button == 2 ) ? 3 : 0;
+        drag.state = 0;
         piano.svg.releasePointerCapture(e.pointerId);
         updatePianoPosition();
         updatePianoCursor();

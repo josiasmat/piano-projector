@@ -53,29 +53,43 @@ import { SlTooltip } from "@shoelace-style/shoelace";
 
 // Initialization
 
-const I18N_FILES = Array.from(document.head.querySelectorAll("link"))
-                    .map((elm) => elm.getAttribute("href"))
-                    .filter((href) => href?.startsWith("i18n/") && href?.endsWith(".json"));
+// Prevent context menu on right-click, except on links
+document.body.addEventListener(
+    "contextmenu", 
+    e => {
+        if ( e.target.tagName !== "A" ) 
+            e.preventDefault();
+    },
+    { capture: true }
+);
 
+// Wait for custom elements to be defined
 Promise.allSettled([
     customElements.whenDefined('sl-dropdown'),
     customElements.whenDefined('sl-button'),
     customElements.whenDefined('sl-button-group'),
+    customElements.whenDefined('sl-dialog'),
     customElements.whenDefined('sl-icon'),
     customElements.whenDefined('sl-menu'),
     customElements.whenDefined('sl-menu-item'),
-    Promise.all(I18N_FILES.map(
-        (datafile) => i18n.fetchDataFile(datafile)
-    ))
-]).finally(initializeApp);
+    customElements.whenDefined('sl-tooltip'),
+    customElements.whenDefined('sl-visually-hidden'),
+]).finally(() => {
+    // Initialize after document is loaded
+    if ( document.readyState != "complete" )
+        window.addEventListener("load", initializeApp, { once: true });
+    else
+        initializeApp();
+});
 
 
-// Init functions
-
-function initializeApp() {
+// Initialization function
+async function initializeApp() {
 
     loadSettings();
     checkUrlQueryStrings();
+
+    await loadLocalizationFiles();
     changeLanguage(settings.language ?? i18n.getPreferredLanguage());
 
     if ( is_mobile ) {
@@ -127,42 +141,36 @@ function initializeApp() {
             });
     }
 
-    const postInit = () => {
-        document.body.classList.add('ready');
-        updateToolbarBasedOnWidth();
-        toolbar.resize.observer = new ResizeObserver(handleToolbarResize);
-        toolbar.resize.observer.observe(toolbar.self);
-        updatePianoPosition();
-        piano.resize.observer = new ResizeObserver(handlePianoContainerResize);
-        piano.resize.observer.observe(piano.container);
-        if ( !is_mobile ) {
-            initializeKbdNavigator();
-            startOnboardingTour({
-                onStepChange: (step) => {
-                    switch ( step ) {
-                        case 11:
-                            showKbdNavigator();
-                            document.getElementById("keyboard-navigator").style.visibility = "hidden";
-                            break;
-                        case 12:
-                            document.getElementById("keyboard-navigator").style.removeProperty("visibility");
-                    }
-                },
-                onFinish: () => {
-                    hideKbdNavigator();
-                    attachKeyboardHandlers();
-                    attachPianoPointerAndTouchHandlers();
+    document.body.classList.add('ready');
+    updateToolbarBasedOnWidth();
+    toolbar.resize.observer = new ResizeObserver(handleToolbarResize);
+    toolbar.resize.observer.observe(toolbar.self);
+    updatePianoPosition();
+    piano.resize.observer = new ResizeObserver(handlePianoContainerResize);
+    piano.resize.observer.observe(piano.container);
+    
+    if ( !is_mobile ) {
+        initializeKbdNavigator();
+        startOnboardingTour({
+            onStepChange: (step) => {
+                switch ( step ) {
+                    case 11:
+                        showKbdNavigator();
+                        document.getElementById("keyboard-navigator").style.visibility = "hidden";
+                        break;
+                    case 12:
+                        document.getElementById("keyboard-navigator").style.removeProperty("visibility");
                 }
-            });
-        } else {
-            attachPianoPointerAndTouchHandlers();
-        }
-    };
-
-    if ( document.readyState != "complete" )
-        window.addEventListener("load", postInit, { once: true });
-    else
-        postInit();
+            },
+            onFinish: () => {
+                hideKbdNavigator();
+                attachKeyboardHandlers();
+                attachPianoPointerAndTouchHandlers();
+            }
+        });
+    } else {
+        attachPianoPointerAndTouchHandlers();
+    }
 
     midiWatchdog();
     midi.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
@@ -184,4 +192,15 @@ function checkUrlQueryStrings() {
     if ( lang ) {
         settings.language = lang;
     }
+}
+
+
+async function loadLocalizationFiles() {
+    // Get localization files from html file
+    const files = Array.from(document.head.querySelectorAll("link[href^='i18n/'][href$='.json']"))
+                       .map((elm) => elm.getAttribute("href"));
+
+    await Promise.all(files.map(
+        (datafile) => i18n.fetchDataFile(datafile)
+    ));
 }
