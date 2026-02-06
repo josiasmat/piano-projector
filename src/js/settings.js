@@ -156,30 +156,64 @@ export const settings = {
 };
 
 
-export function writeSettings(sound_type = null) {
-    settings_storage.writeBool("first-time", false);
-    settings_storage.writeString("language", settings.language);
+function saveLanguageSetting() {
+    if ( settings.language )
+        settings_storage.writeString("language", settings.language);
+    else
+        settings_storage.remove("language");
+}
+
+
+export function saveDeviceSetting() {
+    if ( settings.device_name ) 
+        settings_storage.writeString("device", settings.device_name);
+    else 
+        settings_storage.remove("device");
+}
+
+
+export function saveAppearanceSettings() {
     settings_storage.writeNumber("height-factor", settings.height_factor);
     settings_storage.writeNumber("number-of-keys", settings.number_of_keys);
     settings_storage.writeString("color-pressed", settings.color_highlight);
     settings_storage.writeString("color-white", settings.color_white);
     settings_storage.writeString("color-black", settings.color_black);
+    settings_storage.writeBool("perspective", settings.perspective);
+    settings_storage.writeBool("top-felt", settings.top_felt);
+    settings_storage.writeString("highlight-opacity", settings.highlight_opacity);
+    settings_storage.writeNumber("offset-y", settings.offset.y);
+}
+
+
+export function saveLabelsAndStickersSettings() {
     settings_storage.writeString("labels-type", settings.labels.type);
     settings_storage.writeBool("labels-octave", settings.labels.octave);
     settings_storage.writeBool("labels-played", settings.labels.played);
     settings_storage.writeString("labels-keys", settings.labels.keysToStr());
     settings_storage.writeString("sticker-color", settings.stickers.color);
     settings_storage.writeString("stickers-keys", settings.stickers.keysToStr());
-    settings_storage.writeBool("perspective", settings.perspective);
-    settings_storage.writeBool("top-felt", settings.top_felt);
-    settings_storage.writeString("highlight-opacity", settings.highlight_opacity);
+}
+
+
+export function savePedalSettings() {
     settings_storage.writeBool("pedals", settings.pedals);
     settings_storage.writeBool("pedal-dim", settings.pedal_dim);
-    settings_storage.writeNumber("offset-y", settings.offset.y);
-    if ( settings.device_name ) settings_storage.writeString("device", settings.device_name);
-        else settings_storage.remove("device");
-    if ( sound_type )
-        settings_storage.writeString("sound", sound_type);
+}
+
+
+export function saveSoundSetting(sound_type) {
+    settings_storage.writeString("sound", sound_type);
+}
+
+
+export function writeSettings(sound_type = null) {
+    settings_storage.writeBool("first-time", false);
+    saveLanguageSetting();
+    saveAppearanceSettings();
+    savePedalSettings();
+    saveLabelsAndStickersSettings();
+    saveDeviceSetting();
+    if ( sound_type ) saveSoundSetting(sound_type); 
     writeSessionSettings();
 }
 
@@ -228,11 +262,13 @@ export function loadSessionSettings() {
 export function changeLanguage(code) {
     const new_code = i18n.setLanguage(code);
     if ( new_code === code ) {
+        settings.language = new_code;
         document.documentElement.setAttribute("lang", code);
         i18n.translateDOM(document.body);
         updateKbdNavigator();
         updateToolbarBasedOnWidth();
         updateOnboardingTour();
+        saveLanguageSetting();
     }
     return new_code;
 }
