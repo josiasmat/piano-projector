@@ -1,10 +1,9 @@
 import { argv } from 'node:process';
 import * as esbuild from 'esbuild';
-import BuildOptions from 'esbuild';
 import fs from 'node:fs';
 import { copyFile, cp } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { join, resolve, relative } from 'node:path';
+import { join, resolve, relative, basename, dirname, sep } from 'node:path';
 import { minifyTemplates, writeFiles } from "esbuild-minify-templates";
 import { sassPlugin } from 'esbuild-sass-plugin';
 
@@ -45,7 +44,7 @@ const COPY_LIST = [
   {src: join(DATA_DIRNAME, I18N_DIRNAME), dest: join(PWA_PATH, I18N_DIRNAME)},
 ];
 
-/** CSS bundle parameters @type {BuildOptions} */
+/** CSS bundle parameters @type {esbuild.BuildOptions} */
 const cssBuildOptions = {
     entryPoints: [ CSS_SRC_FILEPATH ],
     bundle: true,
@@ -63,13 +62,14 @@ const cssBuildOptions = {
     external: [ '*.woff2' ]
 };
 
-/** JS bundle parameters @type {BuildOptions} */
+/** JS bundle parameters @type {esbuild.BuildOptions} */
 const jsBuildOptions = {
     entryPoints: [ JS_SRC_FILEPATH ],
     format: 'esm',
     bundle: true,
     target: targetBrowsers,
-    drop: productionMode ? ['debugger', 'console'] : [],
+    drop: productionMode ? ['debugger'] : [],
+    pure: productionMode ? ['console.debug', 'console.info'] : [],
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
     sourcemap: !productionMode,
@@ -133,11 +133,7 @@ if ( productionMode ) {
   await buildCSS.watch();
   await buildJS.watch();
 
-  COPY_LIST.forEach(entry => fs.watch(
-    entry.src, 
-    {recursive: true}, 
-    () => copyFilesAndDirs(COPY_LIST)
-  ));
+  watchForFileChanges(COPY_LIST);
 
   await buildCSS.serve({
     servedir: PUB_PATH
@@ -184,30 +180,47 @@ function createDirectory(dir) {
  * @param {object[]} files
  * @param {string} files[].src
  * @param {string} files[].dest
+ * @param {string} [filter]
  */
-async function copyFilesAndDirs(files) {
+async function copyFilesAndDirs(files, filter = null) {
   console.log("\nCopying files/directories...");
-  const result = await Promise.allSettled(
+  let filecount = 0;
+  let errorcount = 0;
+  await Promise.allSettled(
     files.map(({src, dest}) => {
-      const isDir = fs.existsSync(src) && fs.lstatSync(src).isDirectory();
-      if ( isDir )
+      if ( isDir(src) ) {
         return cp(src, dest, {
           recursive: true,
-          preserveTimestamps: true
-        }).then(
-          () => console.log(`  directory "${relative(BASE_PATH, src)}" copied to "${relative(BASE_PATH, dest)}".`),
-          (e) => console.error(`  error when copying dir "${relative(BASE_PATH, src)}": ${e}`)
-        );
-      else
-        return copyFile(src, dest).then(
-          () => console.log(`  file "${relative(BASE_PATH, src)}" copied to "${relative(BASE_PATH, dest)}".`),
-          (e) => console.error(`  error when copying file "${relative(BASE_PATH, src)}": ${e}`)
-        );
-    })
+          preserveTimestamps: true,
+          filter: (sf, df) => { 
+            const isFile = !isDir(sf);
+            const result = !(filter) || !isFile || df.endsWith(filter);
+            if ( result && isFile ) {
+              console.log(`  copying file "${basename(sf)}" to "${relative(BASE_PATH, dirname(df))+sep}"`);
+              filecount++;
+            }
+            return result;
+          }
+        }).catch((e) => {
+          console.error(`  error when copying dir "${relative(BASE_PATH, src)}": ${e}`);
+          errorcount++;
+        });
+      } else {
+        if ( !(filter) || dest.endsWith(filter) ) {
+          console.log(`  copying file "${basename(src)}" to "${relative(BASE_PATH, dirname(dest))+sep}"`);
+          filecount++;
+          return copyFile(src, dest).catch((e) => {
+            console.error(`  error when copying file "${relative(BASE_PATH, src)}": ${e}`);
+            errorcount++;
+        });
+        } else return null;
+    }})
   );
-  console.log(( result[0].errors || result[1].errors )
-    ? "finished copy with errors." : "finished copy without errors."
+  console.log(( errorcount )
+    ? `finished copy of ${filecount-errorcount} files with ${errorcount} errors.` 
+    : `finished copy of ${filecount} files without errors.`
   );
+  
 }
 
 
@@ -345,3 +358,31 @@ function generateServiceWorker(templateFile, cacheName, assetsList) {
   }
 }
 
+
+function isDir(path) {
+  return fs.existsSync(path) && fs.lstatSync(path).isDirectory();
+}
+
+
+function watchForFileChanges(copy_list) {
+  const debounceMap = new Map();
+  const DEBOUNCE_MS = 200;
+
+  COPY_LIST.forEach(({src}) => 
+    fs.watch(
+      src, 
+      {recursive: true}, 
+      (type, filename) => {
+        if ( !filename ) return;
+        clearTimeout(debounceMap.get(filename));
+        debounceMap.set(
+          filename,
+          setTimeout(() => {
+            copyFilesAndDirs(copy_list, filename);
+            debounceMap.delete(filename);
+          }, DEBOUNCE_MS)
+        );
+      } 
+    )
+  );
+}
