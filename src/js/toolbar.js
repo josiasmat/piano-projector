@@ -49,7 +49,8 @@ import {
 import { 
     settings, setKeyDepth, setNumberOfKeys, 
     saveDeviceSetting, saveAppearanceSettings,
-    saveLabelsAndStickersSettings, savePedalSettings
+    saveLabelsAndStickersSettings, savePedalSettings,
+    writeSessionSettings
 } from './settings.js';
 
 import { sound } from "./sound.js";
