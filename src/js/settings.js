@@ -54,7 +54,7 @@ export const settings = {
             else
                 this.keys.delete(key);
             updatePianoKey(key);
-            writeSettings();
+            saveLabelsAndStickersSettings();
         },
         keysToStr() {
             return [...this.keys].join(',');
@@ -91,7 +91,7 @@ export const settings = {
             else
                 this.keys.delete(key);
             updatePianoKey(key);
-            writeSettings();
+            saveLabelsAndStickersSettings();
         },
         keysToStr() {
             let items = [];
@@ -280,7 +280,7 @@ export function setNumberOfKeys(value) {
     settings.zoom = 1.0;
     updateSizeMenu();
     createPianoKeyboard();
-    writeSettings();
+    saveAppearanceSettings();
 }
 
 
@@ -294,7 +294,7 @@ export function setKeyDepth(value) {
     settings.height_factor = value;
     updateSizeMenu();
     createPianoKeyboard();
-    writeSettings();
+    saveAppearanceSettings();
 }
 
 
@@ -310,7 +310,7 @@ export function togglePedalsFollow(value = undefined) {
         : value;
     updatePedalsMenu();
     updatePianoKeys();
-    writeSettings();
+    savePedalSettings();
 }
 
 
@@ -321,5 +321,5 @@ export function togglePedalsDim(value = undefined) {
         : value;
     updatePedalsMenu();
     updatePianoKeys();
-    writeSettings();
+    savePedalSettings();
 }

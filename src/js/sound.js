@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { SmplrPlayer } from "./lib/libsound.js";
-import { settings, writeSettings } from "./settings.js";
+import { saveSoundSetting, settings } from "./settings.js";
 import { updateToolbar, updateSoundMenu } from "./toolbar.js";
 import { Midi } from "./lib/libmidi.js";
 import KbdNotes from "./lib/kbdnotes.js";
@@ -68,7 +68,7 @@ export const sound = {
             };
             this.player.load(name, () => {
                 onLoadFinished(true);
-                writeSettings(this.type);
+                saveSoundSetting(this.type);
             }, (reason) => {
                 onLoadFinished(false);
                 this.fail_alert.children[1].innerText = `Reason: ${reason}`;

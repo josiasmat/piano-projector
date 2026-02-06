@@ -21,7 +21,7 @@ import { drawPianoKeyboard, drawPianoKeyboardLP } from "./pianodraw.js";
 import { clamp, range, degToRad} from "./lib/utils.js";
 import Midi, { noteToMidi } from "./lib/libmidi.js";
 import { toolbar } from "./toolbar.js";
-import { settings, writeSettings } from "./settings.js";
+import { saveAppearanceSettings, settings } from "./settings.js";
 import KbdNotes from "./lib/kbdnotes.js";
 import { setKbdNavVerticalPosition } from "./keyboard.js";
 import { sound } from "./sound.js";
@@ -339,7 +339,7 @@ piano.svg.addEventListener("pointerup", (e) => {
         piano.svg.releasePointerCapture(e.pointerId);
         updatePianoPosition();
         updatePianoCursor();
-        writeSettings();
+        saveAppearanceSettings();
     }
 }, { capture: true, passive: false });
 

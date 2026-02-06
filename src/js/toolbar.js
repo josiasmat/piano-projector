@@ -47,7 +47,9 @@ import {
 } from './common.js';
 
 import { 
-    settings, writeSettings, setKeyDepth, setNumberOfKeys 
+    settings, setKeyDepth, setNumberOfKeys, 
+    saveDeviceSetting, saveAppearanceSettings,
+    saveLabelsAndStickersSettings, savePedalSettings
 } from './settings.js';
 
 import { sound } from "./sound.js";
@@ -393,7 +395,7 @@ export function toggleToolbarVisibility() {
     settings.toolbar = !settings.toolbar;
     updateToolbar();
     updatePianoPosition();
-    writeSettings();
+    writeSessionSettings();
 }
 
 
@@ -484,17 +486,17 @@ for ( const dropdown of toolbar.dropdowns.all ) {
 
 toolbar.menus.connect.kbd.addEventListener("click", () => {
     togglePcKeyboardConnection();
-    writeSettings();
+    saveDeviceSetting();
 });
 
 toolbar.menus.connect.touch.addEventListener("click", () => {
     toggleTouchConnection();
-    writeSettings();
+    saveDeviceSetting();
 });
 
 toolbar.menus.sound.top.addEventListener("sl-select", (e) => {
     sound.load(e.detail.item.value);
-    writeSettings();
+    // already called by sound.load(): saveSoundSetting(e.detail.item.value);
 });
 
 const btn_number_of_keys_handler = (e) => {
@@ -520,7 +522,7 @@ toolbar.dropdowns.size.querySelectorAll(".btn-key-depth")
 toolbar.menus.colors.highlight_opacity
 .addEventListener("sl-select", (e) => {
     settings.highlight_opacity = e.detail.item.value;
-    writeSettings();
+    saveAppearanceSettings();
     updateColorsMenu();
 });
 
@@ -528,7 +530,7 @@ toolbar.menus.colors.item_perspective
 .addEventListener("click", () => {
     settings.perspective = !settings.perspective;
     createPianoKeyboard();
-    writeSettings();
+    saveAppearanceSettings();
     if ( is_mobile ) toolbar.dropdowns.colors.hide();
 });
 
@@ -536,26 +538,26 @@ toolbar.menus.colors.item_top_felt
 .addEventListener("click", () => {
     settings.top_felt = !settings.top_felt;
     updatePianoTopFelt();
-    writeSettings();
+    saveAppearanceSettings();
     if ( is_mobile ) toolbar.dropdowns.colors.hide();
 });
 
 toolbar.menus.colors.picker_color_white
 .addEventListener("sl-change", (e) => {
     settings.color_white = e.target.value;
-    writeSettings();
+    saveAppearanceSettings();
 });
 
 toolbar.menus.colors.picker_color_black
 .addEventListener("sl-change", (e) => {
     settings.color_black = e.target.value;
-    writeSettings();
+    saveAppearanceSettings();
 });
 
 toolbar.menus.colors.picker_color_pressed
 .addEventListener("sl-change", (e) => {
     settings.color_highlight = e.target.value;
-    writeSettings();
+    saveAppearanceSettings();
 });
 
 toolbar.menus.labels.type
@@ -589,7 +591,7 @@ toolbar.menus.stickers.top
         toggleStickerMode(undefined, e.detail.item.value);
         toolbar.dropdowns.stickers.hide();
     }
-    writeSettings();
+    saveLabelsAndStickersSettings();
 });
 
 toolbar.buttons.stickers_left
@@ -617,7 +619,7 @@ toolbar.menus.pedals.top
     setDisabledAttr(toolbar.menus.pedals.item_dim, !settings.pedals);
     updatePedalIcons();
     updatePianoKeys();
-    writeSettings();
+    savePedalSettings();
     if ( is_mobile ) toolbar.dropdowns.pedals.hide();
 });
 

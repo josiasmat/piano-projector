@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { midiToFreq } from "./lib/libmidi";
 import { touch, updatePianoCursor, updatePianoKeys } from "./piano";
 import { isWhiteKey } from "./pianodraw";
-import { settings, writeSettings } from "./settings";
+import { saveLabelsAndStickersSettings, settings } from "./settings";
 import { updateLabelsMenu, updateStickersMenu, updateToolbar } from "./toolbar";
 
 
@@ -47,7 +47,7 @@ export function setLabelsType(value) {
     settings.labels.type = value;
     updateLabelsMenu();
     updatePianoKeys();
-    writeSettings();
+    saveLabelsAndStickersSettings();
 }
 
 
@@ -82,7 +82,7 @@ export function clearStickers() {
     settings.stickers.keys.clear();
     updatePianoKeys();
     updateStickersMenu();
-    writeSettings();
+    saveLabelsAndStickersSettings();
 }
 
 
@@ -90,7 +90,7 @@ export function clearLabels() {
     settings.labels.keys.clear();
     updatePianoKeys();
     updateLabelsMenu();
-    writeSettings();
+    saveLabelsAndStickersSettings();
 }
 
 
@@ -101,7 +101,7 @@ export function toggleLabelsPlayed(value = undefined) {
         : value;
     updateLabelsMenu();
     updatePianoKeys();
-    writeSettings();
+    saveLabelsAndStickersSettings();
 }
 
 
@@ -112,7 +112,7 @@ export function toggleLabelsOctave(value = undefined) {
         : value;
     updateLabelsMenu();
     updatePianoKeys();
-    writeSettings();
+    saveLabelsAndStickersSettings();
 }
 
 

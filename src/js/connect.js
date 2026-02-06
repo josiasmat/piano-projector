@@ -21,7 +21,7 @@ export const MIDI_WATCHDOG_SLOW_INTERVAL = 2000;
 
 import { Midi } from "./lib/libmidi.js";
 import { toolbar, updateConnectionMenu, updatePedalIcons, updateToolbar } from "./toolbar.js";
-import { settings, writeSettings } from "./settings.js";
+import { saveDeviceSetting, settings } from "./settings.js";
 import { KbdNotes } from "./lib/kbdnotes.js";
 import { touch } from "./piano.js";
 import { updatePianoKeys, updateNote, updatePiano } from "./piano.js";
@@ -111,7 +111,7 @@ export function toggleTouchConnection(value=null) {
  * @param {string} name - Name of the input device, which can be:
  *      - "pckbd", the computer keyboard,
  *      - name of a MIDI input port.
- * @param {boolean} save - _true_ to call writeSettings() after connection.
+ * @param {boolean} save - _true_ to call saveDeviceSetting() after connection.
  */
 export function connectInput(name, save=false) {
     Midi.disconnect();
@@ -123,7 +123,7 @@ export function connectInput(name, save=false) {
             settings.device_name = "pckbd";
             updateToolbar();
             updatePiano();
-            if ( save ) writeSettings();
+            if ( save ) saveDeviceSetting();
             break;
         case "touch":
             KbdNotes.disable();
@@ -131,7 +131,7 @@ export function connectInput(name, save=false) {
             settings.device_name = "touch";
             updateToolbar();
             updatePianoKeys();
-            if ( save ) writeSettings();
+            if ( save ) saveDeviceSetting();
             break;
         default:
             KbdNotes.disable();
@@ -143,7 +143,7 @@ export function connectInput(name, save=false) {
                 settings.device_name = name;
                 updateToolbar();
                 updateKbdNavigator();
-                if ( save ) writeSettings();
+                if ( save ) saveDeviceSetting();
             });
     }
 }
@@ -156,7 +156,7 @@ export function disconnectInput(save=false) {
     settings.device_name = null;
     updateToolbar();
     updatePianoKeys();
-    if ( save ) writeSettings();
+    if ( save ) saveDeviceSetting();
 }
 
 
@@ -167,7 +167,7 @@ export function disconnectInput(save=false) {
  *      - "touch",
  *      - name of a MIDI input port,
  *      - "" or any falsy value, to disconnect.
- * @param {boolean} save - _true_ to call writeSettings() after connection.
+ * @param {boolean} save - _true_ to call saveDeviceSetting() after connection.
  */
 export function toggleInput(name, save=false) {
     if ( name && settings.device_name != name )
