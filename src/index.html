@@ -37,7 +37,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     .catch(err => console.error('Service worker registration failed:\n', err));
                 });
                 navigator.serviceWorker.addEventListener('message', (event) => {
-                    if (event.data && event.data.type === 'RELOAD')
+                    if ( event.data?.type === 'RELOAD' )
                         window.location.reload();
                 });
             }
