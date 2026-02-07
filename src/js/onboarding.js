@@ -21,6 +21,7 @@ import { TourGuideClient } from "@sjmc11/tourguidejs/src/Tour";
 import { i18n } from "./lib/i18n.js";
 import { toolbar } from "./toolbar.js";
 import { piano } from "./piano.js";
+import { linesToHtmlParagraphs } from './lib/utils.js';
 
 
 var tg = new TourGuideClient({
@@ -140,16 +141,10 @@ export function updateOnboardingTour() {
         }
         const new_content = i18n.get(item.i18n+"-text", null);
         if ( new_content )
-            item.content = replaceNewLineWithParagraphTags(new_content);
+            item.content = linesToHtmlParagraphs(new_content);
     }
     tg.options.nextLabel = i18n.get("onboarding-next-label", "Next");
     tg.options.finishLabel = i18n.get("onboarding-finish-label", "Finish");
     if ( tg.isVisible )
         tg.refresh();
-}
-
-
-/** @param {string} str */
-function replaceNewLineWithParagraphTags(str) {
-    return str.split('\n').map((s) => '<p>'+s+'</p>').join('');
 }
