@@ -35,7 +35,9 @@ import {
     handleToolbarResize, updateToolbarBasedOnWidth
 } from "./toolbar.js";
 
-import { prepareOnboardingTour, startOnboardingTour, updateOnboardingTour } from "./onboarding.js";
+import { 
+    prepareOnboardingTour, startOnboardingTour 
+} from "./onboarding.js";
 
 import { 
     piano, createPianoKeyboard, updatePianoPosition, 
@@ -43,25 +45,23 @@ import {
     attachPianoPointerAndTouchHandlers
 } from "./piano.js";
 
-import { sound } from "./sound.js";
-import { getUrlQueryValue } from "./lib/utils.js";
-import { attachKeyboardHandlers, hideKbdNavigator, initializeKbdNavigator, showKbdNavigator } from "./keyboard.js";
-import { i18n } from "./lib/i18n.js";
+import { 
+    attachKeyboardHandlers, hideKbdNavigator, 
+    initializeKbdNavigator, showKbdNavigator 
+} from "./keyboard.js";
+
 import { changeLanguage } from "./settings.js";
-import { SlTooltip } from "@shoelace-style/shoelace";
+import { getUrlQueryValue } from "./lib/utils.js";
+import { sound } from "./sound.js";
+import { i18n } from "./lib/i18n.js";
 
 
-// Initialization
+/** @typedef {import("@shoelace-style/shoelace").SlTooltip} SlTooltip */
 
-// Prevent context menu on right-click, except on links
-document.body.addEventListener(
-    "contextmenu", 
-    e => {
-        if ( e.target.tagName !== "A" ) 
-            e.preventDefault();
-    },
-    { capture: true }
-);
+
+// Initialize app
+
+disableContextMenu();
 
 // Wait for custom elements to be defined
 Promise.allSettled([
@@ -75,7 +75,7 @@ Promise.allSettled([
     customElements.whenDefined('sl-tooltip'),
     customElements.whenDefined('sl-visually-hidden'),
 ]).finally(() => {
-    // Initialize after document is loaded
+    // Run initialization routine after document is loaded
     if ( document.readyState != "complete" )
         window.addEventListener("load", initializeApp, { once: true });
     else
@@ -83,7 +83,7 @@ Promise.allSettled([
 });
 
 
-// Initialization function
+/** Must run after DOM loaded */
 async function initializeApp() {
 
     loadSettings();
@@ -104,42 +104,9 @@ async function initializeApp() {
         enable20KeysBtn();
     }
 
-    if ( is_safari ) {
-        // For now, disable sound button on Safari browser
-        setHiddenAttr(toolbar.dropdowns.sound);
-    } else {
-        document.getElementById("menu-sound-item-unavailable").hidden = true;
-        toolbar.menus.sound.items.forEach((item) => { item.hidden = false; });
-        if ( is_mobile && settings.sound ) sound.load(settings.sound);
-    }
-
+    initializeSound();
     updateToolbar();
     createPianoKeyboard();
-
-    if ( !settings.device_name ) {
-        /** @type {SlTooltip} */
-        const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
-        const connect_tooltip_text = connect_tooltip.querySelector("span[slot='content']");
-        if ( is_mobile ) {
-            // Select touch input by default on mobile
-            connectInput("touch", true);
-            connect_tooltip_text.setAttribute("i18n", "connect-tooltip-touch");
-            connect_tooltip_text.textContent = i18n.get("connect-tooltip-touch",
-                "Play your keyboard using your fingers! " +
-                "Or change the input method by tapping this button."
-            );
-            connect_tooltip.open = true;
-        }
-        
-    } else {
-        if ( ["pckbd","touch"].includes(settings.device_name) )
-            connectInput(settings.device_name);
-        else
-            midi.queryAccess((access) => {
-                if ( access == "granted" )
-                    connectInput(settings.device_name);
-            });
-    }
 
     document.body.classList.add('ready');
     updateToolbarBasedOnWidth();
@@ -167,11 +134,13 @@ async function initializeApp() {
                 hideKbdNavigator();
                 attachKeyboardHandlers();
                 attachPianoPointerAndTouchHandlers();
+                connectInputStartup();
             }
         });
     } else {
         attachKeyboardHandlers();
         attachPianoPointerAndTouchHandlers();
+        connectInputStartup();
     }
 
     midiWatchdog();
@@ -205,4 +174,61 @@ async function loadLocalizationFiles() {
     await Promise.all(files.map(
         (datafile) => i18n.fetchDataFile(datafile)
     ));
+}
+
+
+/** Prevents context menu on right-click, except on links */
+function disableContextMenu() {
+    document.body.addEventListener("contextmenu", e => {
+        if ( e.target.tagName !== "A" ) 
+            e.preventDefault();
+    }, { capture: true });
+}
+
+
+function showMobileTouchTooltip() {
+    const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
+    const connect_tooltip_text = connect_tooltip.querySelector("span[slot='content']");
+    connect_tooltip_text.setAttribute("i18n", "connect-tooltip-touch");
+    connect_tooltip_text.textContent = i18n.get("connect-tooltip-touch",
+        "Play your keyboard using your fingers! " +
+        "Or change the input method by tapping this button."
+    );
+    connect_tooltip.open = true;
+    window.addEventListener("touchstart", 
+        () => connect_tooltip.hide(), 
+        {capture: true, once: true, passive: true}
+    );
+}
+
+
+function connectInputStartup() {
+    if ( !settings.device_name && is_mobile ) {
+        // Select touch input by default on mobile
+        connectInput("touch", true);
+        if ( settings.first_time )
+            showMobileTouchTooltip();
+        
+    } else {
+        // Connect input stored in settings
+        if ( ["pckbd","touch"].includes(settings.device_name) )
+            connectInput(settings.device_name);
+        else
+            midi.queryAccess((access) => {
+                if ( access == "granted" )
+                    connectInput(settings.device_name);
+            });
+    }
+}
+
+
+function initializeSound() {
+    if ( is_safari ) {
+        // For now, disable sound button on Safari browser
+        setHiddenAttr(toolbar.dropdowns.sound);
+    } else {
+        document.getElementById("menu-sound-item-unavailable").hidden = true;
+        toolbar.menus.sound.items.forEach((item) => { item.hidden = false; });
+        if ( is_mobile && settings.sound ) sound.load(settings.sound);
+    }
 }
