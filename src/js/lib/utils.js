@@ -512,3 +512,15 @@ export function isMobile() {
 export function isSafari() {
     return ( /^((?!chrome|android).)*safari/i.test(navigator.userAgent) );
 }
+
+
+/** @param {string} str @returns {string} */
+export function newlinesToBrTags(str) {
+    return str.replaceAll("\n", "<br />");
+}
+
+
+/** @param {string} str */
+export function linesToHtmlParagraphs(str) {
+    return str.split('\n').map((s) => '<p>'+s+'</p>').join('');
+}
