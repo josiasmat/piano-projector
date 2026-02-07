@@ -20,13 +20,15 @@ import { SmplrPlayer } from "./lib/libsound.js";
 import { saveSoundSetting, settings } from "./settings.js";
 import { updateToolbar, updateSoundMenu } from "./toolbar.js";
 import { Midi } from "./lib/libmidi.js";
+import { toast } from "./toast.js";
+import { i18n } from "./lib/i18n.js";
 import KbdNotes from "./lib/kbdnotes.js";
+import { newlinesToBrTags } from "./lib/utils.js";
 
 
 export const sound = {
     player: new SmplrPlayer(),
     led: null,
-    fail_alert: document.getElementById("alert-sound-connection-fail"),
 
     get type() { return this.player.name; },
     get loaded() { return this.player.loaded; },
@@ -71,8 +73,11 @@ export const sound = {
                 saveSoundSetting(this.type);
             }, (reason) => {
                 onLoadFinished(false);
-                this.fail_alert.children[1].innerText = `Reason: ${reason}`;
-                this.fail_alert.toast();
+                const fail_msg = i18n.getp("alert-sound-load-error", 
+                    "The sound you selected could not be loaded. Reason: %0",
+                    [reason]
+                );
+                toast(fail_msg, {type: "error"});
             });
         }
         updateToolbar();
