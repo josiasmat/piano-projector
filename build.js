@@ -216,11 +216,11 @@ async function copyFilesAndDirs(files, filter = null) {
         } else return null;
     }})
   );
-  console.log(( errorcount )
-    ? `finished copy of ${filecount-errorcount} files with ${errorcount} errors.` 
-    : `finished copy of ${filecount} files without errors.`
-  );
-  
+  if ( filecount > 0 )
+    console.log(( errorcount )
+      ? `finished copy of ${filecount-errorcount} file(s) with ${errorcount} error(s).` 
+      : `finished copy of ${filecount} file(s) without errors.`
+    );
 }
 
 
