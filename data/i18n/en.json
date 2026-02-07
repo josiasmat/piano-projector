@@ -72,7 +72,7 @@
         "panic-btn-tooltip": "Panic! (ESC)",
         "toolbar-hide-btn-tooltip": "Hide toolbar (F9)",
         "toolbar-show-btn-tooltip": "Show toolbar (F9)",
-        "alert-sound-load-error": "The sound you selected could not be loaded.",
+        "alert-sound-load-error": "The sound you selected could not be loaded. Reason: %0",
         "connect-tooltip-touch": "Play your keyboard using your fingers! Or change the input method by tapping this button.",
         "kbdnav-not-transposed": "not transposed",
         "kbdnav-transpose-value-semitone": "1 semitone",

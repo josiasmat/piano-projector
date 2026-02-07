@@ -72,7 +72,7 @@
         "panic-btn-tooltip": "Pânico! (ESC)",
         "toolbar-hide-btn-tooltip": "Ocultar barra de ferramentas (F9)",
         "toolbar-show-btn-tooltip": "Mostrar barra de ferramentas (F9)",
-        "alert-sound-load-error": "Não foi possível carregar o som que você selecionou.",
+        "alert-sound-load-error": "Não foi possível carregar o som que você selecionou. Motivo: %0",
         "connect-tooltip-touch": "Toque no teclado usando seus dedos! Ou selecione outro método de entrada tocando neste botão.",
         "kbdnav-not-transposed": "não transposto",
         "kbdnav-transpose-value-semitone": "1 semitom",
