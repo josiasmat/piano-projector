@@ -43,135 +43,92 @@ function getTourSteps() {
         {
             i18n: "onboarding-main-intro",
             group: "main",
-            title: "Welcome to Piano Projector!",
-            content: 
-                "This short tour will help you learn how to use the app. "+
-                "Follow the steps to get started.",
+            title: i18n.get("onboarding-main-intro-title", ""),
+            content: i18n.get("onboarding-main-intro-text", ""),
             target: document.body
         },
         {
             i18n: "onboarding-main-piano",
             group: "main",
-            title: "Piano projection",
-            content: 
-                "This is the piano projection area. When connected to a MIDI controller, "+
-                "the keys you play are highlighted here.\n"+
-                "Click and drag the piano up or down to change its position on the screen. "+
-                "If you are using Touch control mode, you can still move the keyboard with "+
-                "the middle or right mouse button.\n"+
-                "Use the mouse wheel to zoom in or out.",
+            title: i18n.get("onboarding-main-piano-title", ""),
+            content: i18n.get("onboarding-main-piano-text", ""),
             target: piano.svg
         },
         {
             i18n: "onboarding-main-control",
             group: "main",
-            title: "Control button",
-            content: 
-                "Click the Control button to choose how you want to play the piano. You can "+
-                "use a MIDI keyboard, your mouse or touch screen, or your computer keyboard.\n"+
-                "The first time you click this button, your browser will ask for permission to "+
-                "access MIDI devices. After permission is granted and the connection is "+
-                "successful, a green light will turn on.",
+            title: i18n.get("onboarding-main-control-title", ""),
+            content: i18n.get("onboarding-main-control-text", ""),
             target: toolbar.buttons.connect
         },
         {
             i18n: "onboarding-main-sound",
             group: "main",
-            title: "Sound button",
-            content: 
-                "Click the Sound button to choose a sound for the piano. If you prefer a "+
-                "silent keyboard, or if you already have sound on your controller, you can "+
-                "leave this turned off.",
+            title: i18n.get("onboarding-main-sound-title", ""),
+            content: i18n.get("onboarding-main-sound-text", ""),
             target: toolbar.buttons.sound
         },
         {
             i18n: "onboarding-main-transpose",
             group: "main",
-            title: "Transpose button",
-            content: 
-                "Click the Transpose button to transpose by semitones or octaves. You can "+
-                "also use Page Up and Page Down; hold Shift to transpose by octaves.\n"+
-                "When transposed, a yellow light will turn on.",
+            title: i18n.get("onboarding-main-transpose-title", ""),
+            content: i18n.get("onboarding-main-transpose-text", ""),
             target: toolbar.buttons.transpose
         },
         {
             i18n: "onboarding-main-size",
             group: "main",
-            title: "Size button",
-            content: 
-                "Click the Size button to change how many keys are shown on the screen or "+
-                "how tall the keys appear.",
+            title: i18n.get("onboarding-main-size-title", ""),
+            content: i18n.get("onboarding-main-size-text", ""),
             target: toolbar.buttons.size
         },
         {
             i18n: "onboarding-main-appearance",
             group: "main",
-            title: "Appearance button",
-            content: 
-                "Click the Appearance button to change the colors of the keys and other "+
-                "visual details.",
+            title: i18n.get("onboarding-main-appearance-title", ""),
+            content: i18n.get("onboarding-main-appearance-text", ""),
             target: toolbar.buttons.colors
         },
         {
             i18n: "onboarding-main-pedals",
             group: "main",
-            title: "Pedals button",
-            content: 
-                "Click the Pedals button to control how the app reacts to pedal input. "+
-                "The app supports both sustain and sostenuto pedals.\n"+
-                "When you press a pedal, the corresponding pedal indicator lights up on "+
-                "the button.",
+            title: i18n.get("onboarding-main-pedals-title", ""),
+            content: i18n.get("onboarding-main-pedals-text", ""),
             target: toolbar.buttons.pedals
         },
         {
             i18n: "onboarding-main-labels",
             group: "main",
-            title: "Labels button",
-            content: 
-                "Click the Labels button (or press F2) to turn on Labeling mode. Then click "+
-                "any key to show or hide its label.\n"+
-                "Hold Ctrl while clicking to apply the label to that same note in all octaves.\n"+
-                "Use the menu next to the button to choose from several label formats, such as "+
-                "English, German, Italian, pitch class, MIDI note number, or frequency.",
+            title: i18n.get("onboarding-main-labels-title", ""),
+            content: i18n.get("onboarding-main-labels-text", ""),
             target: toolbar.buttons.labels_group
         },
         {
             i18n: "onboarding-main-stickers",
             group: "main",
-            title: "Stickers button",
-            content: 
-                "Click the Stickers button (or press F3) to turn on Sticker mode. Then "+
-                "click a key to place or remove a colored sticker. Hold Ctrl while clicking "+
-                "to apply a sticker to that same note in all octaves.\n"+
-                "Use the menu next to the button to choose the sticker color.",
+            title: i18n.get("onboarding-main-stickers-title", ""),
+            content: i18n.get("onboarding-main-stickers-text", ""),
             target: toolbar.buttons.stickers_group
         },
         {
             i18n: "onboarding-main-panic",
             group: "main",
-            title:  "Panic button",
-            content: 
-                "If a key seems stuck or a note keeps sounding, click the Panic button "+
-                "(or press Esc). This will reset the keyboard.",
+            title:  i18n.get("onboarding-main-panic-title", ""),
+            content: i18n.get("onboarding-main-panic-text", ""),
             target: toolbar.buttons.panic
         },
         {
             i18n: "onboarding-main-toggle-toolbar",
             group: "main",
-            title: "Hide and show toolbar",
-            content: 
-                "You can hide the top toolbar by clicking the small button on its right "+
-                "side or by pressing F9. To show it again, move the mouse to the top-right "+
-                "corner of the screen.",
+            title: i18n.get("onboarding-main-toggle-toolbar-title", ""),
+            content: i18n.get("onboarding-main-toggle-toolbar-text", ""),
             target: toolbar.buttons.hide_toolbar
         },
         {
             i18n: "onboarding-main-kbdnav",
             group: "main",
-            title: "Keyboard navigation",
-            content: 
-                "Hold the Alt key to show the keyboard navigation bar. This lets you "+
-                "move through the app's functionality using your computer keyboard.",
+            title: i18n.get("onboarding-main-kbdnav-title", ""),
+            content: i18n.get("onboarding-main-kbdnav-text", ""),
             target: document.getElementById("keyboard-navigator")
         },
     ];
@@ -186,6 +143,8 @@ function getTourSteps() {
  * @param {(step: number)} options.onStepChange
  */
 export function startOnboardingTour(options = {}) {
+    // Skip tour if content is missing
+    if ( !tg.tourSteps[0].title ) return;
     if ( options.force || !tg.isFinished("main") ) {
         if ( options.onFinish ) 
             tg.onAfterExit(options.onFinish);
