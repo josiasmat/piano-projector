@@ -33,8 +33,9 @@ var tg = new TourGuideClient({
 });
 
 
-export function prepareOnboardingTour() {
-    tg.addSteps(getTourSteps()).then(() => updateOnboardingTour());
+export async function prepareOnboardingTour() {
+    await tg.addSteps(getTourSteps());
+    updateOnboardingTour();
 }
 
 
@@ -43,92 +44,66 @@ function getTourSteps() {
         {
             i18n: "onboarding-main-intro",
             group: "main",
-            title: i18n.get("onboarding-main-intro-title", ""),
-            content: i18n.get("onboarding-main-intro-text", ""),
             target: document.body
         },
         {
             i18n: "onboarding-main-piano",
             group: "main",
-            title: i18n.get("onboarding-main-piano-title", ""),
-            content: i18n.get("onboarding-main-piano-text", ""),
             target: piano.svg
         },
         {
             i18n: "onboarding-main-control",
             group: "main",
-            title: i18n.get("onboarding-main-control-title", ""),
-            content: i18n.get("onboarding-main-control-text", ""),
             target: toolbar.buttons.connect
         },
         {
             i18n: "onboarding-main-sound",
             group: "main",
-            title: i18n.get("onboarding-main-sound-title", ""),
-            content: i18n.get("onboarding-main-sound-text", ""),
             target: toolbar.buttons.sound
         },
         {
             i18n: "onboarding-main-transpose",
             group: "main",
-            title: i18n.get("onboarding-main-transpose-title", ""),
-            content: i18n.get("onboarding-main-transpose-text", ""),
             target: toolbar.buttons.transpose
         },
         {
             i18n: "onboarding-main-size",
             group: "main",
-            title: i18n.get("onboarding-main-size-title", ""),
-            content: i18n.get("onboarding-main-size-text", ""),
             target: toolbar.buttons.size
         },
         {
             i18n: "onboarding-main-appearance",
             group: "main",
-            title: i18n.get("onboarding-main-appearance-title", ""),
-            content: i18n.get("onboarding-main-appearance-text", ""),
             target: toolbar.buttons.colors
         },
         {
             i18n: "onboarding-main-pedals",
             group: "main",
-            title: i18n.get("onboarding-main-pedals-title", ""),
-            content: i18n.get("onboarding-main-pedals-text", ""),
             target: toolbar.buttons.pedals
         },
         {
             i18n: "onboarding-main-labels",
             group: "main",
-            title: i18n.get("onboarding-main-labels-title", ""),
-            content: i18n.get("onboarding-main-labels-text", ""),
             target: toolbar.buttons.labels_group
         },
         {
             i18n: "onboarding-main-stickers",
             group: "main",
-            title: i18n.get("onboarding-main-stickers-title", ""),
-            content: i18n.get("onboarding-main-stickers-text", ""),
             target: toolbar.buttons.stickers_group
         },
         {
             i18n: "onboarding-main-panic",
             group: "main",
-            title:  i18n.get("onboarding-main-panic-title", ""),
-            content: i18n.get("onboarding-main-panic-text", ""),
             target: toolbar.buttons.panic
         },
         {
             i18n: "onboarding-main-toggle-toolbar",
             group: "main",
-            title: i18n.get("onboarding-main-toggle-toolbar-title", ""),
-            content: i18n.get("onboarding-main-toggle-toolbar-text", ""),
             target: toolbar.buttons.hide_toolbar
         },
         {
             i18n: "onboarding-main-kbdnav",
             group: "main",
-            title: i18n.get("onboarding-main-kbdnav-title", ""),
-            content: i18n.get("onboarding-main-kbdnav-text", ""),
             target: document.getElementById("keyboard-navigator")
         },
     ];
@@ -144,7 +119,7 @@ function getTourSteps() {
  */
 export function startOnboardingTour(options = {}) {
     // Skip tour if content is missing
-    if ( !tg.tourSteps[0].title ) return;
+    if ( !tg.tourSteps[0].content ) return;
     if ( options.force || !tg.isFinished("main") ) {
         if ( options.onFinish ) 
             tg.onAfterExit(options.onFinish);

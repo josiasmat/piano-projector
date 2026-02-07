@@ -91,6 +91,7 @@ async function initializeApp() {
 
     await loadLocalizationFiles();
     changeLanguage(settings.language ?? i18n.getPreferredLanguage());
+    const onboardingTourPromise = prepareOnboardingTour();
 
     if ( is_mobile ) {
         document.documentElement.classList.add("mobile");
@@ -114,7 +115,6 @@ async function initializeApp() {
 
     updateToolbar();
     createPianoKeyboard();
-    prepareOnboardingTour();
 
     if ( !settings.device_name ) {
         /** @type {SlTooltip} */
@@ -151,6 +151,7 @@ async function initializeApp() {
     
     if ( !is_mobile ) {
         initializeKbdNavigator();
+        await onboardingTourPromise;
         startOnboardingTour({
             onStepChange: (step) => {
                 switch ( step ) {
@@ -169,6 +170,7 @@ async function initializeApp() {
             }
         });
     } else {
+        attachKeyboardHandlers();
         attachPianoPointerAndTouchHandlers();
     }
 
