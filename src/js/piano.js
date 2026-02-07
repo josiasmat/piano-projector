@@ -61,6 +61,12 @@ const drag = {
     previous_offset: { x: 0, y: 0 }
 };
 
+const marking_action = {
+    /** @type {boolean|null} */
+    value: null,
+    id: null
+}
+
 export const touch = {
     enabled: false,
     /** @type {Map<number,Set<number>} */
@@ -311,36 +317,36 @@ export function updateNote(note) {
 }
 
 
-// Pointer move events
+// Events related to dragging the piano keyboard to move up and down
 
-piano.svg.addEventListener("pointerdown", (e) => {
+function handlePianoDragPointerDown(e) {
     toolbar.dropdowns.closeAll();
     if ( e.pointerType === "touch" ) return;
-    if ( e.button != 0 || !touch.enabled ) {
-        if ( !isMarkingModeOn() || e.button != 0 ) {
-            drag.state = 1;
-            drag.origin.x = e.screenX;
-            drag.origin.y = e.screenY;
-            drag.previous_offset.x = settings.offset.x;
-            drag.previous_offset.y = settings.offset.y;
-            piano.svg.setPointerCapture(e.pointerId);
-            updatePianoCursor();
-        }
+    if ( e.button != 0 || !(touch.enabled || isMarkingModeOn()) ) {
+        drag.state = 1;
+        drag.origin.x = e.screenX;
+        drag.origin.y = e.screenY;
+        drag.previous_offset.x = settings.offset.x;
+        drag.previous_offset.y = settings.offset.y;
+        piano.svg.setPointerCapture(e.pointerId);
+        updatePianoCursor();
     }
-}, { capture: true, passive: false });
+}
 
-piano.svg.addEventListener("pointerup", (e) => {
-    if ( e.pointerType != "touch" && drag.state ) {
+function handlePianoDragPointerUp(e) {
+    if ( e.pointerType === "touch" ) return;
+    if ( drag.state ) {
         drag.state = 0;
         piano.svg.releasePointerCapture(e.pointerId);
         updatePianoPosition();
         updatePianoCursor();
         saveAppearanceSettings();
     }
-}, { capture: true, passive: false });
+};
 
-piano.svg.addEventListener("pointermove", (e) => {
-    if ( e.pointerType != "touch" && drag.state ) {
+function handlePianoDragPointerMove(e) {
+    if ( e.pointerType === "touch" ) return;
+    if ( drag.state ) {
 
         const SNAP_THRESHOLD = 0.06;
 
@@ -372,9 +378,11 @@ piano.svg.addEventListener("pointermove", (e) => {
         updatePianoPosition();
         updatePianoCursor();
     }
-}, { capture: false, passive: true });
+};
 
-piano.container.addEventListener("wheel", (e) => {
+
+// Mouse wheel event handler: piano zoom in/out
+function handlePianoWheelEvent(e) {
     if ( !drag.state && !touch.started() && !e.ctrlKey ) {
         // make zoom out faster than zoom in
         const amount = -e.deltaY / (e.deltaY <= 0 ? 1000 : 500);
@@ -396,25 +404,7 @@ piano.container.addEventListener("wheel", (e) => {
         updatePianoPosition();
     }
     e.preventDefault();
-}, { capture: false, passive: false });
-
-if ( !is_mobile ) {
-    var btn_show_toolbar_timeout = null;
-    piano.container.addEventListener("pointermove", (e) => {
-        if ( e.pointerType == "touch" ) return;
-        if ( btn_show_toolbar_timeout ) clearTimeout(btn_show_toolbar_timeout);
-        toolbar.buttons.show_toolbar.toggleAttribute("visible", true);
-        piano.container.toggleAttribute("cursor-hidden", false);
-        piano.svg.toggleAttribute("cursor-hidden", false);
-        btn_show_toolbar_timeout = setTimeout(() => {
-            toolbar.buttons.show_toolbar.toggleAttribute("visible", false);
-            if ( !touch.enabled ) {
-                piano.container.toggleAttribute("cursor-hidden", true);
-                piano.svg.toggleAttribute("cursor-hidden", true);
-            }
-        }, 4000);
-    }, { capture: false, passive: true });
-}
+};
 
 
 // Pointer & touch control events
@@ -502,11 +492,18 @@ function findKeysUnderArea(x, y, rx, ry, a_deg) {
 /** @param {PointerEvent} e */
 function handlePianoPointerDown(e) {
     toolbar.dropdowns.closeAll();
-    if ( e.pointerType != "touch" && touch.enabled && !isMarkingModeOn()
-         && e.button === 0 && !touch.started(e.pointerId)) {
-        const note = findKeyUnderPoint(e.clientX, e.clientY);
-        if ( note ) { 
-            touch.add(e.pointerId, new Set([note]));
+    if ( e.pointerType === "touch" || e.button !== 0 ) return;
+    if ( isMarkingModeOn() ) {
+        const key = findKeyUnderPoint(e.clientX, e.clientY);
+        if ( key ) {
+            marking_action.id = e.pointerId;
+            setKeyMarking(key, e.ctrlKey || e.shiftKey);
+            e.preventDefault();
+        }
+    } else if ( touch.enabled && !touch.started(e.pointerId) ) {
+        const key = findKeyUnderPoint(e.clientX, e.clientY);
+        if ( key ) {
+            touch.add(e.pointerId, new Set([key]));
             e.preventDefault();
         }
     }
@@ -514,25 +511,50 @@ function handlePianoPointerDown(e) {
 
 /** @param {PointerEvent} e */
 function handlePianoPointerUp(e) {
-    if ( e.pointerType != "touch" && touch.started(e.pointerId) && e.button === 0 ) {
-        e.preventDefault();
+    if ( e.pointerType === "touch" ) return;
+    if ( touch.started(e.pointerId) ) {
         touch.remove(e.pointerId);
+        e.preventDefault();
+    }
+    if ( marking_action.id === e.pointerId ) {
+        marking_action.id = null;
+        marking_action.value = null;
+        e.preventDefault();
     }
 }
 
 /** @param {PointerEvent} e */
 function handlePianoPointerMove(e) {
-    if ( e.pointerType != "touch" && touch.started(e.pointerId) ) {
-        const note = findKeyUnderPoint(e.clientX, e.clientY);
-        touch.change(e.pointerId, new Set([note]));
-        e.preventDefault();
+    if ( e.pointerType === "touch" ) return;
+    if ( touch.started(e.pointerId) ) {
+        const key = findKeyUnderPoint(e.clientX, e.clientY);
+        if ( key ) {
+            touch.change(e.pointerId, new Set([key]));
+            e.preventDefault();
+        }
+    }
+    if ( marking_action.id === e.pointerId ) {
+        const key = findKeyUnderPoint(e.clientX, e.clientY);
+        if ( key ) {
+            setKeyMarking(key, e.ctrlKey || e.shiftKey);
+            e.preventDefault();
+        }
     }
 }
 
 /** @param {TouchEvent} e */
 function handlePianoTouchStart(e) {
-    if ( touch.enabled && !isMarkingModeOn() ) {
-        for ( const t of e.changedTouches )
+    if ( isMarkingModeOn() ) {
+        for ( const t of e.changedTouches ) {
+            const key = findKeyUnderPoint(t.clientX, t.clientY);
+            if ( key ) {
+                marking_action.id = t.identifier;
+                setKeyMarking(key, e.ctrlKey || e.shiftKey);
+                e.preventDefault();
+            }
+        }
+    } else if ( touch.enabled ) {
+        for ( const t of e.changedTouches ) {
             if ( !touch.started(t.identifier) ) {
                 const notes = findKeysUnderArea(
                     t.clientX, t.clientY, t.radiusX, t.radiusY, t.rotationAngle
@@ -540,27 +562,34 @@ function handlePianoTouchStart(e) {
                 if ( notes.size ) {
                     touch.add(t.identifier, notes);
                     if ( e.timeStamp - touch.last_vibration_time > 40 ) {
-                        navigator.vibrate(40);
+                        navigator.vibrate?.(40);
                         touch.last_vibration_time = e.timeStamp;
                     }
                     e.preventDefault();
                 }
             }
+        }
     }
 }
 
 /** @param {TouchEvent} e */
 function handlePianoTouchEnd(e) {
-    for ( const t of e.changedTouches )
+    for ( const t of e.changedTouches ) {
         if ( touch.started(t.identifier) ) {
             touch.remove(t.identifier);
             e.preventDefault();
         }
+        if ( marking_action.id === t.identifier ) {
+            marking_action.id = null;
+            marking_action.value = null;
+            e.preventDefault();
+        }
+    }
 }
 
 /** @param {TouchEvent} e */
 function handlePianoTouchMove(e) {
-    for ( const t of e.changedTouches )
+    for ( const t of e.changedTouches ) {
         if ( touch.started(t.identifier) ) {
             const notes = findKeysUnderArea(
                 t.clientX, t.clientY, t.radiusX, t.radiusY, t.rotationAngle
@@ -568,38 +597,56 @@ function handlePianoTouchMove(e) {
             if ( touch.change(t.identifier, notes) == 1 &&
                  e.timeStamp - touch.last_vibration_time > 40 )
             {
-                navigator.vibrate(40);
+                navigator.vibrate?.(40);
                 touch.last_vibration_time = e.timeStamp;
             }
             e.preventDefault();
         }
+        if ( marking_action.id === t.identifier ) {
+            const key = findKeyUnderPoint(t.clientX, t.clientY);
+            if ( key ) {
+                marking_action.id = t.identifier;
+                setKeyMarking(key, e.ctrlKey || e.shiftKey);
+                e.preventDefault();
+            }
+        }
+    }
 }
 
 
-// Adding and removing labels or markers with pointer
-
-/** @param {PointerEvent} e */
-function handlePianoClick(e) {
-    if ( e.button === 0 ) {
-        const key_num = findKeyUnderPoint(e.clientX, e.clientY);
-        if ( key_num ) {
-            const notes = e.ctrlKey
-                ? Array.from(range(key_num%12, 128, 12))
-                : [key_num];
-            if ( isLabelingModeOn()) {
+function setKeyMarking(key, all_octaves) {
+    if ( !isMarkingModeOn() ) {
+        marking_action.id = null;
+        marking_action.value = null;
+        return;
+    }
+    if ( key ) {
+        // Get list of notes
+        const notes = all_octaves
+            ? Array.from(range(key%12, 128, 12))
+            : [key];
+        // If just clicked, detect correct value
+        if ( marking_action.value === null ) {
+            if ( isLabelingModeOn() ) {
                 // true if there is at least one note without label
-                const value = notes.some(
+                marking_action.value = notes.some(
                     (note) => !settings.labels.keys.has(note)
                 );
-                for ( const note of notes )
-                    settings.labels.toggle(note, value);
             } else if ( isStickerModeOn() ) {
                 // true if there is at least one note without sticker
-                const value = notes.some(
+                marking_action.value = notes.some(
                     (note) => !settings.stickers.keys.has(note)
                 );
+            }
+        }
+        // do marking if value is set
+        if ( marking_action.value !== null ) {
+            if ( isLabelingModeOn() ) {
                 for ( const note of notes )
-                    settings.stickers.toggle(note, value);
+                    settings.labels.toggle(note, marking_action.value);
+            } else if ( isStickerModeOn() ) {
+                for ( const note of notes )
+                    settings.stickers.toggle(note, marking_action.value);
             }
         }
     }
@@ -614,7 +661,35 @@ export function handlePianoContainerResize() {
 }
 
 
+function attachHidePointerAfterInactivityHandler() {
+    // Show toolbar buttons and mouse cursor when moving mouse, 
+    // hide after a while of inactivity
+    var btn_show_toolbar_timeout = null;
+    piano.container.addEventListener("pointermove", (e) => {
+        if ( e.pointerType === "touch" ) return;
+        if ( btn_show_toolbar_timeout ) clearTimeout(btn_show_toolbar_timeout);
+        toolbar.buttons.show_toolbar.toggleAttribute("visible", true);
+        piano.container.toggleAttribute("cursor-hidden", false);
+        piano.svg.toggleAttribute("cursor-hidden", false);
+        btn_show_toolbar_timeout = setTimeout(() => {
+            toolbar.buttons.show_toolbar.toggleAttribute("visible", false);
+            if ( !touch.enabled ) {
+                piano.container.toggleAttribute("cursor-hidden", true);
+                piano.svg.toggleAttribute("cursor-hidden", true);
+            }
+        }, 4000);
+    }, { capture: false, passive: true });
+}
+
+
 export function attachPianoPointerAndTouchHandlers() {
+    // Piano drag events
+    piano.svg.addEventListener("pointerdown", handlePianoDragPointerDown, {capture: true, passive: false});
+    piano.svg.addEventListener("pointerup", handlePianoDragPointerUp, {capture: true, passive: false});
+    piano.svg.addEventListener("pointermove", handlePianoDragPointerMove, {capture: false, passive: true});
+    // Mouse wheel events
+    piano.container.addEventListener("wheel", handlePianoWheelEvent, {capture: false, passive: false});
+    // Mouse/touch control events
     piano.svg.addEventListener("pointerdown", handlePianoPointerDown, { capture: true, passive: false });
     piano.svg.addEventListener("touchstart", handlePianoTouchStart, { capture: true, passive: false });
     window.addEventListener("pointerup", handlePianoPointerUp, { capture: false, passive: false });
@@ -623,5 +698,7 @@ export function attachPianoPointerAndTouchHandlers() {
     window.addEventListener("touchcancel", handlePianoTouchEnd, { capture: false, passive: false });
     window.addEventListener("pointermove", handlePianoPointerMove, { capture: false, passive: false });
     window.addEventListener("touchmove", handlePianoTouchMove, { capture: false, passive: false });
-    piano.svg.addEventListener("click", handlePianoClick, { capture: false, passive: true });
+
+    if ( !is_mobile )
+        attachHidePointerAfterInactivityHandler()
 }
