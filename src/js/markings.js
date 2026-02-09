@@ -97,8 +97,8 @@ export function toggleStickerMode(enabled, color = settings.stickers.color) {
 }
 
 
-/** @param {boolean} enabled @returns {boolean} */
-export function toggleTonicMode(enabled) {
+/** @param {boolean} enabled @param {boolean} show_tooltip @returns {boolean} */
+export function toggleTonicMode(enabled, show_tooltip = false) {
     tonic_mode = ( settings.labels.type === "movdo" )
         ? enabled ?? !tonic_mode
         : false;
@@ -106,8 +106,10 @@ export function toggleTonicMode(enabled) {
     updatePianoKeys();
     updateLabelsMenuAndButton();
     updateStickersButton();
-    if ( settings.toolbar )
-        toolbar.tooltips.labels.open = tonic_mode;
+    if ( show_tooltip && settings.toolbar && tonic_mode )
+        toolbar.tooltips.labels.show();
+    else
+        toolbar.tooltips.labels.hide();
     return tonic_mode;
 }
 
