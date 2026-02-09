@@ -154,28 +154,31 @@ function changeSustain(value) {
 }
 
 
+/** @param {KeyboardEvent} e */
 function handlePcKeyDown(e) {
-    if ( e.ctrlKey || e.altKey ) return;
-    if ( e.code.startsWith("Shift") ) {
+    if ( e.code === "Space" ) {
+        // Space enables sustain
         e.preventDefault();
+        if ( e.repeat || e.altKey ) return;
         changeSustain(true);
     } else if ( internal_state.map.has(e.code) ) {
+        // Play corresponding note
         e.preventDefault();
-        if ( e.repeat ) return;
+        if ( e.repeat || e.altKey ) return;
         const key = internal_state.map.get(e.code);
         playNote(key);
     }
 }
 
 
+/** @param {KeyboardEvent} e */
 function handlePcKeyUp(e) {
-    if ( e.code.startsWith("Shift") && !e.shiftKey ) {
+    if ( e.code === "Space" ) {
         e.preventDefault();
         changeSustain(false);
     }
     if ( internal_state.map.has(e.code) ) {
         e.preventDefault();
-        if ( e.repeat ) return;
         const key = internal_state.map.get(e.code);
         releaseNote(key);
     }
