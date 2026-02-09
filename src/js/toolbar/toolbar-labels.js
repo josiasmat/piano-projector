@@ -82,7 +82,7 @@ export function attachToolbarLabelsEventListeners() {
         else {
             if ( setLabelsType(e.detail.item.value) ) {
                 if ( settings.labels.type === "movdo" ) {
-                    toggleTonicMode(true);
+                    toggleTonicMode(true, true);
                     toolbar.dropdowns.labels.hide();
                 } else {
                     toggleTonicMode(false);
