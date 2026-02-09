@@ -20,11 +20,11 @@ export const MIDI_WATCHDOG_FAST_INTERVAL = 500;
 export const MIDI_WATCHDOG_SLOW_INTERVAL = 2000;
 
 import { Midi } from "./lib/libmidi.js";
-import { toolbar, updateConnectionMenu, updatePedalIcons, updateToolbar } from "./toolbar.js";
+import { toolbar, updateControlButton, updateControlMenu, updatePedalIcons, updateToolbar } from "./toolbar/toolbar.js";
 import { saveDeviceSetting, settings } from "./settings.js";
 import { KbdNotes } from "./lib/kbdnotes.js";
-import { touch } from "./piano.js";
-import { updatePianoKeys, updateNote, updatePiano } from "./piano.js";
+import { touch } from "./piano/piano.js";
+import { updatePianoKeys, updateNote, updatePiano } from "./piano/piano.js";
 import { isKbdNavigatorVisible, updateKbdNavigator } from "./keyboard.js";
 import { sound } from "./sound.js";
 
@@ -34,7 +34,7 @@ export const midi = {
     ports: [],
     /** @returns {HTMLElement[]} */
     get menu_items() {
-        return toolbar.menus.connect.getMidiItems();
+        return toolbar.menus.control.getMidiItems();
     },
     /** @type {MIDIInput?} */
     get connected_port() {
@@ -87,7 +87,7 @@ export const midi = {
 
 
 export function togglePcKeyboardConnection(value=null) {
-    if ( value === null ) 
+    if ( value == null ) 
         value = !settings.pc_keyboard_connected;
     if ( value )
         connectInput("pckbd");
@@ -97,7 +97,7 @@ export function togglePcKeyboardConnection(value=null) {
 
 
 export function toggleTouchConnection(value=null) {
-    if ( value === null ) 
+    if ( value == null ) 
         value = !touch.enabled;
     if ( value )
         connectInput("touch");
@@ -170,8 +170,8 @@ export function disconnectInput(save=false) {
  * @param {boolean} save - _true_ to call saveDeviceSetting() after connection.
  */
 export function toggleInput(name, save=false) {
-    if ( name && settings.device_name != name )
-        connectInput(settings.device_name == name ? "" : name, save);
+    if ( name && settings.device_name !== name )
+        connectInput(name, save);
     else
         disconnectInput(save);
 }
@@ -233,35 +233,35 @@ KbdNotes.onReset = handleResetMsg;
 // MIDI watchdog
 
 export function midiWatchdog() {
-    const dropdown_connect_open = toolbar.dropdowns.connect.open;
+    const dropdown_connect_open = toolbar.dropdowns.control.open;
     midi.queryAccess((access) => {
-        if ( access == "granted" ) {
+        if ( access === "granted" ) {
             if ( isKbdNavigatorVisible() ) updateKbdNavigator();
             midi.requestPorts( (ports) => {
                 midi.ports = ports;
                 if ( settings.device_name 
-                        && settings.device_name != "pckbd" 
-                        && settings.device_name != "touch" 
+                        && settings.device_name !== "pckbd" 
+                        && settings.device_name !== "touch" 
                 ) {
                     const connected_port = Midi.getConnectedPort();
                     if ( !connected_port ) {
                         const reconnected_port = 
-                            ports.find((p) => p.name == settings.device_name);
+                            ports.find((p) => p.name === settings.device_name);
                         if ( reconnected_port )
                             Midi.connect(reconnected_port, () => {
                                 updateToolbar();
                                 if ( dropdown_connect_open ) 
-                                    updateConnectionMenu();
+                                    updateControlMenu();
                             });
                     }
-                    updateToolbar();
+                    updateControlButton();
                 }
-                if ( dropdown_connect_open ) updateConnectionMenu();
+                if ( dropdown_connect_open ) updateControlMenu();
             });
         } else {
             Midi.disconnect();
-            updateToolbar();
-            if ( dropdown_connect_open ) updateConnectionMenu();
+            updateControlButton();
+            if ( dropdown_connect_open ) updateControlMenu();
         }
     });
 }

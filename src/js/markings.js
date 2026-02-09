@@ -16,15 +16,21 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { midiToFreq } from "./lib/libmidi";
-import { touch, updatePianoCursor, updatePianoKeys } from "./piano";
-import { isWhiteKey } from "./pianodraw";
-import { saveLabelsAndStickersSettings, settings } from "./settings";
-import { updateLabelsMenu, updateStickersMenu, updateToolbar } from "./toolbar";
+import { midiToFreq } from "./lib/libmidi.js";
+import { mod } from "./lib/utils.js";
+import { touch, updatePianoCursor, updatePianoKeys } from "./piano/piano.js";
+import { isWhiteKey } from "./piano/piano-creator.js";
+import { saveLabelsAndStickersSettings, settings } from "./settings.js";
+import { 
+    updateLabelsMenu, updateLabelsMenuAndButton, updateStickersButton, updateStickersMenu, 
+    updateStickersMenuAndButton, updateToolbar, updateToolbarBasedOnWidth, toolbar
+} from "./toolbar/toolbar.js";
 
 
 /** @type {string?} "label" or "sticker" or null */
 let marking_mode = null;
+
+export let tonic_mode = false;
 
 
 export function isMarkingModeOn() {
@@ -42,39 +48,67 @@ export function isStickerModeOn() {
 }
 
 
-/** @param {string} value */
+/** 
+ * @param {string} value 
+ * @returns {boolean} _true_ if changed. */
 export function setLabelsType(value) {
-    settings.labels.type = value;
+    const changed = ( settings.labels.type !== (settings.labels.type = value) );
     updateLabelsMenu();
+    updateToolbar();
+    updateToolbarBasedOnWidth();
     updatePianoKeys();
     saveLabelsAndStickersSettings();
+    return changed;
 }
 
 
 /** @param {string} value - "label", "sticker" or _null_ */
 export function setMarkingMode(value) {
-    marking_mode = value ? value : null;
+    marking_mode = (value === "label" || value === "sticker") ? value : null;
     updatePianoCursor();
-    updateToolbar();
+    updateLabelsMenuAndButton();
+    updateStickersMenuAndButton();
 }
 
 
-/** @param {boolean} value */
-export function toggleLabelingMode(value = undefined) {
-    if ( value === undefined )
-        value = !(marking_mode == "label");
-    setMarkingMode(value ? "label" : null);
-    updateLabelsMenu();
+export function exitMarkingMode() {
+    setMarkingMode(null);
 }
 
 
-/** @param {boolean} enabled @param {string} color */
-export function toggleStickerMode(enabled = undefined, color = settings.stickers.color) {
+/** @param {boolean} [enabled] @returns {boolean} */
+export function toggleLabelingMode(enabled) {
     if ( enabled === undefined )
-        enabled = !(marking_mode == "sticker") || (color != settings.stickers.color);
+        enabled = !(marking_mode === "label");
+    tonic_mode = false;
+    setMarkingMode(enabled ? "label" : null);
+    return (marking_mode === "label");
+}
+
+
+/** @param {boolean} [enabled] @param {string} [color] @returns {boolean} */
+export function toggleStickerMode(enabled, color = settings.stickers.color) {
+    if ( enabled === undefined )
+        enabled = !(marking_mode === "sticker") || (color !== settings.stickers.color);
     settings.stickers.color = color;
+    tonic_mode = false;
     setMarkingMode(enabled ? "sticker" : null);
-    updateStickersMenu();
+    return (marking_mode === "sticker");
+}
+
+
+/** @param {boolean} enabled @returns {boolean} */
+export function toggleTonicMode(enabled) {
+    tonic_mode = ( settings.labels.type === "movdo" )
+        ? enabled ?? !tonic_mode
+        : false;
+    updatePianoCursor();
+    updatePianoKeys();
+    updateLabelsMenuAndButton();
+    updateStickersButton();
+    if ( settings.toolbar )
+        toolbar.tooltips.labels.open = tonic_mode;
+    return tonic_mode;
 }
 
 
@@ -94,22 +128,22 @@ export function clearLabels() {
 }
 
 
-/** @param {boolean} value */
-export function toggleLabelsPlayed(value = undefined) {
-    settings.labels.played = ( value === undefined )
+/** @param {boolean} [enabled] */
+export function toggleLabelsPlayed(enabled) {
+    settings.labels.played = ( enabled === undefined )
         ? !settings.labels.played 
-        : value;
+        : enabled;
     updateLabelsMenu();
     updatePianoKeys();
     saveLabelsAndStickersSettings();
 }
 
 
-/** @param {boolean} value */
-export function toggleLabelsOctave(value = undefined) {
-    settings.labels.octave = ( value === undefined )
+/** @param {boolean} [enabled] */
+export function toggleLabelsOctave(enabled) {
+    settings.labels.octave = ( enabled === undefined )
         ? !settings.labels.octave 
-        : value;
+        : enabled;
     updateLabelsMenu();
     updatePianoKeys();
     saveLabelsAndStickersSettings();
@@ -125,7 +159,8 @@ const LABEL_STRINGS = {
     it_main: ['do','do♯','re','re♯','mi','fa','fa♯','sol','sol♯','la','la♯','si'],
     it_alt:  [    ,'re♭',    ,'mi♭',    ,    ,'sol♭',     ,'la♭',    ,'si♭',    ],
     it_oct_sup: ['⁻²','⁻¹','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹','¹⁰'],
-    it_oct_sub: ['₋₂','₋₁','₁','₂','₃','₄','₅','₆','₇','₈','₉','₁₀']
+    it_oct_sub: ['₋₂','₋₁','₁','₂','₃','₄','₅','₆','₇','₈','₉','₁₀'],
+    movdo:   ['do','ra','re','me','mi','fa','fi','sol','le','la','te','ti']
 };
 
 
@@ -173,4 +208,10 @@ export function getItalianLabel(key) {
 export function getFrequencyLabel(key) {
     const freq = midiToFreq(touch.enabled ? key+settings.transpose : key);
     return `${freq.toFixed(freq < 1000 ? 1 : 0)}`;
+}
+
+
+export function getMovableDoLabel(key) {
+    const moved_pc = mod(key - settings.labels.tonic - settings.transpose, 12, false);
+    return `${LABEL_STRINGS.movdo[moved_pc]}`;
 }

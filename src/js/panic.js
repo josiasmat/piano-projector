@@ -18,9 +18,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import KbdNotes from "./lib/kbdnotes";
 import Midi from "./lib/libmidi";
-import { createPianoKeyboard, touch } from "./piano";
+import { createPianoKeyboard, touch } from "./piano/piano";
 import { sound } from "./sound";
-import { blinkMidiPanicButton, updatePedalIcons } from "./toolbar";
+import { blinkMidiPanicButton, updatePedalIcons } from "./toolbar/toolbar";
 
 
 export function triggerPanic() {

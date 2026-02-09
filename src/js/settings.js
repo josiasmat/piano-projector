@@ -18,9 +18,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { is_mobile } from "./common.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./lib/storage-handler.js";
-import { nextOf } from "./lib/utils.js";
-import { createPianoKeyboard, updatePianoKey, updatePianoKeys } from "./piano.js";
-import { updatePedalsMenu, updateSizeMenu, updateToolbarBasedOnWidth } from "./toolbar.js";
+import { mod, nextOf } from "./lib/utils.js";
+import { createPianoKeyboard, updatePianoKey, updatePianoKeys } from "./piano/piano.js";
+import { updatePedalsMenu, updateSizeMenu, updateToolbarBasedOnWidth } from "./toolbar/toolbar.js";
 import { i18n } from "./lib/i18n.js";
 import { updateKbdNavigator } from "./keyboard.js";
 import { updateOnboardingTour } from "./onboarding.js";
@@ -36,7 +36,7 @@ export const settings = {
     lowperf: false,
     language: null,
     number_of_keys: 88,
-    height_factor: 1,
+    height_factor: 1.0,
     device_name: null,
     sound: null,
     offset: { x: 0.5, y: 0.5 },
@@ -47,6 +47,14 @@ export const settings = {
         played: false,
         /** @type {Set<number>} */
         keys: new Set(),
+        _tonic: 0,
+        get tonic() {
+            return this._tonic;
+        },
+        set tonic(value) {
+            this._tonic = value;
+            writeSessionSettings();
+        },
         toggle(key, value=undefined) {
             value = value ?? !this.keys.has(key);
             if ( value )
@@ -56,6 +64,23 @@ export const settings = {
             updatePianoKey(key);
             saveLabelsAndStickersSettings();
         },
+        toggleOctaves(key, value=undefined) {
+            value = value ?? !this.keys.has(key);
+            const first = key%12;
+            if ( value ) {
+                for ( let i = first; i < 128; i += 12 ) {
+                    this.keys.add(i);
+                    updatePianoKey(i);
+                }
+            } else {
+                for ( let i = first; i < 128; i += 12 ) {
+                    this.keys.delete(i);
+                    updatePianoKey(i);
+                }
+            }
+            saveLabelsAndStickersSettings();
+        },
+        /** @returns {string} */
         keysToStr() {
             return [...this.keys].join(',');
         },
@@ -69,15 +94,24 @@ export const settings = {
                         this.keys.add(key);
                 }
         },
+        /** @return {string} */
         get type_badge() {
             return {
                 english: i18n.get("labels-menu-format-english", "English"), 
                 german: i18n.get("labels-menu-format-german", "German"), 
                 italian: i18n.get("labels-menu-format-italian", "Italian"),
+                movdo: i18n.get("labels-menu-format-movdo", "Solfège"),
                 pc: i18n.get("labels-menu-format-pc", "Pitch-class"), 
                 midi: i18n.get("labels-menu-format-midi", "MIDI"), 
                 freq: i18n.get("labels-menu-format-freq", "Frequency")
             }[this.type];
+        },
+        /** @return {string} */
+        get tonic_badge() {
+            return [
+                '.C.','C♯/D♭','.D.','D♯/E♭','.E.','.F.',
+                'F♯/G♭','.G.','G♯/A♭','.A.','A♯/B♭','.B.'
+            ][this.tonic].replaceAll('.','\u2007');
         }
     },
     stickers: {
@@ -93,6 +127,22 @@ export const settings = {
             updatePianoKey(key);
             saveLabelsAndStickersSettings();
         },
+        toggleOctaves(key, value=undefined) {
+            value = value ?? !this.keys.has(key);
+            const first = key%12;
+            if ( value ) {
+                for ( let i = first; i < 128; i += 12 ) {
+                    this.keys.set(i, this.color);
+                    updatePianoKey(i);
+                }
+            } else {
+                for ( let i = first; i < 128; i += 12 ) {
+                    this.keys.delete(i);
+                    updatePianoKey(i);
+                }
+            }
+            saveLabelsAndStickersSettings();
+        },        
         keysToStr() {
             let items = [];
             for ( const [k,v] of this.keys.entries() ) 
@@ -249,6 +299,7 @@ export function writeSessionSettings() {
     session_storage.writeNumber("semitones", settings.semitones);
     session_storage.writeNumber("octaves", settings.octaves);
     session_storage.writeBool("toolbar", settings.toolbar);
+    session_storage.writeString("tonic", settings.labels.tonic);
 }
 
 
@@ -256,6 +307,7 @@ export function loadSessionSettings() {
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
     settings.toolbar = session_storage.readBool("toolbar", settings.toolbar);
+    settings.labels.tonic = session_storage.readString("tonic", settings.labels.tonic);
 }
 
 

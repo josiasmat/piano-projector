@@ -18,8 +18,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import { settings, writeSessionSettings } from "./settings.js";
-import { updateTransposeMenuAndButton } from "./toolbar.js";
-import { updatePianoKeys } from "./piano.js";
+import { updateTransposeMenuAndButton } from "./toolbar/toolbar.js";
+import { updatePianoKeys } from "./piano/piano.js";
 import { sound } from "./sound.js";
 import { clamp } from "./lib/utils.js";
 

@@ -90,6 +90,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         }
     }
 
+    #menu-group-scale-bottom {
+        display: flex;
+        flex-direction: row;
+        #menu-group-scale-type {
+            margin-left: 20px;
+        }
+        #menu-group-scale-accidental sl-button::part(base) {
+            font-size: larger;
+        }
+        div {
+            text-align: left;
+        }
+    }
+
     #menu-group-number-of-keys {
         .btn-number-of-keys {
             width: 6ch;

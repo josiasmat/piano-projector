@@ -19,8 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { TourGuideClient } from "@sjmc11/tourguidejs/src/Tour";
 
 import { i18n } from "./lib/i18n.js";
-import { toolbar } from "./toolbar.js";
-import { piano } from "./piano.js";
+import { toolbar } from "./toolbar/toolbar.js";
+import { piano } from "./piano/piano.js";
 import { linesToHtmlParagraphs } from './lib/utils.js';
 
 
@@ -55,7 +55,7 @@ function getTourSteps() {
         {
             i18n: "onboarding-main-control",
             group: "main",
-            target: toolbar.buttons.connect
+            target: toolbar.buttons.control
         },
         {
             i18n: "onboarding-main-sound",
@@ -75,7 +75,7 @@ function getTourSteps() {
         {
             i18n: "onboarding-main-appearance",
             group: "main",
-            target: toolbar.buttons.colors
+            target: toolbar.buttons.appearance
         },
         {
             i18n: "onboarding-main-pedals",

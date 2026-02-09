@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { SmplrPlayer } from "./lib/libsound.js";
 import { saveSoundSetting, settings } from "./settings.js";
-import { updateToolbar, updateSoundMenu } from "./toolbar.js";
+import { updateToolbar, updateSoundMenu } from "./toolbar/toolbar.js";
 import { Midi } from "./lib/libmidi.js";
 import { toast } from "./toast.js";
 import { i18n } from "./lib/i18n.js";

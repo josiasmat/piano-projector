@@ -64,6 +64,10 @@ svg#piano {
         cursor: crosshair !important;
     }
 
+    &.tonic-mode:not(.grabbing) {
+        cursor: cell !important;
+    }
+
     .key {
         transform-origin: center top 0px;
 

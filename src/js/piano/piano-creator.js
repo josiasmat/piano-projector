@@ -31,8 +31,8 @@ const BLACK_KEY_SIDE_BEVEL = 3.0;
 const BK_OFFSETS = [,-BK_OFFSET,,+BK_OFFSET,,,-1.4*BK_OFFSET,,0,,+1.4*BK_OFFSET,];
 
 
-import SvgTools from "./lib/svgtools.js";
-import { noteToMidi } from "./lib/libmidi.js";
+import SvgTools from "../lib/svgtools.js";
+import { noteToMidi } from "../lib/libmidi.js";
 
 
 /**

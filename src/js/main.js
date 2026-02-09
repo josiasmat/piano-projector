@@ -32,18 +32,18 @@ import {
 
 import { 
     toolbar, updateToolbar, enable20KeysBtn,
-    handleToolbarResize, updateToolbarBasedOnWidth
-} from "./toolbar.js";
+    updateToolbarBasedOnWidth
+} from "./toolbar/toolbar.js";
 
 import { 
     prepareOnboardingTour, startOnboardingTour 
 } from "./onboarding.js";
 
 import { 
-    piano, createPianoKeyboard, updatePianoPosition, 
-    handlePianoContainerResize, 
-    attachPianoPointerAndTouchHandlers
-} from "./piano.js";
+    createPianoKeyboard, updatePianoPosition, 
+    attachPianoPointerAndTouchHandlers,
+    attachPianoResizeObserver
+} from "./piano/piano.js";
 
 import { 
     attachKeyboardHandlers, hideKbdNavigator, 
@@ -54,6 +54,7 @@ import { changeLanguage } from "./settings.js";
 import { getUrlQueryValue } from "./lib/utils.js";
 import { sound } from "./sound.js";
 import { i18n } from "./lib/i18n.js";
+import { initializeToolbar } from "./toolbar/toolbar.js";
 
 
 /** @typedef {import("@shoelace-style/shoelace").SlTooltip} SlTooltip */
@@ -62,9 +63,12 @@ import { i18n } from "./lib/i18n.js";
 // Initialize app
 
 disableContextMenu();
+loadSettings();
+checkUrlQueryStrings();
+
 
 // Wait for custom elements to be defined
-Promise.allSettled([
+await Promise.allSettled([
     customElements.whenDefined('sl-dropdown'),
     customElements.whenDefined('sl-button'),
     customElements.whenDefined('sl-button-group'),
@@ -73,24 +77,24 @@ Promise.allSettled([
     customElements.whenDefined('sl-menu'),
     customElements.whenDefined('sl-menu-item'),
     customElements.whenDefined('sl-tooltip'),
-    customElements.whenDefined('sl-visually-hidden'),
-]).finally(() => {
-    // Run initialization routine after document is loaded
-    if ( document.readyState != "complete" )
-        window.addEventListener("load", initializeApp, { once: true });
-    else
-        initializeApp();
-});
+    customElements.whenDefined('sl-visually-hidden')
+]);
+
+// Run initialization routine after document is loaded
+if ( document.readyState != "complete" )
+    window.addEventListener("load", initializeApp, { once: true });
+else
+    initializeApp();
 
 
 /** Must run after DOM loaded */
 async function initializeApp() {
 
-    loadSettings();
-    checkUrlQueryStrings();
+    initializeToolbar();
 
     await loadLocalizationFiles();
     changeLanguage(settings.language ?? i18n.getPreferredLanguage());
+
     const onboardingTourPromise = prepareOnboardingTour();
 
     if ( is_mobile ) {
@@ -105,16 +109,14 @@ async function initializeApp() {
     }
 
     initializeSound();
-    updateToolbar();
     createPianoKeyboard();
-
+    attachPianoResizeObserver();
+    updateToolbar();
+    
     document.body.classList.add('ready');
+    
     updateToolbarBasedOnWidth();
-    toolbar.resize.observer = new ResizeObserver(handleToolbarResize);
-    toolbar.resize.observer.observe(toolbar.self);
     updatePianoPosition();
-    piano.resize.observer = new ResizeObserver(handlePianoContainerResize);
-    piano.resize.observer.observe(piano.container);
     
     if ( !is_mobile ) {
         initializeKbdNavigator();
@@ -227,7 +229,7 @@ function initializeSound() {
         // For now, disable sound button on Safari browser
         setHiddenAttr(toolbar.dropdowns.sound);
     } else {
-        document.getElementById("menu-sound-item-unavailable").hidden = true;
+        toolbar.menus.sound.unavailable.hidden = true;
         toolbar.menus.sound.items.forEach((item) => { item.hidden = false; });
         if ( is_mobile && settings.sound ) sound.load(settings.sound);
     }

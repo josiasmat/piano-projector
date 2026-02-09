@@ -265,46 +265,55 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
-                <sl-button-group id="btn-labels-group" class="space-before">
-                    <sl-button id="btn-labels-switch">
-                        <span data-nosnippet i18n="labels-btn-label">Labels</span>
-                        <sl-icon id="labels-power-icon" slot="prefix" name="tags-fill" class="led-strong"></sl-icon>
-                    </sl-button>
-                    <sl-dropdown id="dropdown-labels" placement="bottom-end" stay-open-on-select>
-                        <sl-button id="btn-labels-dropdown" slot="trigger" caret>
-                            <sl-visually-hidden data-nosnippet>More labeling options</sl-visually-hidden>
+                <sl-tooltip id="btn-labels-tooltip" trigger="manual" distance="10" placement="bottom" index="0">
+                    <span i18n="labels-btn-tooltip" slot="content"></span>
+                    <sl-button-group id="btn-labels-group" class="space-before">
+                        <sl-button id="btn-labels-switch">
+                            <span data-nosnippet i18n="labels-btn-label">Labels</span>
+                            <sl-icon id="labels-power-icon" slot="prefix" name="tags-fill" class="led-strong"></sl-icon>
                         </sl-button>
-                        <sl-menu id="menu-labels-top">
-                            <sl-menu-item id="menu-labeling-mode" type="checkbox" value="labeling-mode" i18n="labels-menu-labeling-mode">
-                                Labeling mode
-                                <span slot="suffix" class="menu-keyboard-shortcut">F2</span>
-                            </sl-menu-item>
-                            <sl-menu-item id="menu-labels-played-keys" type="checkbox" value="played-keys" i18n="labels-menu-played-keys">
-                                Show on played keys
-                            </sl-menu-item>
-                            <sl-menu-item>
-                                <span data-nosnippet i18n="labels-menu-format">Format</span>
-                                <sl-menu id="menu-labels-type" slot="submenu">
-                                    <sl-menu-item type="checkbox" i18n="labels-menu-format-english" value="english" checked><span data-nosnippet>English</span></sl-menu-item>
-                                    <sl-menu-item type="checkbox" i18n="labels-menu-format-german" value="german"><span data-nosnippet>German</span></sl-menu-item>
-                                    <sl-menu-item type="checkbox" i18n="labels-menu-format-italian" value="italian"><span data-nosnippet>Italian</span></sl-menu-item>
-                                    <sl-menu-item type="checkbox" i18n="labels-menu-format-pc" value="pc"><span data-nosnippet>Pitch class</span></sl-menu-item>
-                                    <sl-menu-item type="checkbox" i18n="labels-menu-format-midi" value="midi"><span data-nosnippet>MIDI value</span></sl-menu-item>
-                                    <sl-menu-item type="checkbox" i18n="labels-menu-format-freq" value="freq"><span data-nosnippet>Frequency</span></sl-menu-item>
-                                    <sl-divider></sl-divider>
-                                    <sl-menu-item id="menu-item-labels-octave" type="checkbox" value="octave" checked>
-                                        <span data-nosnippet i18n="labels-menu-octave">Show octave</span>
-                                    </sl-menu-item>
-                                </sl-menu>
-                                <sl-badge slot="suffix" variant="neutral" pill></sl-badge>
-                            </sl-menu-item>
-                            <sl-divider></sl-divider>
-                            <sl-menu-item id="menu-labels-clear" i18n="labels-menu-clear">
-                                Clear all
-                            </sl-menu-item>
-                        </sl-menu>
-                    </sl-dropdown>
-                </sl-button-group>
+                        <sl-dropdown id="dropdown-labels" placement="bottom-end" stay-open-on-select>
+                            <sl-button id="btn-labels-dropdown" slot="trigger" caret>
+                                <sl-visually-hidden data-nosnippet>More labeling options</sl-visually-hidden>
+                            </sl-button>
+                            <sl-menu id="menu-labels-top">
+                                <sl-menu-item id="menu-labeling-mode" type="checkbox" value="labeling-mode" i18n="labels-menu-labeling-mode">
+                                    Labeling mode
+                                    <span slot="suffix" class="menu-keyboard-shortcut">F2</span>
+                                </sl-menu-item>
+                                <sl-menu-item id="menu-labels-played-keys" type="checkbox" value="played-keys" i18n="labels-menu-played-keys">
+                                    Show on played keys
+                                </sl-menu-item>
+                                <sl-menu-item>
+                                    <span data-nosnippet i18n="labels-menu-format">Format</span>
+                                    <sl-menu id="menu-labels-type" slot="submenu">
+                                        <sl-menu-item type="checkbox" i18n="labels-menu-format-english" value="english" checked><span data-nosnippet>English</span></sl-menu-item>
+                                        <sl-menu-item type="checkbox" i18n="labels-menu-format-german" value="german"><span data-nosnippet>German</span></sl-menu-item>
+                                        <sl-menu-item type="checkbox" i18n="labels-menu-format-italian" value="italian"><span data-nosnippet>Italian</span></sl-menu-item>
+                                        <sl-menu-item type="checkbox" i18n="labels-menu-format-movdo" value="movdo"><span data-nosnippet>Solfège</span></sl-menu-item>
+                                        <sl-menu-item type="checkbox" i18n="labels-menu-format-pc" value="pc"><span data-nosnippet>Pitch class</span></sl-menu-item>
+                                        <sl-menu-item type="checkbox" i18n="labels-menu-format-midi" value="midi"><span data-nosnippet>MIDI value</span></sl-menu-item>
+                                        <sl-menu-item type="checkbox" i18n="labels-menu-format-freq" value="freq"><span data-nosnippet>Frequency</span></sl-menu-item>
+                                        <sl-divider></sl-divider>
+                                        <sl-menu-item id="menu-item-labels-octave" type="checkbox" value="octave" checked>
+                                            <span data-nosnippet i18n="labels-menu-octave">Show octave</span>
+                                        </sl-menu-item>
+                                    </sl-menu>
+                                    <sl-badge id="menu-labels-type-badge" slot="suffix" variant="neutral" pill></sl-badge>
+                                </sl-menu-item>
+                                <sl-menu-item id="menu-labels-tonic" type="checkbox" value="tonic-mode">
+                                    <span data-nosnippet i18n="labels-menu-tonic">Set tonic</span>
+                                    <!-- <sl-badge id="menu-labels-tonic-badge" slot="suffix" variant="neutral" pill></sl-badge> -->
+                                    <span slot="suffix" class="menu-keyboard-shortcut">F4</span>
+                                </sl-menu-item>
+                                <sl-divider></sl-divider>
+                                <sl-menu-item id="menu-labels-clear" i18n="labels-menu-clear">
+                                    Clear all
+                                </sl-menu-item>
+                            </sl-menu>
+                        </sl-dropdown>
+                    </sl-button-group>
+                </sl-tooltip>
                 <sl-button-group id="btn-stickers-group">
                     <sl-button id="btn-stickers-switch">
                         <span data-nosnippet i18n="stickers-btn-label">Stickers</span>
