@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { toolbar } from "./toolbar.js";
 import { settings, setKeyDepth, setNumberOfKeys } from "../settings.js";
-import { is_mobile } from "../common.js";
+import { is_mobile, setHiddenAttr } from "../common.js";
 
 
 export function updateSizeMenu() {
