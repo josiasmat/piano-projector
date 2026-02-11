@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { is_mobile } from "./common.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./lib/storage-handler.js";
-import { mod, nextOf } from "./lib/utils.js";
+import { nextOf, range } from "./lib/utils.js";
 import { createPianoKeyboard, updatePianoKey, updatePianoKeys } from "./piano/piano.js";
 import { updatePedalsMenu, updateSizeMenu, updateToolbarBasedOnWidth } from "./toolbar/toolbar.js";
 import { i18n } from "./lib/i18n.js";
@@ -53,7 +53,7 @@ export const settings = {
         },
         set tonic(value) {
             this._tonic = value;
-            writeSessionSettings();
+            saveLabelsAndStickersSettings();
         },
         toggle(key, value=undefined) {
             value = value ?? !this.keys.has(key);
@@ -78,6 +78,26 @@ export const settings = {
                     updatePianoKey(i);
                 }
             }
+            saveLabelsAndStickersSettings();
+        },
+        /** @param {number} key @returns {boolean} */
+        allOctaves(key) {
+            return [...range(key%12, 128, 12)]
+                   .every(key => this.keys.has(key));
+        },
+        /** @param {number} n */
+        transpose(n) {
+            const new_keys = new Set();
+            [...range(0, 12)].forEach(pc => {
+                if ( this.allOctaves(pc) )
+                    [...range((pc + n) % 12, 128, 12)]
+                    .forEach(new_key => new_keys.add(new_key));
+            });
+            this.keys.forEach(key => 
+                (key >= 0 && key < 128) && new_keys.add(key + n)
+            );
+            this.keys = new_keys;
+            updatePianoKeys();
             saveLabelsAndStickersSettings();
         },
         /** @returns {string} */
@@ -240,6 +260,7 @@ export function saveLabelsAndStickersSettings() {
     settings_storage.writeBool("labels-octave", settings.labels.octave);
     settings_storage.writeBool("labels-played", settings.labels.played);
     settings_storage.writeString("labels-keys", settings.labels.keysToStr());
+    settings_storage.writeString("labels-tonic", settings.labels.tonic);
     settings_storage.writeString("sticker-color", settings.stickers.color);
     settings_storage.writeString("stickers-keys", settings.stickers.keysToStr());
 }
@@ -281,6 +302,7 @@ export function loadSettings() {
     settings.labels.octave = settings_storage.readBool("labels-octave", settings.labels.octave);
     settings.labels.played = settings_storage.readBool("labels-played", settings.labels.played);
     settings.labels.strToKeys(settings_storage.readString("labels-keys", ''));
+    settings.labels.tonic = settings_storage.readString("labels-tonic", settings.labels.tonic);
     settings.stickers.color = settings_storage.readString("sticker-color", settings.stickers.color);
     settings.stickers.strToKeys(settings_storage.readString("stickers-keys", ''));
     settings.perspective = settings_storage.readBool("perspective", settings.perspective);
@@ -299,7 +321,6 @@ export function writeSessionSettings() {
     session_storage.writeNumber("semitones", settings.semitones);
     session_storage.writeNumber("octaves", settings.octaves);
     session_storage.writeBool("toolbar", settings.toolbar);
-    session_storage.writeString("tonic", settings.labels.tonic);
 }
 
 
@@ -307,7 +328,6 @@ export function loadSessionSettings() {
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
     settings.toolbar = session_storage.readBool("toolbar", settings.toolbar);
-    settings.labels.tonic = session_storage.readString("tonic", settings.labels.tonic);
 }
 
 
