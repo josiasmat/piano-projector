@@ -17,11 +17,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { is_mobile, is_safari } from "../common.js";
-import { clamp, range, degToRad, rangeArray} from "../lib/utils.js";
+import { clamp, range, degToRad } from "../lib/utils.js";
 import { toolbar } from "../toolbar/toolbar.js";
 import { saveAppearanceSettings, settings } from "../settings.js";
 import { piano, touch, updatePianoCursor, updatePianoPosition } from "./piano.js";
-import { isLabelingModeOn, isMarkingModeOn, isStickerModeOn, toggleLabelingMode, toggleTonicMode, tonic_mode } from "../markings.js";
+import { isLabelingModeOn, isMarkingModeOn, isStickerModeOn, toggleTonicMode, tonic_mode } from "../markings.js";
 
 
 export const drag = {
@@ -307,21 +307,11 @@ function setNoteAsTonic(new_tonic, shift_labels) {
     const previous_tonic = settings.labels.tonic;
     settings.labels.tonic = (new_tonic-settings.transpose)%12;
 
-    const previous_tonics = rangeArray(previous_tonic, 128, 12);
-
-    if ( settings.labels.keys.size === 0 ||
-            range(piano.first_key, piano.last_key+1).every(key => 
-                settings.labels.keys.has(key) == previous_tonics.includes(key)
-            )
-    ) {
-        settings.labels.toggleOctaves(previous_tonic, false);
+    if ( settings.labels.keys.size === 0 ) {
         settings.labels.toggleOctaves(new_tonic, true);
-
     } else if ( shift_labels ) {
         const diff = (settings.labels.tonic - previous_tonic + 6) % 12 - 6;
-        const old_labels = new Set(settings.labels.keys);
-        settings.labels.keys.forEach(key => settings.labels.toggle(key));
-        old_labels.forEach(key => settings.labels.toggle(key+diff));
+        settings.labels.transpose(diff);
     }
 
     toggleTonicMode(false);
