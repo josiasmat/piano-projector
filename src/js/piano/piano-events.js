@@ -310,7 +310,8 @@ function setNoteAsTonic(new_tonic, shift_labels) {
     if ( settings.labels.keys.size === 0 ) {
         settings.labels.toggleOctaves(new_tonic, true);
     } else if ( shift_labels ) {
-        const diff = (settings.labels.tonic - previous_tonic + 6) % 12 - 6;
+        let diff = (settings.labels.tonic - previous_tonic) % 12;
+        if ( Math.abs(diff) > 6 ) diff -= Math.sign(diff) * 12;
         settings.labels.transpose(diff);
     }
 
