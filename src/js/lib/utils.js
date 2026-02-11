@@ -27,7 +27,7 @@ const HEX_DIGITS = DIGITS.concat(['A','a','B','b','C','c','D','d','E','e','F','f
  * @param {Number} stop Number _before_ which to end the generator.
  * @param {Number} step Optional; how much to increment each step. Default is
  *      _1_ if _stop_ > _start_, _-1_ otherwise.
- * @returns {Number[]}
+ * @returns {Generator<number>}
  */
 export function* range(start, stop, step = (stop>start) ? 1 : -1) {
     if ( step > 0 && start < stop ) {
@@ -53,19 +53,7 @@ export function* range(start, stop, step = (stop>start) ? 1 : -1) {
  * @returns {Number[]}
  */
 export function rangeArray(start, stop, step = (stop>start) ? 1 : -1) {
-    const array = [];
-    if ( step > 0 && start < stop ) {
-        while ( start < stop ) {
-            array.push(start);
-            start += step;
-        }
-    } else if ( step < 0 && start > stop ) {
-        while ( start > stop ) {
-            array.push(start);
-            start += step;
-        }
-    }
-    return array;
+    return [...range(start, stop, step)];
 }
 
 
