@@ -42,16 +42,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 });
             }
         </script>
-        <link rel="manifest" href="manifest.json" crossorigin />
-        <link rel="preload" href="i18n/en.json" as="fetch" type="application/json" hreflang="en" crossorigin />
-        <link rel="preload" href="i18n/pt.json" as="fetch" type="application/json" hreflang="pt" crossorigin />
+        <link rel="manifest" href="manifest.json" />
+        <link rel="preload" href="i18n/en.json" as="fetch" type="application/json" hreflang="en" />
+        <link rel="preload" href="i18n/pt.json" as="fetch" type="application/json" hreflang="pt" />
         <link rel="stylesheet" blocking="render" href="bundle.css" />
         <script type="module" src="bundle.js" async></script>
-        <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icon/favicon.svg" crossorigin />
-        <link rel="icon" type="image/png" sizes="128x128" href="assets/icon/favicon.png" crossorigin />
-        <link rel="icon" type="image/png" sizes="192x192" href="assets/icon/favicon-192.png" crossorigin />
-        <link rel="icon" type="image/png" sizes="512x512" href="assets/icon/favicon-512.png" crossorigin />
-        <link rel="license" type="text/markdown" href="/LICENSE.md" crossorigin />
+        <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icon/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="128x128" href="assets/icon/favicon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="assets/icon/favicon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="assets/icon/favicon-512.png" />
+        <link rel="license" type="text/markdown" href="/LICENSE.md" />
     </head>
     <body>
         <div id="loading-title" class="title-text">Piano Projector</div>
@@ -64,7 +64,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             <span>© 2025 Josias Matschulat.</span><br /><br />
             <span data-nosnippet i18n="about-license-text">
                 Licensed under the <br />
-                <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" i18n="about-license-link">
+                <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="external" target="_blank" i18n="about-license-link">
                     GNU Affero General Public License version 3
                 </a>.
             </span>
@@ -94,8 +94,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                                 <span data-nosnippet i18n="control-menu-midi-browser-unsupported">
                                     Your browser does not support the Web MIDI API.<br />
                                     To use MIDI, try updating your browser or switching<br />
-                                    to <a href="https://www.mozilla.org/firefox/" target="_blank">Mozilla Firefox</a>
-                                    or <a href="https://www.google.com/chrome/" target="_blank">Google Chrome</a>.
+                                    to <a href="https://www.mozilla.org/firefox/" rel="external" target="_blank">Mozilla Firefox</a>
+                                    or <a href="https://www.google.com/chrome/" rel="external" target="_blank">Google Chrome</a>.
                                 </span>
                             </sl-menu-item>
                             <sl-divider></sl-divider>
