@@ -33,6 +33,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     --color-black-key-right-bevel:  color(from #444 srgb r g b / 37%);
     --color-felt-top: #920;
     --color-felt-bottom: color-mix(in hsl, var(--color-felt-top) 30%, #000 45%);
+    --gradient-white-key-top: color-mix(in lch, var(--color-white-key), white 10%);
+    --gradient-white-key-bottom: color-mix(in lch, var(--color-white-key), black 10%);
+    --gradient-black-key-top: color-mix(in lch, var(--color-black-key), white 15%);
+    --gradient-black-key-bottom: color-mix(in lch, var(--color-black-key), black 15%);
     --highlight-transition-duration: 0.05s;
     --unpress-transition-duration: 0.1s;
     --highlight-opacity: 100%;
