@@ -48,14 +48,7 @@ export const settings = {
         played: false,
         /** @type {Set<number>} */
         keys: new Set(),
-        _tonic: 0,
-        get tonic() {
-            return this._tonic;
-        },
-        set tonic(value) {
-            this._tonic = value;
-            saveLabelsAndStickersSettings();
-        },
+        tonic: 0,
         toggle(key, value=undefined) {
             value = value ?? !this.keys.has(key);
             if ( value )

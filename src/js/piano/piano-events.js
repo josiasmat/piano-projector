@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { is_mobile, is_safari } from "../common.js";
 import { clamp, range, degToRad } from "../lib/utils.js";
 import { toolbar } from "../toolbar/toolbar.js";
-import { saveAppearanceSettings, settings } from "../settings.js";
+import { saveAppearanceSettings, saveLabelsAndStickersSettings, settings } from "../settings.js";
 import { piano, touch, updatePianoCursor, updatePianoPosition } from "./piano.js";
 import { isLabelingModeOn, isMarkingModeOn, isStickerModeOn, toggleTonicMode, tonic_mode } from "../markings.js";
 
@@ -306,6 +306,7 @@ function handlePianoTouchMove(e) {
 function setNoteAsTonic(new_tonic, shift_labels) {
     const previous_tonic = settings.labels.tonic;
     settings.labels.tonic = (new_tonic-settings.transpose)%12;
+    saveLabelsAndStickersSettings();
 
     if ( settings.labels.keys.size === 0 ) {
         settings.labels.toggleOctaves(new_tonic, true);
