@@ -157,9 +157,10 @@ export function createPianoKeyboard() {
         perspective: settings.perspective,
         top_felt: settings.top_felt,
         first_key: piano.first_key,
-        last_key: piano.last_key
+        last_key: piano.last_key,
+        no_gradient: settings.graphics_quality < 2
     };
-    if ( settings.lowperf )
+    if ( settings.graphics_quality === 0 )
         drawPianoKeyboardLP(piano.svg, piano.keys, options);
     else
         drawPianoKeyboard(piano.svg, piano.keys, options);

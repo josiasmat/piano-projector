@@ -20,7 +20,7 @@ import { is_mobile } from "./common.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./lib/storage-handler.js";
 import { nextOf, range } from "./lib/utils.js";
 import { createPianoKeyboard, updatePianoKey, updatePianoKeys } from "./piano/piano.js";
-import { updatePedalsMenu, updateSizeMenu, updateToolbarBasedOnWidth } from "./toolbar/toolbar.js";
+import { updateAppearanceMenu, updatePedalsMenu, updateSizeMenu, updateToolbarBasedOnWidth } from "./toolbar/toolbar.js";
 import { i18n } from "./lib/i18n.js";
 import { updateKbdNavigator } from "./keyboard.js";
 import { updateOnboardingTour } from "./onboarding.js";
@@ -33,7 +33,8 @@ export const session_storage = new SessionStorageHandler("piano-projector-sessio
 // Settings object
 export const settings = {
     first_time: true,
-    lowperf: false,
+    graphics_quality: 2, // 2 = max, 1 = medium, 0 = min
+    // lowperf: false,
     language: null,
     number_of_keys: 88,
     height_factor: 1.0,
@@ -252,6 +253,7 @@ export function saveAppearanceSettings() {
     settings_storage.writeBool("top-felt", settings.top_felt);
     settings_storage.writeString("highlight-opacity", settings.highlight_opacity);
     settings_storage.writeNumber("offset-y", settings.offset.y);
+    saveGraphicsQualitySetting();
 }
 
 
@@ -277,6 +279,11 @@ export function saveSoundSetting(sound_type) {
 }
 
 
+export function saveGraphicsQualitySetting() {
+    settings_storage.writeNumber("graphics-quality", settings.graphics_quality);
+}
+
+
 export function writeSettings(sound_type = null) {
     settings_storage.writeBool("first-time", false);
     saveLanguageSetting();
@@ -291,7 +298,8 @@ export function writeSettings(sound_type = null) {
 
 export function loadSettings() {
     settings.first_time = settings_storage.readBool("first-time", true);
-    settings.lowperf = settings_storage.readBool("lowperf", settings.lowperf);
+    settings.graphics_quality = settings_storage.readNumber("graphics-quality", settings.graphics_quality);
+    // settings.lowperf = settings_storage.readBool("lowperf", settings.lowperf);
     settings.language = settings_storage.readString("language", settings.language);
     settings.height_factor = settings_storage.readNumber("height-factor", is_mobile ? 0.75 : settings.height_factor);
     settings.number_of_keys = settings_storage.readNumber("number-of-keys", is_mobile ? 20 : settings.number_of_keys);
@@ -394,4 +402,18 @@ export function togglePedalsDim(value = undefined) {
     updatePedalsMenu();
     updatePianoKeys();
     savePedalSettings();
+}
+
+
+/** 
+ * @param {number} value 2 = high, 1 = medium, 0 = low 
+ * @param {boolean} no_update
+ */
+export function setGraphicsQuality(value, no_update = false) {
+    settings.graphics_quality = value;
+    saveGraphicsQualitySetting();
+    if ( !no_update ) {
+        updateAppearanceMenu();
+        createPianoKeyboard();
+    }
 }

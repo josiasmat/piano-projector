@@ -116,15 +116,19 @@ svg#piano {
 
     .white-key {
         .key-fill {
-            &.lowperf { fill: var(--color-white-key); }
-            &:not(.lowperf) { fill: url(#white-key-gradient); }
+            &.lowperf, &.nogradient { 
+                fill: var(--color-white-key); 
+            }
+            &:not(.lowperf, .nogradient) { 
+                fill: url(#white-key-gradient); 
+            }
         }
         .key-highlight {
-            &.lowperf {
+            &.lowperf, &.nogradient {
                 fill: var(--color-highlight);
                 fill-opacity: var(--highlight-opacity);
             }
-            &:not(.lowperf) {
+            &:not(.lowperf, .nogradient) {
                 fill: url(#pressed-white-key-highlight-gradient);
             }
         }
@@ -147,15 +151,19 @@ svg#piano {
     
     .black-key {
         .key-fill {
-            &.lowperf { fill: var(--color-black-key); }
-            &:not(.lowperf) { fill: url(#black-key-gradient); }
+            &.lowperf, &.nogradient { 
+                fill: var(--color-black-key); 
+            }
+            &:not(.lowperf, .nogradient) { 
+                fill: url(#black-key-gradient); 
+            }
         }
         .key-highlight {
-            &.lowperf {
+            &.lowperf, &.nogradient {
                 fill: var(--color-highlight);
                 fill-opacity: var(--highlight-opacity);
             }
-            &:not(.lowperf) {
+            &:not(.lowperf, .nogradient) {
                 fill: url(#pressed-black-key-highlight-gradient);
             }
         }
@@ -322,7 +330,9 @@ svg#piano {
     #top-felt {
         &[hidden] { display: none; }
         &.lowperf { fill: var(--color-felt-top); }
-        &:not(lowperf) { fill: url("#top-felt-gradient"); }
+        &:not(.lowperf) { 
+            fill: url("#top-felt-gradient"); 
+        }
     }
 
     /* Optimize animations */

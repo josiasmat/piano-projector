@@ -27,7 +27,9 @@ import {
 } from "./common.js";
 
 import { 
-    settings, settings_storage, loadSettings 
+    settings, settings_storage, loadSettings, 
+    saveGraphicsQualitySetting,
+    setGraphicsQuality
 } from "./settings.js";
 
 import { 
@@ -153,14 +155,22 @@ async function initializeApp() {
 
 function checkUrlQueryStrings() {
     const perf_mode = getUrlQueryValue("mode").toLowerCase();
-    if ( ["lp","lowperf"].includes(perf_mode) ) {
-        settings.lowperf = true;
-        settings_storage.writeBool("lowperf", true);
+    switch ( perf_mode ) {
+        case "lq":
+        case "lp":
+        case "lowperf":
+            setGraphicsQuality(0, true); break;
+        case "mq":
+        case "mp":
+        case "medperf":
+        case "mediumperf":
+            setGraphicsQuality(1, true); break;
+        case "hq":
+        case "hp":
+        case "highperf":
+            setGraphicsQuality(2, true);
     }
-    else if ( ["hp","highperf"].includes(perf_mode) ) {
-        settings.lowperf = false;
-        settings_storage.writeBool("lowperf", false);
-    }
+
     const lang = getUrlQueryValue("lang", "").toLowerCase();
     if ( lang ) {
         settings.language = lang;

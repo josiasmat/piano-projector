@@ -245,6 +245,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         <sl-menu-item id="menu-top-felt" type="checkbox" checked>
                             <span data-nosnippet i18n="appearance-menu-red-felt">Show red felt</span>
                         </sl-menu-item>
+                        <sl-divider></sl-divider>
+                        <sl-menu-item>
+                            <span data-nosnippet i18n="appearance-menu-graphics-quality">Graphics quality</span>
+                            <sl-menu id="menu-graphics-quality" slot="submenu">
+                                <sl-menu-item type="checkbox" value="2" i18n="appearance-menu-graphics-quality-high">High</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="1" i18n="appearance-menu-graphics-quality-medium">Medium</sl-menu-item>
+                                <sl-menu-item type="checkbox" value="0" i18n="appearance-menu-graphics-quality-low">Low</sl-menu-item>
+                            </sl-menu>
+                        </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
                 <sl-dropdown id="dropdown-pedals" stay-open-on-select>

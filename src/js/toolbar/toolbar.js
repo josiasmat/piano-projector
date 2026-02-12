@@ -143,6 +143,7 @@ export const toolbar = {
             picker_color_pressed: _id("color-pressed"),
             item_perspective: _id("menu-perspective"),
             item_top_felt: _id("menu-top-felt"),
+            graphics_quality: _id("menu-graphics-quality")
         },
         labels: {
             top: _id("menu-labels-top"),
@@ -279,7 +280,7 @@ export function handleToolbarResize() {
         updateToolbarBasedOnWidth();
         updateOnboardingTour();
         toolbar.resize.timeout = null;
-    }, settings.lowperf ? 50 : 5);
+    }, (settings.graphics_quality === 0) ? 50 : 5);
 }
 
 

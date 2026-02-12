@@ -360,7 +360,7 @@ function handlePianoContainerResize() {
     piano.resize_timeout = setTimeout(() => {
         updatePianoPosition();
         piano.resize.timeout = null;
-    }, settings.lowperf ? 50 : 5);
+    }, (settings.graphics_quality === 0) ? 50 : 5);
 }
 
 
