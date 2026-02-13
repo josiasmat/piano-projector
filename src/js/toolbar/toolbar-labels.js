@@ -26,8 +26,10 @@ import {
 } from "../markings.js";
 
 
-let blinking_led_timer = null;
-let blinking_led_state = false;
+const blinking_led = {
+    timer: null,
+    state: false
+}
 
 
 export function updateLabelsMenuAndButton() {
@@ -38,18 +40,18 @@ export function updateLabelsMenuAndButton() {
 
 export function updateLabelsButton() {
     if ( tonic_mode ) {
-        blinking_led_state = !blinking_led_state;
-        if ( !blinking_led_timer )
-            blinking_led_timer = setInterval(updateLabelsButton, 350);
-    } else if ( blinking_led_timer ) {
-        clearInterval(blinking_led_timer);
-        blinking_led_timer = null;
-        blinking_led_state = false;
+        blinking_led.state = !blinking_led.state;
+        if ( !blinking_led.timer )
+            blinking_led.timer = setInterval(updateLabelsButton, 350);
+    } else if ( blinking_led.timer ) {
+        clearInterval(blinking_led.timer);
+        blinking_led.timer = null;
+        blinking_led.state = false;
     }
 
     changeLed(
         toolbar.leds.labels, 
-        tonic_mode ? blinking_led_state : isLabelingModeOn(),
+        tonic_mode ? blinking_led.state : isLabelingModeOn(),
         tonic_mode ? '#f44' : null
     );
 }
