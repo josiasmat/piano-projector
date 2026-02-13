@@ -95,13 +95,11 @@ svg#piano {
 
         &:not(.active),
         &.active:not(.pressed) {
-            .key-highlight {
-                &:not(.lowperf) {
-                    transition-property: opacity, d;
-                    transition-duration: var(--highlight-transition-duration),
-                                         var(--unpress-transition-duration);
-                    transition-timing-function: ease-out, ease-in;
-                }
+            .key-highlight:not(.lowperf, .notransition) {
+                transition-property: opacity, d;
+                transition-duration: var(--highlight-transition-duration),
+                                        var(--unpress-transition-duration);
+                transition-timing-function: ease-out, ease-in;
             }
         }
 
@@ -112,9 +110,6 @@ svg#piano {
             &.dim .key-highlight {
                 opacity: 55%;
             }
-            /* .gap-reflection {
-                fill-opacity: 5%;
-            } */
         }
     }
 
@@ -136,7 +131,7 @@ svg#piano {
                 fill: url(#pressed-white-key-highlight-gradient);
             }
         }
-        &:not(.pressed):not(.lowperf) path {
+        &:not(.pressed):not(.lowperf, .notransition) path {
             transition: d var(--unpress-transition-duration) ease-in;
         }
         .white-key-border {
@@ -171,7 +166,7 @@ svg#piano {
                 fill: url(#pressed-black-key-highlight-gradient);
             }
         }
-        &:not(.pressed):not(.lowperf) path {
+        &:not(.pressed):not(.lowperf, .notransition) path {
             transition: d var(--unpress-transition-duration) ease-in;
         }
         .black-key-bevel {
@@ -192,10 +187,6 @@ svg#piano {
         .key-right-round-bevel {
             fill: color-mix(in srgb, var(--color-black-key-right-bevel), var(--color-black-key-bottom-bevel) 60%);
         }
-        /* .gap-reflection {
-            fill: url("#gap-reflection-gradient");
-            fill-opacity: 20%;
-        } */
     }
     
     /* Key markings (labels and stickers) */
@@ -205,7 +196,7 @@ svg#piano {
         transform-box: content-box;
     }
 
-    .key:not(.pressed) .key-marker-group:not(.lowperf) {
+    .key:not(.pressed) .key-marker-group:not(.lowperf, .notransition) {
         transition: transform var(--unpress-transition-duration) ease-in;
     }
     
@@ -235,7 +226,7 @@ svg#piano {
     .key.has-temporary-label:not(.label-visible):has(.key-touch-area:not(:hover)) .key-label { 
         fill: lch(from var(--color-highlight) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
         opacity: 0%;
-        &:not(.lowperf) {
+        &:not(.lowperf, .notransition) {
             transition-property: opacity;
             transition-timing-function: ease-in;
             transition-duration: var(--highlight-transition-duration);

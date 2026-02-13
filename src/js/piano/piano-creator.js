@@ -48,6 +48,7 @@ import { noteToMidi } from "../lib/libmidi.js";
 export function drawPianoKeyboard(svg, keys, options = {}) {
 
     const nograd = options.no_gradient ? "nogradient" : null;
+    const notran = options.no_transition ? "notransition" : null;
 
     const height = KBD_HEIGHT;
     const height_factor = options.height_factor ?? 1.0;
@@ -182,7 +183,11 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
 
         const round_quarter = round/4;
 
-        const key_group = SvgTools.createGroup({ id: `key${key}`, class: join("key","white-key"), value: key });
+        const key_group = SvgTools.createGroup({ 
+            id: `key${key}`, 
+            class: join("key", "white-key", notran), 
+            value: key 
+        });
 
         const key_touch_area = SvgTools.makePath([
                 'M', normal.ax, normal.ay,
@@ -280,7 +285,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
                 ] : null,
                 'Z'
             ],
-            { class: join("key-highlight", nograd) }
+            { class: join("key-highlight", nograd, notran) }
         );
 
         const light_border = makeDualPath([
@@ -347,7 +352,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         )
         
         const key_marker_group = SvgTools.createGroup({ 
-            class: "key-marker-group",
+            class: join("key-marker-group", notran),
             press_transform: `translateY(${white_key_label_y1-white_key_label_y}px)`,
         });
         key_marker_group.appendChild(label);
@@ -419,7 +424,11 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
             right_bottom1: right
         };
 
-        const key_group = SvgTools.createGroup({ id: `key${key}`, class: join("key","black-key"), value: key });
+        const key_group = SvgTools.createGroup({ 
+            id: `key${key}`, 
+            class: join("key", "black-key", notran), 
+            value: key 
+        });
 
         const key_touch_area = SvgTools.makePath(
             [
@@ -494,7 +503,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
                 'L', body.left_bottom1+inset, height-inset-black_key_bevel.bottom_height1-round_half,
                 'Z'
             ],
-            { class: join("key-highlight", nograd) }
+            { class: join("key-highlight", nograd, notran) }
         );
 
         key_group.appendChild(key_fill);
@@ -589,7 +598,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         )
 
         const key_marker_group = SvgTools.createGroup({ 
-            class: "key-marker-group",
+            class: join("key-marker-group", notran),
             press_transform: `translateX(${(lateral_displacement1_bottom-lateral_displacement)*0.7}px) translateY(${black_key_label_y1-black_key_label_y}px)`,
         });
         key_marker_group.appendChild(label);
@@ -605,7 +614,8 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         const center = left + white_key_width_half;
         const elm = SvgTools.createElement("text", {
             x: center, y: white_key_label_y,
-            id: `keylabel${keynum}`, class: join("key-label", "white-key-label")
+            id: `keylabel${keynum}`, 
+            class: join("key-label", "white-key-label", notran)
         });
         elm.appendChild(SvgTools.createElement("tspan", { x: center }));
         return elm;
