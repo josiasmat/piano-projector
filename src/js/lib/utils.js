@@ -176,7 +176,7 @@ export function getUrlQueryValue(param, default_value = "") {
 export function deleteUrlQueryValue(param) {
     const url = new URL(location.href);
     url.searchParams.delete(param);
-    history.replaceState(null, "", url);
+    history.replaceState(history.state, "", url);
 }
 
 
