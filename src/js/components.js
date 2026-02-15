@@ -21,4 +21,4 @@ import '@shoelace-style/shoelace/dist/components/visually-hidden/visually-hidden
 // Shoelace: set base path
 import { setBasePath as shoelaceSetBaseBath } 
     from '@shoelace-style/shoelace/dist/utilities/base-path.js';
-shoelaceSetBaseBath('assets/shoelace');
+shoelaceSetBaseBath('.');

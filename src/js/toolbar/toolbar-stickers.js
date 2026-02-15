@@ -19,8 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { toolbar, changeLed } from "./toolbar.js";
 import { saveLabelsAndStickersSettings, settings } from "../settings.js";
 import { 
-    clearStickers, isStickerModeOn, toggleStickerMode,
-    tonic_mode
+    isStickerModeOn, toggleStickerMode, tonic_mode
 } from "../markings.js";
 
 
@@ -70,7 +69,7 @@ export function attachToolbarStickersEventListeners() {
     
     toolbar.menus.stickers.clear
     .addEventListener("click", () => {
-        clearStickers();
+        settings.stickers.clear();
     });
     
 }

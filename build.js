@@ -95,7 +95,7 @@ const PRECACHE = {
     'manifest.json',
   ],
   exclude: [
-    ASSETS_DIRNAME+'font/orbitron-license.txt'
+    ASSETS_DIRNAME+'fonts/orbitron-license.txt'
   ]
 }
 

@@ -114,22 +114,6 @@ export function toggleTonicMode(enabled, show_tooltip = false) {
 }
 
 
-export function clearStickers() {
-    settings.stickers.keys.clear();
-    updatePianoKeys();
-    updateStickersMenu();
-    saveLabelsAndStickersSettings();
-}
-
-
-export function clearLabels() {
-    settings.labels.keys.clear();
-    updatePianoKeys();
-    updateLabelsMenu();
-    saveLabelsAndStickersSettings();
-}
-
-
 /** @param {boolean} [enabled] */
 export function toggleLabelsPlayed(enabled) {
     settings.labels.played = ( enabled === undefined )

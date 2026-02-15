@@ -334,9 +334,9 @@ function setKeyMarking(key, all_octaves) {
         // if just clicked, detect correct value
         if ( marking_action.value === null ) {
             if ( isLabelingModeOn() )
-                marking_action.value = !settings.labels.keys.has(key);
+                marking_action.value = !settings.labels.has(key);
             else if ( isStickerModeOn() )
-                marking_action.value = !settings.stickers.keys.has(key);
+                marking_action.value = !settings.stickers.has(key);
         }
         // do marking if value is set
         if ( marking_action.value !== null ) {

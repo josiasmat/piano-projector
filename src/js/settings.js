@@ -20,7 +20,7 @@ import { is_mobile } from "./common.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./lib/storage-handler.js";
 import { nextOf, range } from "./lib/utils.js";
 import { createPianoKeyboard, updatePianoKey, updatePianoKeys } from "./piano/piano.js";
-import { updateAppearanceMenu, updatePedalsMenu, updateSizeMenu, updateToolbarBasedOnWidth } from "./toolbar/toolbar.js";
+import { updateAppearanceMenu, updateLabelsMenu, updatePedalsMenu, updateSizeMenu, updateStickersMenu, updateToolbarBasedOnWidth } from "./toolbar/toolbar.js";
 import { i18n } from "./lib/i18n.js";
 import { updateKbdNavigator } from "./keyboard.js";
 import { updateOnboardingTour } from "./onboarding.js";
@@ -97,6 +97,12 @@ export const settings = {
             updatePianoKeys();
             saveLabelsAndStickersSettings();
         },
+        clear() {
+            this.keys.clear();
+            updatePianoKeys();
+            updateLabelsMenu();
+            saveLabelsAndStickersSettings();
+        },
         /** @returns {string} */
         keysToStr() {
             return [...this.keys].join(',');
@@ -162,7 +168,13 @@ export const settings = {
                 }
             }
             saveLabelsAndStickersSettings();
-        },        
+        },
+        clear() {
+            this.keys.clear();
+            updatePianoKeys();
+            updateStickersMenu();
+            saveLabelsAndStickersSettings();
+        },
         keysToStr() {
             let items = [];
             for ( const [k,v] of this.keys.entries() ) 

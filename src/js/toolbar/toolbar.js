@@ -32,6 +32,7 @@ import { attachToolbarPedalsEventListeners, updatePedalsButton } from './toolbar
 import { attachToolbarLabelsEventListeners, updateLabelsButton } from './toolbar-labels.js';
 import { attachToolbarStickersEventListeners, updateStickersButton } from './toolbar-stickers.js';
 import { attachToolbarToggleEventListeners, updateToolbarToggleButton } from './toolbar-toggle.js';
+import { attachToolbarOptionsEventListeners } from './toolbar-options.js';
 
 export * from './toolbar-control.js';
 export * from './toolbar-sound.js';
@@ -41,6 +42,7 @@ export * from './toolbar-appearance.js';
 export * from './toolbar-pedals.js';
 export * from './toolbar-labels.js';
 export * from './toolbar-stickers.js';
+export * from './toolbar-options.js';
 export * from './toolbar-toggle.js';
 
 
@@ -69,11 +71,12 @@ export const toolbar = {
         pedals: _id("dropdown-pedals"),
         labels: _id("dropdown-labels"),
         stickers: _id("dropdown-stickers"),
+        options: _id("dropdown-options"),
         /** @returns {HTMLElement[]} */
         get all() { return [
             this.control, this.sound, this.transpose,
             this.size, this.appearance, this.pedals, 
-            this.labels, this.stickers
+            this.labels, this.stickers, this.options
         ]; },
         /** @returns {void} */
         closeAll() {
@@ -98,6 +101,7 @@ export const toolbar = {
         stickers_group: _id("btn-stickers-group"),
         stickers_left: _id("btn-stickers-switch"),
         stickers_right: _id("btn-stickers-dropdown"),
+        options: _id("btn-options"),
         panic: _id("btn-panic"),
         hide_toolbar: _id("btn-hide-toolbar"),
         show_toolbar: _id("btn-show-toolbar")
@@ -143,7 +147,6 @@ export const toolbar = {
             picker_color_pressed: _id("color-pressed"),
             item_perspective: _id("menu-perspective"),
             item_top_felt: _id("menu-top-felt"),
-            graphics_quality: _id("menu-graphics-quality")
         },
         labels: {
             top: _id("menu-labels-top"),
@@ -164,7 +167,15 @@ export const toolbar = {
             top: _id("pedal-menu"),
             item_follow: _id("menu-pedal-follow"),
             item_dim: _id("menu-pedal-dim")
-        } 
+        } ,
+        options: {
+            top: _id("menu-options"),
+            language: {
+                top: _id("menu-language")
+            },
+            graphics_quality: _id("menu-graphics-quality"),
+            reset: _id("menu-options-reset")
+        }
     },
     leds: {
         control: _id("connection-power-icon"),
@@ -178,11 +189,15 @@ export const toolbar = {
     },
     tooltips: {
         connect: _id("dropdown-connect-tooltip"),
-        labels: _id("btn-labels-tooltip")
+        labels: _id("btn-labels-tooltip"),
+        options: _id("btn-options-tooltip")
     },
     resize: {
         observer: undefined,
         timeout: undefined
+    },
+    other: {
+        show_toolbar_hover_area: _id("show-toolbar-btn-hover-area")
     }
 };
 
@@ -230,6 +245,7 @@ const toolbar_shrink_list = [
     { elm: () => toolbar.buttons.stickers_group, action: "hide-elm" },
     { elm: () => toolbar.buttons.labels_group,   action: "hide-elm" },
     { elm: () => toolbar.buttons.panic,          action: "hide-elm" },
+    { elm: () => toolbar.buttons.options,        action: "hide-elm" },
     { elm: () => toolbar.self,                   action: "hide-elm" }
 ];
 
@@ -337,6 +353,7 @@ export function initializeToolbar() {
     attachToolbarLabelsEventListeners();
     attachToolbarStickersEventListeners();
     attachToolbarToggleEventListeners();
+    attachToolbarOptionsEventListeners();
 
     const dropdown_show_handler = (e) => {
         e.currentTarget.querySelector("sl-button")

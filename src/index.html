@@ -37,8 +37,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     .catch(err => console.error('Service worker registration failed:\n', err));
                 });
                 navigator.serviceWorker.addEventListener('message', (event) => {
-                    if ( event.data?.type === 'RELOAD' )
-                        window.location.reload();
+                    if ( event.data?.type === 'RELOAD' ) {
+                        history.pushState({ updated: true }, '');
+                        location.reload();
+                    }
                 });
             }
         </script>
@@ -47,17 +49,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         <link rel="preload" href="i18n/pt.json" as="fetch" type="application/json" hreflang="pt" crossorigin />
         <link rel="stylesheet" blocking="render" href="bundle.css" />
         <script type="module" src="bundle.js" async></script>
-        <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icon/favicon.svg" />
-        <link rel="icon" type="image/png" sizes="128x128" href="assets/icon/favicon.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="assets/icon/favicon-192.png" />
-        <link rel="icon" type="image/png" sizes="512x512" href="assets/icon/favicon-512.png" />
+        <link rel="icon" type="image/svg+xml" sizes="any" href="assets/favicon/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="128x128" href="assets/favicon/favicon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon/favicon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon/favicon-512.png" />
         <link rel="license" type="text/markdown" href="/LICENSE.md" />
     </head>
     <body>
         <div id="loading-title" class="title-text">Piano Projector</div>
         <sl-dialog label="About" id="dialog-about" class="sl-theme-dark" hidden>
             <span slot="label" class="title-text">
-                <sl-icon src="assets/icon/favicon.svg"></sl-icon>
+                <sl-icon src="assets/favicon/favicon.svg"></sl-icon>
                 Piano Projector
             </span>
             <span i18n="about-description">A versatile and easy-to-use on-screen piano keyboard for music education.</span><br /><br />
@@ -245,24 +247,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                         <sl-menu-item id="menu-top-felt" type="checkbox" checked>
                             <span data-nosnippet i18n="appearance-menu-red-felt">Show red felt</span>
                         </sl-menu-item>
-                        <sl-divider></sl-divider>
-                        <sl-menu-item>
-                            <span data-nosnippet i18n="appearance-menu-graphics-quality">Graphics quality</span>
-                            <sl-menu id="menu-graphics-quality" slot="submenu">
-                                <sl-menu-item type="checkbox" value="2" i18n="appearance-menu-graphics-quality-high">High</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="1" i18n="appearance-menu-graphics-quality-medium">Medium</sl-menu-item>
-                                <sl-menu-item type="checkbox" value="0" i18n="appearance-menu-graphics-quality-low">Low</sl-menu-item>
-                            </sl-menu>
-                        </sl-menu-item>
                     </sl-menu>
                 </sl-dropdown>
                 <sl-dropdown id="dropdown-pedals" stay-open-on-select>
                     <sl-button id="btn-pedals" slot="trigger" caret>
                         <span data-nosnippet i18n="pedals-btn-label">Pedals</span>
                         <div id="pedal-icons" slot="prefix">
-                            <sl-icon id="pedl" class="pedal-indicator led-weak" slot="prefix" src="assets/svg/lped.svg"></sl-icon>
-                            <sl-icon id="pedm" class="pedal-indicator led-weak" slot="prefix" src="assets/svg/mped.svg"></sl-icon>
-                            <sl-icon id="pedr" class="pedal-indicator led-weak" slot="prefix" src="assets/svg/rped.svg"></sl-icon>
+                            <sl-icon id="pedl" class="pedal-indicator led-weak" slot="prefix" src="assets/icons/lped.svg"></sl-icon>
+                            <sl-icon id="pedm" class="pedal-indicator led-weak" slot="prefix" src="assets/icons/mped.svg"></sl-icon>
+                            <sl-icon id="pedr" class="pedal-indicator led-weak" slot="prefix" src="assets/icons/rped.svg"></sl-icon>
                         </div>
                     </sl-button>
                     <sl-menu id="pedal-menu">
@@ -367,6 +360,32 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                 </sl-button-group>
             </div>
             <div id="top-toolbar-right">
+                <sl-tooltip id="btn-options-tooltip">
+                    <span slot="content" i18n="options-btn-tooltip">More options</span>
+                    <sl-dropdown id="dropdown-options">
+                        <sl-button id="btn-options" slot="trigger">
+                            <sl-icon name="gear" label="More options"></sl-icon>
+                        </sl-button>
+                        <sl-menu id="menu-options">
+                            <sl-menu-item>
+                                <span data-nosnippet i18n="options-menu-language">Language</span>
+                                <sl-menu id="menu-language" slot="submenu"></sl-menu>
+                            </sl-menu-item>
+                            <sl-menu-item>
+                                <span data-nosnippet i18n="options-menu-graphics-quality">Graphics quality</span>
+                                <sl-menu id="menu-graphics-quality" slot="submenu">
+                                    <sl-menu-item type="checkbox" value="2" i18n="options-menu-graphics-quality-high">High</sl-menu-item>
+                                    <sl-menu-item type="checkbox" value="1" i18n="options-menu-graphics-quality-medium">Medium</sl-menu-item>
+                                    <sl-menu-item type="checkbox" value="0" i18n="options-menu-graphics-quality-low">Low</sl-menu-item>
+                                </sl-menu>
+                            </sl-menu-item>     
+                            <sl-divider></sl-divider>
+                            <sl-menu-item id="menu-options-reset">
+                                <span data-nosnippet i18n="options-menu-reset">Reset all settings</span>
+                            </sl-menu-item>                   
+                        </sl-menu>
+                    </sl-dropdown>
+                </sl-tooltip>
                 <sl-tooltip>
                     <span slot="content" i18n="panic-btn-tooltip">Panic! (ESC)</span>
                     <sl-button id="btn-panic">
@@ -400,7 +419,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         <template id="menu-connect-item-midi-port-template">
             <sl-menu-item type="checkbox" class="menu-connect-item-midi-input">
                 <span></span>
-                <sl-icon src="assets/svg/midikbd.svg" slot="prefix"></sl-icon>
+                <sl-icon src="assets/icons/midikbd.svg" slot="prefix"></sl-icon>
             </sl-menu-item>
         </template>
         

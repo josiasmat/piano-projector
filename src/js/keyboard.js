@@ -23,11 +23,9 @@ import { triggerPanic } from "./panic.js";
 import { setTransposition } from "./transpose.js";
 
 import { 
-    clearLabels,
-    clearStickers, isLabelingModeOn, isMarkingModeOn, isStickerModeOn,
-    setLabelsType, toggleLabelingMode, toggleLabelsOctave, toggleLabelsPlayed, 
-    toggleStickerMode, exitMarkingMode, toggleTonicMode,
-    tonic_mode
+    isLabelingModeOn, isMarkingModeOn, isStickerModeOn, setLabelsType, 
+    toggleLabelingMode, toggleLabelsOctave, toggleLabelsPlayed, 
+    toggleStickerMode, exitMarkingMode, toggleTonicMode, tonic_mode
 } from "./markings.js";
 
 import { 
@@ -225,7 +223,7 @@ function buildKbdNavStructure() {
                     [i18n.get("kbdnav-labels-octave", "Show &octave"), () => toggleLabelsOctave(), {checked: settings.labels.octave}]
                 ]],
                 [i18n.get("kbdnav-labels-played-keys", "&Show on played keys"), () => toggleLabelsPlayed(), {checked: settings.labels.played}],
-                [i18n.get("kbdnav-labels-clear", "&Clear"), () => clearLabels()],
+                [i18n.get("kbdnav-labels-clear", "&Clear"), () => settings.labels.clear()],
             ]],
             [i18n.get("kbdnav-stickers", "Stic&kers"), [
                 [i18n.get("kbdnav-stickers-red", "&Red"), () => toggleStickerMode(undefined, "red"), {checked: sticker_mode && settings.stickers.color === "red"}],
@@ -233,7 +231,7 @@ function buildKbdNavStructure() {
                 [i18n.get("kbdnav-stickers-green", "&Green"), () => toggleStickerMode(undefined, "green"), {checked: sticker_mode && settings.stickers.color === "green"}],
                 [i18n.get("kbdnav-stickers-blue", "&Blue"), () => toggleStickerMode(undefined, "blue"), {checked: sticker_mode && settings.stickers.color === "blue"}],
                 [i18n.get("kbdnav-stickers-violet", "&Violet"), () => toggleStickerMode(undefined, "violet"), {checked: sticker_mode && settings.stickers.color === "violet"}],
-                [i18n.get("kbdnav-stickers-clear", "&Clear"), () => clearStickers()],
+                [i18n.get("kbdnav-stickers-clear", "&Clear"), () => settings.stickers.clear()],
             ]],
             [i18n.get("kbdnav-panic", "Panic!"), triggerPanic],
             [(settings.toolbar 

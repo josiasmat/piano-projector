@@ -98,6 +98,11 @@ function getTourSteps() {
             target: toolbar.buttons.panic
         },
         {
+            i18n: "onboarding-main-options",
+            group: "main",
+            target: toolbar.buttons.options
+        },
+        {
             i18n: "onboarding-main-toggle-toolbar",
             group: "main",
             target: toolbar.buttons.hide_toolbar

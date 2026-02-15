@@ -20,7 +20,7 @@ import { toolbar, changeLed } from "./toolbar.js";
 import { settings } from "../settings.js";
 import { is_mobile, setHiddenAttr } from "../common.js";
 import { 
-    clearLabels, isLabelingModeOn, setLabelsType, toggleTonicMode, 
+    isLabelingModeOn, setLabelsType, toggleTonicMode, 
     toggleLabelingMode, toggleLabelsOctave, toggleLabelsPlayed,
     tonic_mode, 
 } from "../markings.js";
@@ -119,7 +119,7 @@ export function attachToolbarLabelsEventListeners() {
     
     toolbar.menus.labels.clear
     .addEventListener("click", () => {
-        clearLabels();
+        settings.labels.clear();
     });
     
 }

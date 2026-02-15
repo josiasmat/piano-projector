@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { toolbar } from "./toolbar.js";
-import { settings, saveAppearanceSettings, setGraphicsQuality } from "../settings.js";
+import { settings, saveAppearanceSettings } from "../settings.js";
 import { createPianoKeyboard, updatePianoTopFelt } from "../piano/piano.js";
 import { is_mobile } from "../common.js";
 
@@ -31,14 +31,13 @@ export function updateAppearanceMenu() {
     toolbar.menus.appearance.item_top_felt.checked = settings.top_felt;
     for ( const item of toolbar.menus.appearance.highlight_opacity.children )
         item.checked = ( item.value === settings.highlight_opacity.toString() );
-    for ( const item of toolbar.menus.appearance.graphics_quality.children )
-        item.checked = ( item.value === settings.graphics_quality.toString() );
 }
 
 
 export function attachToolbarAppearanceEventListeners() {
 
-    toolbar.dropdowns.appearance.addEventListener("sl-show", updateAppearanceMenu);
+    toolbar.dropdowns.appearance
+    .addEventListener("sl-show", updateAppearanceMenu);
     
     toolbar.menus.appearance.highlight_opacity
     .addEventListener("sl-select", (e) => {
@@ -81,10 +80,4 @@ export function attachToolbarAppearanceEventListeners() {
         saveAppearanceSettings();
     });
 
-    toolbar.menus.appearance.graphics_quality
-    .addEventListener("sl-select", (e) => {
-        setGraphicsQuality(parseInt(e.detail.item.value));
-        if ( is_mobile ) toolbar.dropdowns.appearance.hide();
-    });
-    
 }

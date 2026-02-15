@@ -53,10 +53,11 @@ import {
 } from "./keyboard.js";
 
 import { changeLanguage } from "./settings.js";
-import { getUrlQueryValue } from "./lib/utils.js";
+import { deleteUrlQueryValue, getUrlQueryValue } from "./lib/utils.js";
 import { sound } from "./sound.js";
 import { i18n } from "./lib/i18n.js";
 import { initializeToolbar } from "./toolbar/toolbar.js";
+import { toast } from "./toast.js";
 
 
 /** @typedef {import("@shoelace-style/shoelace").SlTooltip} SlTooltip */
@@ -139,12 +140,14 @@ async function initializeApp() {
                 attachKeyboardHandlers();
                 attachPianoPointerAndTouchHandlers();
                 connectInputStartup();
+                showUpdatedMsg();
             }
         });
     } else {
         attachKeyboardHandlers();
         attachPianoPointerAndTouchHandlers();
         connectInputStartup();
+        showUpdatedMsg();
     }
 
     midiWatchdog();
@@ -170,10 +173,12 @@ function checkUrlQueryStrings() {
         case "highperf":
             setGraphicsQuality(2, true);
     }
+    deleteUrlQueryValue("mode");
 
-    const lang = getUrlQueryValue("lang", "").toLowerCase();
+    const lang = getUrlQueryValue("lang")?.toLowerCase();
     if ( lang ) {
         settings.language = lang;
+        deleteUrlQueryValue("lang");
     }
 }
 
@@ -243,4 +248,10 @@ function initializeSound() {
         toolbar.menus.sound.items.forEach((item) => { item.hidden = false; });
         if ( is_mobile && settings.sound ) sound.load(settings.sound);
     }
+}
+
+
+function showUpdatedMsg() {
+    if ( history.state?.updated )
+        toast(i18n.get("updated-message"), { type: "info" });
 }
