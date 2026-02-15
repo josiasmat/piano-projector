@@ -121,6 +121,7 @@ export function connectInput(name, save=false) {
             KbdNotes.enable();
             touch.disable();
             settings.device_name = "pckbd";
+            settings.labels.transposed = true;
             updateToolbar();
             updatePiano();
             if ( save ) saveDeviceSetting();
@@ -129,6 +130,7 @@ export function connectInput(name, save=false) {
             KbdNotes.disable();
             touch.enable();
             settings.device_name = "touch";
+            settings.labels.transposed = false;
             updateToolbar();
             updatePianoKeys();
             if ( save ) saveDeviceSetting();
@@ -137,6 +139,7 @@ export function connectInput(name, save=false) {
             KbdNotes.disable();
             touch.disable();
             settings.device_name = null;
+            settings.labels.transposed = true;
             updateToolbar();
             updatePianoKeys();
             Midi.connectByPortName(name, () => {

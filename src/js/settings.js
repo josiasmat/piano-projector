@@ -49,44 +49,50 @@ export const settings = {
         /** @type {Set<number>} */
         keys: new Set(),
         tonic: 0,
-        has(key) {
-            return this.keys.has(key - settings.transpose);
+        transposed: true,
+        _key(key, transposed = this.transposed, inverse = false) {
+            return transposed 
+                ? key + (inverse ? settings.transpose : -settings.transpose)
+                : key;
         },
-        toggle(key, value=undefined) {
-            value = value ?? !this.has(key);
+        has(key, transposed = this.transposed) {
+            return this.keys.has(this._key(key, transposed));
+        },
+        toggle(key, value=undefined, transposed = this.transposed) {
+            value = value ?? !this.has(key, transposed);
             if ( value )
-                this.keys.add(key - settings.transpose);
+                this.keys.add(this._key(key, transposed));
             else
-                this.keys.delete(key - settings.transpose);
+                this.keys.delete(this._key(key, transposed));
             updatePianoKey(key);
             saveLabelsAndStickersSettings();
         },
-        toggleOctaves(key, value=undefined) {
-            value = value ?? !this.has(key);
-            const first = (key-settings.transpose) % 12;
+        toggleOctaves(key, value=undefined, transposed = this.transposed) {
+            value = value ?? !this.has(key, transposed);
+            const first = this._key(key, transposed) % 12;
             if ( value ) {
                 for ( let i = first; i < 128; i += 12 ) {
                     this.keys.add(i);
-                    updatePianoKey(i+settings.transpose);
+                    updatePianoKey(this._key(i, transposed, true));
                 }
             } else {
                 for ( let i = first; i < 128; i += 12 ) {
                     this.keys.delete(i);
-                    updatePianoKey(i+settings.transpose);
+                    updatePianoKey(this._key(i, transposed, true));
                 }
             }
             saveLabelsAndStickersSettings();
         },
         /** @param {number} key @returns {boolean} */
-        allOctaves(key) {
-            return [...range(key%12, 128, 12)]
-                   .every(key => this.has(key));
+        allOctaves(key, transposed = this.transposed) {
+            return [...range(this._key(key, transposed)%12, 128, 12)]
+                   .every(key => this.has(key, false));
         },
         /** @param {number} n */
         transpose(n) {
             const new_keys = new Set();
             [...range(0, 12)].forEach(pc => {
-                if ( this.allOctaves(pc) )
+                if ( this.allOctaves(pc, false) )
                     [...range((pc + n) % 12, 128, 12)]
                     .forEach(new_key => new_keys.add(new_key));
             });
@@ -105,7 +111,7 @@ export const settings = {
         },
         /** @returns {string} */
         keysToStr() {
-            return [...this.keys].join(',');
+            return [...this.keys].sort((a,b)=>a-b).join(',');
         },
         /** @param {string} s */
         strToKeys(s) {
