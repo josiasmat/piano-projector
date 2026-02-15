@@ -261,21 +261,21 @@ svg#piano {
 
     .white-key.has-sticker {
         .key-label:not(.rotated) {
-            transform: translateY(-9px);
+            transform: translateY(-10px);
         }
         .key-label.rotated {
             transform-origin: left center;
-            transform: translateY(-9px) rotate(-90deg) translateX(-18px) scale(70%);
+            transform: translateY(-10px) rotate(-90deg) translateX(-18px) scale(70%);
         }
     }
 
     .black-key.has-sticker {
         .key-label:not(.rotated) {
-            transform: translateY(-10px);
+            transform: translateY(-12px);
         }
         .key-label.rotated {
             transform-origin: center center;
-            transform: translateY(-10px) rotate(-90deg) translateX(10px);
+            transform: translateY(-12px) rotate(-90deg) translateX(10px);
         }
     }
 
@@ -306,14 +306,15 @@ svg#piano {
             stroke-width: calc(var(--stroke-width) * 2);
             paint-order: stroke;
             opacity: 100%;
+            stroke: black;
             stroke-opacity: 75%;
         }
     
-        &.has-sticker-red    { .key-sticker { fill: red;    stroke: #c00; } }
-        &.has-sticker-yellow { .key-sticker { fill: #ee0;   stroke: #bb0; } }
-        &.has-sticker-green  { .key-sticker { fill: #0b0;   stroke: #080; } }
-        &.has-sticker-blue   { .key-sticker { fill: blue;   stroke: #00c; } }
-        &.has-sticker-violet { .key-sticker { fill: violet; stroke: #c0c; } }
+        &.has-sticker-red    { .key-sticker { fill: red;    } }
+        &.has-sticker-yellow { .key-sticker { fill: #ff0;   } }
+        &.has-sticker-green  { .key-sticker { fill: #0b0;   } }
+        &.has-sticker-blue   { .key-sticker { fill: blue;   } }
+        &.has-sticker-violet { .key-sticker { fill: violet; } }
             
         &:not(.has-sticker) .key-sticker {
             display: none;

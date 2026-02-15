@@ -108,13 +108,13 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
     const black_key_label_y1 = black_key_height - black_key_bevel.bottom_height1
             - white_key_width_third*height_factor;
 
-    const w_sticker_gap_x = STROKE_WIDTH * 8;
-    const w_sticker_gap_y = STROKE_WIDTH * 6;
-    const b_sticker_gap_x = STROKE_WIDTH * 7;
-    const b_sticker_gap_y = STROKE_WIDTH * 4;
+    const w_sticker_gap_x = 8 + STROKE_WIDTH;
+    const w_sticker_gap_y = 5 + STROKE_WIDTH;
+    const b_sticker_gap_x = 8 + STROKE_WIDTH;
+    const b_sticker_gap_y = 2 + STROKE_WIDTH;
     const w_sticker_width = white_key_width - (w_sticker_gap_x * 2);
     const b_sticker_width = black_key_width - (b_sticker_gap_x * 2);
-    const w_sticker_height = w_sticker_width / 10;
+    const w_sticker_height = w_sticker_width / 5;
     const b_sticker_height = w_sticker_height;
 
     svg.innerHTML = "";
@@ -347,7 +347,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         const sticker_x = offset+w_sticker_gap_x;
         const sticker_y = white_key_height-w_sticker_height-w_sticker_gap_y;
         const sticker = SvgTools.makeRect(
-            w_sticker_width, w_sticker_height, sticker_x, sticker_y, stroke_width_half, stroke_width_half,
+            w_sticker_width, w_sticker_height, sticker_x, sticker_y, 0, 0,
             { class: join("key-sticker", "white-key-sticker") }
         )
         
@@ -593,7 +593,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         const sticker_x = offset+b_sticker_gap_x+lateral_displacement;
         const sticker_y = black_key_height-black_key_bevel.bottom_height-b_sticker_height-b_sticker_gap_y;
         const sticker = SvgTools.makeRect(
-            b_sticker_width, b_sticker_height, sticker_x, sticker_y, stroke_width_half, stroke_width_half,
+            b_sticker_width, b_sticker_height, sticker_x, sticker_y, 0, 0,
             { class: join("key-sticker", "white-key-sticker") }
         )
 
@@ -761,13 +761,13 @@ export function drawPianoKeyboardLP(svg, keys, options = {}) {
     const white_key_label_y = white_key_height - white_key_width_half*height_factor;
     const black_key_label_y = black_key_height - white_key_width_half*height_factor;
 
-    const w_sticker_gap_x = STROKE_WIDTH * 8;
-    const w_sticker_gap_y = STROKE_WIDTH * 6;
-    const b_sticker_gap_x = STROKE_WIDTH * 5;
-    const b_sticker_gap_y = STROKE_WIDTH * 5;
+    const w_sticker_gap_x = 8 + STROKE_WIDTH;
+    const w_sticker_gap_y = 6 + STROKE_WIDTH;
+    const b_sticker_gap_x = 5 + STROKE_WIDTH;
+    const b_sticker_gap_y = 5 + STROKE_WIDTH;
     const w_sticker_width = white_key_width - (w_sticker_gap_x * 2);
     const b_sticker_width = black_key_width - (b_sticker_gap_x * 2);
-    const w_sticker_height = w_sticker_width / 10;
+    const w_sticker_height = w_sticker_width / 5;
     const b_sticker_height = w_sticker_height;
 
     svg.innerHTML = "";
