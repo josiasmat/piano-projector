@@ -49,27 +49,30 @@ export const settings = {
         /** @type {Set<number>} */
         keys: new Set(),
         tonic: 0,
+        has(key) {
+            return this.keys.has(key - settings.transpose);
+        },
         toggle(key, value=undefined) {
-            value = value ?? !this.keys.has(key);
+            value = value ?? !this.has(key);
             if ( value )
-                this.keys.add(key);
+                this.keys.add(key - settings.transpose);
             else
-                this.keys.delete(key);
+                this.keys.delete(key - settings.transpose);
             updatePianoKey(key);
             saveLabelsAndStickersSettings();
         },
         toggleOctaves(key, value=undefined) {
-            value = value ?? !this.keys.has(key);
-            const first = key%12;
+            value = value ?? !this.has(key);
+            const first = (key-settings.transpose) % 12;
             if ( value ) {
                 for ( let i = first; i < 128; i += 12 ) {
                     this.keys.add(i);
-                    updatePianoKey(i);
+                    updatePianoKey(i+settings.transpose);
                 }
             } else {
                 for ( let i = first; i < 128; i += 12 ) {
                     this.keys.delete(i);
-                    updatePianoKey(i);
+                    updatePianoKey(i+settings.transpose);
                 }
             }
             saveLabelsAndStickersSettings();
@@ -77,7 +80,7 @@ export const settings = {
         /** @param {number} key @returns {boolean} */
         allOctaves(key) {
             return [...range(key%12, 128, 12)]
-                   .every(key => this.keys.has(key));
+                   .every(key => this.has(key));
         },
         /** @param {number} n */
         transpose(n) {
@@ -132,8 +135,11 @@ export const settings = {
         color: "red",
         /** @type {Map<number,string>} */
         keys: new Map(),
+        has(key) {
+            return this.keys.has(key);
+        },
         toggle(key, value=undefined) {
-            value = value ?? !this.keys.has(key);
+            value = value ?? !this.has(key);
             if ( value )
                 this.keys.set(key, this.color);
             else
@@ -142,7 +148,7 @@ export const settings = {
             saveLabelsAndStickersSettings();
         },
         toggleOctaves(key, value=undefined) {
-            value = value ?? !this.keys.has(key);
+            value = value ?? !this.has(key);
             const first = key%12;
             if ( value ) {
                 for ( let i = first; i < 128; i += 12 ) {
@@ -329,6 +335,22 @@ export function loadSessionSettings() {
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
     settings.toolbar = session_storage.readBool("toolbar", settings.toolbar);
+}
+
+
+/** @param {boolean} ask */
+export function resetSettings(ask = false) {
+    console.log("resetSettings() called");
+    if ( ask ) {
+        console.log("asking");
+        const response = window.confirm(i18n.get("reset-confirm-msg",
+            "This will reset all your settings to their default values. Are you sure you want to continue?"
+        ));
+        if ( !response ) return;
+    }
+    session_storage.clear();
+    settings_storage.clear();
+    window.location.reload();
 }
 
 
