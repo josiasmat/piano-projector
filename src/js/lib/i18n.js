@@ -33,7 +33,7 @@ export const i18n = {
      * @param {String} def - Default string
      * @returns {?String}
      */
-    get(key, def) {
+    get(key, def = "") {
         return this.data[this.language]?.strings[key] 
             ?? this.data[this.fallback_lang]?.strings[key]
             ?? def;
