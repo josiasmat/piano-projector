@@ -13,6 +13,8 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
  * @returns 
  */
 export function toast(message, options = {}) {
+    if ( !message ) return;
+
     const [variant, icon] = {
         neutral: ["neutral", "info-circle"],
         info:    ["primary", "info-circle"],
