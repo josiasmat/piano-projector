@@ -16,7 +16,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-:root.mobile #top-toolbar { 
+:root.mobile { 
     sl-dropdown[open]>sl-button::part(base) {
         background-color: var(--sl-color-neutral-600);
         border-color: var(--sl-color-neutral-600);
@@ -30,7 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     .menu-keyboard-shortcut { display: none; }
 }
 
-:root:not(.mobile) #top-toolbar {
+:root:not(.mobile) {
     sl-button[variant=default]::part(base):hover {
         background-color: var(--sl-color-neutral-100);
         border-color: var(--sl-input-border-color);
