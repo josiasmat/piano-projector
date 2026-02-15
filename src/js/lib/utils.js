@@ -172,6 +172,14 @@ export function getUrlQueryValue(param, default_value = "") {
 }
 
 
+/** @param {String} param */
+export function deleteUrlQueryValue(param) {
+    const url = new URL(location.href);
+    url.searchParams.delete(param);
+    history.replaceState(null, "", url);
+}
+
+
 /**
  * Returns all possible combinations of elements from an array as subarrays.
  * @param {any[]} array 
