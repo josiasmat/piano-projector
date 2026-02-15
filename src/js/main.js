@@ -27,8 +27,7 @@ import {
 } from "./common.js";
 
 import { 
-    settings, settings_storage, loadSettings, 
-    saveGraphicsQualitySetting,
+    settings, loadSettings, 
     setGraphicsQuality
 } from "./settings.js";
 
