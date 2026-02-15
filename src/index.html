@@ -36,9 +36,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
                     navigator.serviceWorker.register('sw.js')
                     .catch(err => console.error('Service worker registration failed:\n', err));
                 });
-                navigator.serviceWorker.addEventListener('message', (event) => {
-                    if ( event.data?.type === 'RELOAD' ) {
-                        history.pushState({ updated: true }, '');
+                navigator.serviceWorker.addEventListener('message', (e) => {
+                    if ( e.data?.type === 'RELOAD' ) {
+                        if ( e.data.reason === 'UPDATE' )
+                            history.replaceState({ updated: true }, '');
                         location.reload();
                     }
                 });
