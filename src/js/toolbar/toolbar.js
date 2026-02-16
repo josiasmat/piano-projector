@@ -190,7 +190,10 @@ export const toolbar = {
     tooltips: {
         connect: _id("dropdown-connect-tooltip"),
         labels: _id("btn-labels-tooltip"),
-        options: _id("btn-options-tooltip")
+        options: _id("btn-options-tooltip"),
+        panic: _id("btn-panic-tooltip"),
+        hide_toolbar: _id("btn-hide-toolbar-tooltip"),
+        show_toolbar: _id("btn-show-toolbar-tooltip")
     },
     resize: {
         observer: undefined,

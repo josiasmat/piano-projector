@@ -103,9 +103,10 @@ async function initializeApp() {
         document.documentElement.classList.add("mobile");
         toolbar.buttons.show_toolbar.classList.add("mobile");
         // Disable tooltips
-        setDisabledAttr(toolbar.buttons.panic.parentElement);
-        setDisabledAttr(toolbar.buttons.hide_toolbar.parentElement);
-        setDisabledAttr(toolbar.buttons.show_toolbar.parentElement);
+        setDisabledAttr(toolbar.tooltips.options);
+        setDisabledAttr(toolbar.tooltips.panic);
+        setDisabledAttr(toolbar.tooltips.hide_toolbar);
+        setDisabledAttr(toolbar.tooltips.show_toolbar);
         // Enable selection of keyboard with 20 keys
         enable20KeysBtn();
     }

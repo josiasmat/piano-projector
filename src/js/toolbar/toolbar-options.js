@@ -54,7 +54,7 @@ export function attachToolbarOptionsEventListeners() {
 
     toolbar.dropdowns.options
     .addEventListener("sl-hide", () => {
-        toolbar.tooltips.options.trigger = "hover";
+        if ( is_mobile ) toolbar.tooltips.options.trigger = "hover";
     });
 
     toolbar.menus.options.language.top
