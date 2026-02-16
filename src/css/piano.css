@@ -19,6 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 /* Import key label font */
 @import url('https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap');
 
+@import url('stickers.css');
+
 :root {
     --color-highlight: #f00;
     --color-white-key: #eee;
@@ -31,16 +33,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     --color-black-key-left-bevel:   color(from #999 srgb r g b / 37%);
     --color-black-key-bottom-bevel: color(from #666 srgb r g b / 37%);
     --color-black-key-right-bevel:  color(from #444 srgb r g b / 37%);
-    --color-felt-top: #920;
-    --color-felt-bottom: color-mix(in hsl, var(--color-felt-top) 30%, #000 45%);
+    --color-label-white-key: black;
+    --color-label-black-key: white;
+    --color-label-white-key-active: white;
+    --color-label-black-key-active: white;
+    
     --gradient-white-key-top: color-mix(in lch, var(--color-white-key), white 10%);
     --gradient-white-key-bottom: color-mix(in lch, var(--color-white-key), black 8%);
     --gradient-black-key-top: color-mix(in lch, var(--color-black-key), white 12%);
     --gradient-black-key-bottom: color-mix(in lch, var(--color-black-key), black 10%);
+
     --highlight-transition-duration: 0.05s;
     --unpress-transition-duration: 0.1s;
-    --highlight-opacity: 100%;
-    --color-highlight-alpha: color(from var(--color-highlight) srgb r g b / var(--highlight-opacity));
     --stroke-width: 1.3px;
 }
 
@@ -125,7 +129,6 @@ svg#piano {
         .key-highlight {
             &.lowperf, &.nogradient {
                 fill: var(--color-highlight);
-                fill-opacity: var(--highlight-opacity);
             }
             &:not(.lowperf, .nogradient) {
                 fill: url(#pressed-white-key-highlight-gradient);
@@ -160,7 +163,6 @@ svg#piano {
         .key-highlight {
             &.lowperf, &.nogradient {
                 fill: var(--color-highlight);
-                fill-opacity: var(--highlight-opacity);
             }
             &:not(.lowperf, .nogradient) {
                 fill: url(#pressed-black-key-highlight-gradient);
@@ -189,7 +191,7 @@ svg#piano {
         }
     }
     
-    /* Key markings (labels and stickers) */
+    /* Key labels */
 
     .key-marker-group:not(.lowperf) {
         transform-origin: center center;
@@ -235,12 +237,12 @@ svg#piano {
 
     .white-key-label {
         font-size: 36px;
-        fill: lch(from var(--color-white-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
+        fill: var(--color-label-white-key);
     }
 
     .black-key-label {
         font-size: 25px;
-        fill: lch(from var(--color-black-key) clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 80%);
+        fill: var(--color-label-black-key);
         tspan { text-anchor: middle; }
     }
 
@@ -250,74 +252,41 @@ svg#piano {
     }
 
     .white-key.active .key-label {
-        fill: lch(from color-mix(in srgb, var(--color-highlight) var(--highlight-opacity), var(--color-white-key)) 
-                  clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
+        fill: var(--color-label-white-key-active);
     }
 
     .black-key.active .key-label {
-        fill: lch(from color-mix(in srgb, var(--color-highlight) var(--highlight-opacity), var(--color-black-key)) 
-                  clamp(0, calc(calc(55 - l) * 10000), 100) 0 h / 90%);
+        fill: var(--color-label-black-key-active);
     }
 
     .white-key.has-sticker {
         .key-label:not(.rotated) {
-            transform: translateY(-10px);
+            transform: translateY(-11px);
         }
         .key-label.rotated {
             transform-origin: left center;
-            transform: translateY(-10px) rotate(-90deg) translateX(-18px) scale(70%);
+            transform: translateY(-13px) rotate(-90deg) translateX(-18px) scale(70%);
         }
     }
 
     .black-key.has-sticker {
         .key-label:not(.rotated) {
-            transform: translateY(-12px);
+            transform: translateY(-14px);
         }
         .key-label.rotated {
             transform-origin: center center;
-            transform: translateY(-12px) rotate(-90deg) translateX(10px);
+            transform: translateY(-15px) rotate(-90deg) translateX(10px);
         }
     }
 
     .key:not(.has-sticker) .key-label.rotated {
         &.white-key-label {
             transform-origin: left center;
-            transform: rotate(-90deg) translateX(-18px) scale(70%);
+            transform: translateY(-3px) rotate(-90deg) translateX(-18px) scale(70%);
         }
         &.black-key-label {
             transform-origin: center center;
-            transform: rotate(-90deg) translateX(10px);
-        }
-    }
-
-    /* Key sticker */
-
-    &.sticker-mode .key:not(.has-sticker):hover {
-        .key-sticker {
-            fill: white;  
-            stroke: black;
-            opacity: 15%;
-            display: block;
-        }
-    }
-
-    .key {
-        .key-sticker {
-            stroke-width: calc(var(--stroke-width) * 2);
-            paint-order: stroke;
-            opacity: 100%;
-            stroke: black;
-            stroke-opacity: 75%;
-        }
-    
-        &.has-sticker-red    { .key-sticker { fill: red;    } }
-        &.has-sticker-yellow { .key-sticker { fill: #ff0;   } }
-        &.has-sticker-green  { .key-sticker { fill: #0b0;   } }
-        &.has-sticker-blue   { .key-sticker { fill: blue;   } }
-        &.has-sticker-violet { .key-sticker { fill: violet; } }
-            
-        &:not(.has-sticker) .key-sticker {
-            display: none;
+            transform: translateY(-3px) rotate(-90deg) translateX(10px);
         }
     }
 

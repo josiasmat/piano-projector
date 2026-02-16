@@ -24,6 +24,7 @@ import { updateAppearanceMenu, updateLabelsMenu, updatePedalsMenu, updateSizeMen
 import { i18n } from "./lib/i18n.js";
 import { updateKbdNavigator } from "./keyboard.js";
 import { updateOnboardingTour } from "./onboarding.js";
+import { colors } from "./colors.js";
 
 
 // Initialize storage handlers
@@ -208,36 +209,18 @@ export const settings = {
     semitones: 0,
     octaves: 0,
     get transpose() { return this.semitones + (this.octaves*12); },
-    get highlight_opacity() {
-        return getComputedStyle(document.documentElement).getPropertyValue("--highlight-opacity");
-    },
-    set highlight_opacity(value) {
-        document.documentElement.style.setProperty('--highlight-opacity', value);
-    },
-    get color_highlight() {
-        return getComputedStyle(document.documentElement).getPropertyValue("--color-highlight");
-    },
-    set color_highlight(value) {
-        document.documentElement.style.setProperty('--color-highlight', value);
-    },
-    get color_white() {
-        return getComputedStyle(document.documentElement).getPropertyValue("--color-white-key");
-    },
-    set color_white(value) {
-        document.documentElement.style.setProperty('--color-white-key', value);
-    },
-    get color_black() {
-        return getComputedStyle(document.documentElement).getPropertyValue("--color-black-key");
-    },
-    set color_black(value) {
-        document.documentElement.style.setProperty('--color-black-key', value);
-    },
-    get color_top_felt() {
-        return getComputedStyle(document.documentElement).getPropertyValue("--color-felt-top");
-    },
-    set color_top_felt(value) {
-        document.documentElement.style.setProperty('--color-felt-top', value);
-    },
+
+    get highlight_opacity() { return `${Math.round(colors.highlight_opacity*100)}%`; },
+    set highlight_opacity(value) { colors.highlight_opacity = parseInt(value)/100; },
+    get color_highlight() { return colors.highlight; },
+    set color_highlight(value) { colors.highlight = value; },
+    get color_white() { return colors.white_key; },
+    set color_white(value) { colors.white_key = value; },
+    get color_black() { return colors.black_key; },
+    set color_black(value) { colors.black_key = value; },
+    get color_top_felt() { return colors.top_felt; },
+    set color_top_felt(value) { colors.top_felt = value; },
+
     get pc_keyboard_connected() {
         return this.device_name === "pckbd";
     },

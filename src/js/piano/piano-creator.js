@@ -110,12 +110,12 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
 
     const w_sticker_gap_x = 8 + STROKE_WIDTH;
     const w_sticker_gap_y = 5 + STROKE_WIDTH;
-    const b_sticker_gap_x = 8 + STROKE_WIDTH;
-    const b_sticker_gap_y = 2 + STROKE_WIDTH;
+    const b_sticker_gap_x = 9 + STROKE_WIDTH;
+    const b_sticker_gap_y = 3 + STROKE_WIDTH;
     const w_sticker_width = white_key_width - (w_sticker_gap_x * 2);
     const b_sticker_width = black_key_width - (b_sticker_gap_x * 2);
-    const w_sticker_height = w_sticker_width / 5;
-    const b_sticker_height = w_sticker_height;
+    const w_sticker_height = w_sticker_width / 6;
+    const b_sticker_height = w_sticker_width / 7;
 
     svg.innerHTML = "";
 
@@ -347,7 +347,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         const sticker_x = offset+w_sticker_gap_x;
         const sticker_y = white_key_height-w_sticker_height-w_sticker_gap_y;
         const sticker = SvgTools.makeRect(
-            w_sticker_width, w_sticker_height, sticker_x, sticker_y, 0, 0,
+            w_sticker_width, w_sticker_height, sticker_x, sticker_y, stroke_width_half, stroke_width_half,
             { class: join("key-sticker", "white-key-sticker") }
         )
         
@@ -593,7 +593,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         const sticker_x = offset+b_sticker_gap_x+lateral_displacement;
         const sticker_y = black_key_height-black_key_bevel.bottom_height-b_sticker_height-b_sticker_gap_y;
         const sticker = SvgTools.makeRect(
-            b_sticker_width, b_sticker_height, sticker_x, sticker_y, 0, 0,
+            b_sticker_width, b_sticker_height, sticker_x, sticker_y, stroke_width_half, stroke_width_half,
             { class: join("key-sticker", "white-key-sticker") }
         )
 
@@ -696,12 +696,12 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
             { offset: "100%", "stop-color": "var(--gradient-black-key-bottom)" }
         ], false, { gradientTransform: "rotate(45)" }));
         svg_defs.appendChild(makeGradient("pressed-white-key-highlight-gradient", [
-            { offset: "0%", "stop-color": "var(--color-highlight-alpha)", "stop-opacity": "60%" },
-            { offset: "40%", "stop-color": "var(--color-highlight-alpha)" }
+            { offset: "0%", "stop-color": "var(--color-highlight)", "stop-opacity": "60%" },
+            { offset: "40%", "stop-color": "var(--color-highlight)" }
         ], true));
         svg_defs.appendChild(makeGradient("pressed-black-key-highlight-gradient", [
-            { offset: "0%", "stop-color": "var(--color-highlight-alpha)", "stop-opacity": "60%" },
-            { offset: "50%", "stop-color": "var(--color-highlight-alpha)" }
+            { offset: "0%", "stop-color": "var(--color-highlight)", "stop-opacity": "60%" },
+            { offset: "50%", "stop-color": "var(--color-highlight)" }
         ], true));
     }
     svg_defs.appendChild(makeGradient("top-felt-gradient", [

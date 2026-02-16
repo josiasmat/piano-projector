@@ -24,7 +24,7 @@ Pressing the **ALT** key will open a keyboard navigation menu; press the underli
 
 ## URL query parameters
 
-The app (`/pwa`) accepts the following query parameters:
+The app (`/pwa`) accepts the following URL query parameters:
 
 - `lang` - sets the app's language (example: `/pwa?lang=en`).
 - `mode` - sets graphics quality: `lq` (low), `mq` (medium) or `hq` (high).
@@ -48,4 +48,5 @@ This software is licensed under the terms of the [GNU Affero General Public Lice
 - [Shoelace](https://github.com/shoelace-style/shoelace)
 - [smplr](https://github.com/danigb/smplr)
 - [soundfont2](https://github.com/Mrtenz/soundfont2)
+- [TinyColor](https://bgrins.github.io/TinyColor/)
 - [TourGuide JS](https://tourguidejs.com/)
