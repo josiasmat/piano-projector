@@ -82,6 +82,7 @@ a:has(code) {
     transition-property: all;
     transition-timing-function: ease;
     transition-duration: 0.3s;
+    -webkit-user-drag: none;
     &:hover { 
         &:not(:active) {
             background: #0f84cd;
