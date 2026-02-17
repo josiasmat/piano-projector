@@ -31,6 +31,7 @@ var tg = new TourGuideClient({
     hidePrev: true,
     activeStepInteraction: false,
     allowDialogOverlap: true,
+    dialogMaxWidth: 380
 });
 
 
@@ -93,14 +94,14 @@ function getTourSteps() {
             target: toolbar.buttons.stickers_group
         },
         {
-            i18n: "onboarding-main-panic",
-            group: "main",
-            target: toolbar.buttons.panic
-        },
-        {
             i18n: "onboarding-main-options",
             group: "main",
             target: toolbar.buttons.options
+        },
+        {
+            i18n: "onboarding-main-panic",
+            group: "main",
+            target: toolbar.buttons.panic
         },
         {
             i18n: "onboarding-main-toggle-toolbar",
