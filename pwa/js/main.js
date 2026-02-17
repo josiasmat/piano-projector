@@ -128,11 +128,11 @@ async function initializeApp() {
         startOnboardingTour({
             onStepChange: (step) => {
                 switch ( step ) {
-                    case 11:
+                    case 12:
                         showKbdNavigator();
                         getKbdNavigatorElement().style.visibility = "hidden";
                         break;
-                    case 12:
+                    case 13:
                         getKbdNavigatorElement().style.removeProperty("visibility");
                 }
             },
