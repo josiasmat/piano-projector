@@ -22,10 +22,11 @@ import { i18n } from "./lib/i18n.js";
 import { toolbar } from "./toolbar/toolbar.js";
 import { piano } from "./piano/piano.js";
 import { linesToHtmlParagraphs } from './lib/utils.js';
+import { getKbdNavigatorElement } from "./keyboard.js";
+import { settings } from "./settings.js";
 
 
 var tg = new TourGuideClient({
-    completeOnFinish: true,
     exitOnEscape: true,
     exitOnClickOutside: false,
     hidePrev: true,
@@ -84,14 +85,14 @@ function getTourSteps() {
             target: toolbar.buttons.pedals
         },
         {
-            i18n: "onboarding-main-labels",
+            i18n: "onboarding-main-label",
             group: "main",
-            target: toolbar.buttons.labels_group
+            target: toolbar.buttons.label_group
         },
         {
-            i18n: "onboarding-main-stickers",
+            i18n: "onboarding-main-mark",
             group: "main",
-            target: toolbar.buttons.stickers_group
+            target: toolbar.buttons.markers_group
         },
         {
             i18n: "onboarding-main-options",
@@ -111,7 +112,7 @@ function getTourSteps() {
         {
             i18n: "onboarding-main-kbdnav",
             group: "main",
-            target: document.getElementById("keyboard-navigator")
+            target: getKbdNavigatorElement()
         },
     ];
 }
@@ -127,7 +128,7 @@ function getTourSteps() {
 export function startOnboardingTour(options = {}) {
     // Skip tour if content is missing
     if ( !tg.tourSteps[0].content ) return;
-    if ( options.force || !tg.isFinished("main") ) {
+    if ( options.force || (settings.first_time && !tg.isFinished("main")) ) {
         if ( options.onFinish ) 
             tg.onAfterExit(options.onFinish);
         if ( options.onStepChange )

@@ -20,80 +20,80 @@ import { midiToFreq } from "./lib/libmidi.js";
 import { mod } from "./lib/utils.js";
 import { touch, updatePianoCursor, updatePianoKeys } from "./piano/piano.js";
 import { isWhiteKey } from "./piano/piano-creator.js";
-import { saveLabelsAndStickersSettings, settings } from "./settings.js";
+import { saveAnnotationSettings, settings } from "./settings.js";
 import { 
-    updateLabelsMenu, updateLabelsMenuAndButton, updateStickersButton, updateStickersMenu, 
-    updateStickersMenuAndButton, updateToolbar, updateToolbarBasedOnWidth, toolbar
+    updateLabelMenu, updateLabelMenuAndButton, updateMarkersButton, updateMarkersMenu, 
+    updateMarkersMenuAndButton, updateToolbar, updateToolbarBasedOnWidth, toolbar
 } from "./toolbar/toolbar.js";
 
 
-/** @type {string?} "label" or "sticker" or null */
-let marking_mode = null;
+/** @type {string?} "label" or "marker" or null */
+let annotation_mode = null;
 
 export let tonic_mode = false;
 
 
-export function isMarkingModeOn() {
-    return Boolean(marking_mode);
+export function isAnnotationModeOn() {
+    return Boolean(annotation_mode);
 }
 
 
 export function isLabelingModeOn() {
-    return marking_mode === "label";
+    return annotation_mode === "label";
 }
 
 
-export function isStickerModeOn() {
-    return marking_mode === "sticker";
+export function isMarkerModeOn() {
+    return annotation_mode === "marker";
 }
 
 
 /** 
  * @param {string} value 
  * @returns {boolean} _true_ if changed. */
-export function setLabelsType(value) {
+export function setLabelType(value) {
     const changed = ( settings.labels.type !== (settings.labels.type = value) );
-    updateLabelsMenu();
+    updateLabelMenu();
     updateToolbar();
     updateToolbarBasedOnWidth();
     updatePianoKeys();
-    saveLabelsAndStickersSettings();
+    saveAnnotationSettings();
     return changed;
 }
 
 
-/** @param {string} value - "label", "sticker" or _null_ */
-export function setMarkingMode(value) {
-    marking_mode = (value === "label" || value === "sticker") ? value : null;
+/** @param {string} value - "label", "marker" or _null_ */
+export function setAnnotationMode(value) {
+    annotation_mode = (value === "label" || value === "marker") ? value : null;
     updatePianoCursor();
-    updateLabelsMenuAndButton();
-    updateStickersMenuAndButton();
+    updateLabelMenuAndButton();
+    updateMarkersMenuAndButton();
 }
 
 
-export function exitMarkingMode() {
-    setMarkingMode(null);
+export function exitAnnotationMode() {
+    setAnnotationMode(null);
 }
 
 
 /** @param {boolean} [enabled] @returns {boolean} */
 export function toggleLabelingMode(enabled) {
     if ( enabled === undefined )
-        enabled = !(marking_mode === "label");
+        enabled = !(annotation_mode === "label");
     tonic_mode = false;
-    setMarkingMode(enabled ? "label" : null);
-    return (marking_mode === "label");
+    setAnnotationMode(enabled ? "label" : null);
+    return (annotation_mode === "label");
 }
 
 
 /** @param {boolean} [enabled] @param {string} [color] @returns {boolean} */
-export function toggleStickerMode(enabled, color = settings.stickers.color) {
+export function toggleMarkerMode(enabled, color = settings.markers.color) {
     if ( enabled === undefined )
-        enabled = !(marking_mode === "sticker") || (color !== settings.stickers.color);
-    settings.stickers.color = color;
+        enabled = !(annotation_mode === "marker") || (color !== settings.markers.color);
+    settings.markers.color = color;
     tonic_mode = false;
-    setMarkingMode(enabled ? "sticker" : null);
-    return (marking_mode === "sticker");
+    setAnnotationMode(enabled ? "marker" : null);
+    return (annotation_mode === "marker");
 }
 
 
@@ -104,8 +104,8 @@ export function toggleTonicMode(enabled, show_tooltip = false) {
         : false;
     updatePianoCursor();
     updatePianoKeys();
-    updateLabelsMenuAndButton();
-    updateStickersButton();
+    updateLabelMenuAndButton();
+    updateMarkersButton();
     if ( show_tooltip && settings.toolbar && tonic_mode )
         toolbar.tooltips.labels.show();
     else
@@ -115,24 +115,24 @@ export function toggleTonicMode(enabled, show_tooltip = false) {
 
 
 /** @param {boolean} [enabled] */
-export function toggleLabelsPlayed(enabled) {
+export function toggleLabelPlayed(enabled) {
     settings.labels.played = ( enabled === undefined )
         ? !settings.labels.played 
         : enabled;
-    updateLabelsMenu();
+    updateLabelMenu();
     updatePianoKeys();
-    saveLabelsAndStickersSettings();
+    saveAnnotationSettings();
 }
 
 
 /** @param {boolean} [enabled] */
-export function toggleLabelsOctave(enabled) {
+export function toggleLabelOctave(enabled) {
     settings.labels.octave = ( enabled === undefined )
         ? !settings.labels.octave 
         : enabled;
-    updateLabelsMenu();
+    updateLabelMenu();
     updatePianoKeys();
-    saveLabelsAndStickersSettings();
+    saveAnnotationSettings();
 }
 
 
@@ -164,14 +164,14 @@ export function getGermanLabel(key) {
     const pc = key%12;
     const octave = Math.trunc(key/12);
     if ( octave >= 4 ) {
-        const octave_marks = settings.labels.octave ? "’".repeat(octave-4) : '';
+        const octave_tag = settings.labels.octave ? "’".repeat(octave-4) : '';
         return ( isWhiteKey(pc) )
-            ? `${LABEL_STRINGS.ge_main[pc].toLowerCase()}${octave_marks}`
+            ? `${LABEL_STRINGS.ge_main[pc].toLowerCase()}${octave_tag}`
             : `${LABEL_STRINGS.ge_alt[pc].toLowerCase()}\n${LABEL_STRINGS.ge_main[pc].toLowerCase()}`;
     } else {
-        const octave_marks = settings.labels.octave ? ",".repeat(Math.abs(octave-3)) : '';
+        const octave_tag = settings.labels.octave ? ",".repeat(Math.abs(octave-3)) : '';
         return ( isWhiteKey(pc) )
-            ? `${LABEL_STRINGS.ge_main[pc]}${octave_marks}`
+            ? `${LABEL_STRINGS.ge_main[pc]}${octave_tag}`
             : `${LABEL_STRINGS.ge_alt[pc]}\n${LABEL_STRINGS.ge_main[pc]}`;
     }
 }

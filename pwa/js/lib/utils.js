@@ -510,6 +510,12 @@ export function isSafari() {
 }
 
 
+/** @returns {boolean} */
+export function isFirefox() {
+    return /firefox/i.test(navigator.userAgent);
+}
+
+
 /** @param {string} str @returns {string} */
 export function newlinesToBrTags(str) {
     return str.replaceAll("\n", "<br />");

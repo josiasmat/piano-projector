@@ -7,5 +7,5 @@
             "https://cdn.jsdelivr.net/npm/@shoelace-style/*": ["./node_modules/@shoelace-style/*"]
         }
     },
-    "include": ["./src/js", "./node_modules"],
+    "include": ["./pwa/js", "./node_modules"],
 }

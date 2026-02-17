@@ -16,11 +16,11 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { is_mobile } from "./common.js";
+import { is_firefox, is_mobile } from "./common.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./lib/storage-handler.js";
 import { nextOf, range } from "./lib/utils.js";
 import { createPianoKeyboard, updatePianoKey, updatePianoKeys } from "./piano/piano.js";
-import { updateAppearanceMenu, updateLabelsMenu, updatePedalsMenu, updateSizeMenu, updateStickersMenu, updateToolbarBasedOnWidth } from "./toolbar/toolbar.js";
+import { updateAppearanceMenu, updateLabelMenu, updatePedalsMenu, updateSizeMenu, updateMarkersMenu, updateToolbarBasedOnWidth } from "./toolbar/toolbar.js";
 import { i18n } from "./lib/i18n.js";
 import { updateKbdNavigator } from "./keyboard.js";
 import { updateOnboardingTour } from "./onboarding.js";
@@ -40,6 +40,7 @@ export const settings = {
     number_of_keys: 88,
     height_factor: 1.0,
     device_name: null,
+    midi_access_firefox: "",
     sound: null,
     offset: { x: 0.5, y: 0.5 },
     labels: {
@@ -66,7 +67,7 @@ export const settings = {
             else
                 this.keys.delete(this._key(key, transposed));
             updatePianoKey(key);
-            saveLabelsAndStickersSettings();
+            saveAnnotationSettings();
         },
         toggleOctaves(key, value=undefined, transposed = this.transposed) {
             value = value ?? !this.has(key, transposed);
@@ -82,7 +83,7 @@ export const settings = {
                     updatePianoKey(this._key(i, transposed, true));
                 }
             }
-            saveLabelsAndStickersSettings();
+            saveAnnotationSettings();
         },
         /** @param {number} key @returns {boolean} */
         allOctaves(key, transposed = this.transposed) {
@@ -102,13 +103,13 @@ export const settings = {
             );
             this.keys = new_keys;
             updatePianoKeys();
-            saveLabelsAndStickersSettings();
+            saveAnnotationSettings();
         },
         clear() {
             this.keys.clear();
             updatePianoKeys();
-            updateLabelsMenu();
-            saveLabelsAndStickersSettings();
+            updateLabelMenu();
+            saveAnnotationSettings();
         },
         /** @returns {string} */
         keysToStr() {
@@ -127,13 +128,13 @@ export const settings = {
         /** @return {string} */
         get type_badge() {
             return {
-                english: i18n.get("labels-menu-format-english", "English"), 
-                german: i18n.get("labels-menu-format-german", "German"), 
-                italian: i18n.get("labels-menu-format-italian", "Italian"),
-                movdo: i18n.get("labels-menu-format-movdo", "Solfège"),
-                pc: i18n.get("labels-menu-format-pc", "Pitch-class"), 
-                midi: i18n.get("labels-menu-format-midi", "MIDI"), 
-                freq: i18n.get("labels-menu-format-freq", "Frequency")
+                english: i18n.get("label-menu-format-english", "English"), 
+                german: i18n.get("label-menu-format-german", "German"), 
+                italian: i18n.get("label-menu-format-italian", "Italian"),
+                movdo: i18n.get("label-menu-format-movdo", "Solfège"),
+                pc: i18n.get("label-menu-format-pc", "Pitch-class"), 
+                midi: i18n.get("label-menu-format-midi", "MIDI"), 
+                freq: i18n.get("label-menu-format-freq", "Frequency")
             }[this.type];
         },
         /** @return {string} */
@@ -144,7 +145,7 @@ export const settings = {
             ][this.tonic].replaceAll('.','\u2007');
         }
     },
-    stickers: {
+    markers: {
         color: "red",
         /** @type {Map<number,string>} */
         keys: new Map(),
@@ -158,7 +159,7 @@ export const settings = {
             else
                 this.keys.delete(key);
             updatePianoKey(key);
-            saveLabelsAndStickersSettings();
+            saveAnnotationSettings();
         },
         toggleOctaves(key, value=undefined) {
             value = value ?? !this.has(key);
@@ -174,13 +175,13 @@ export const settings = {
                     updatePianoKey(i);
                 }
             }
-            saveLabelsAndStickersSettings();
+            saveAnnotationSettings();
         },
         clear() {
             this.keys.clear();
             updatePianoKeys();
-            updateStickersMenu();
-            saveLabelsAndStickersSettings();
+            updateMarkersMenu();
+            saveAnnotationSettings();
         },
         keysToStr() {
             let items = [];
@@ -257,14 +258,14 @@ export function saveAppearanceSettings() {
 }
 
 
-export function saveLabelsAndStickersSettings() {
-    settings_storage.writeString("labels-type", settings.labels.type);
-    settings_storage.writeBool("labels-octave", settings.labels.octave);
-    settings_storage.writeBool("labels-played", settings.labels.played);
-    settings_storage.writeString("labels-keys", settings.labels.keysToStr());
-    settings_storage.writeString("labels-tonic", settings.labels.tonic);
-    settings_storage.writeString("sticker-color", settings.stickers.color);
-    settings_storage.writeString("stickers-keys", settings.stickers.keysToStr());
+export function saveAnnotationSettings() {
+    settings_storage.writeString("label-type", settings.labels.type);
+    settings_storage.writeBool("label-octave", settings.labels.octave);
+    settings_storage.writeBool("label-played", settings.labels.played);
+    settings_storage.writeString("label-keys", settings.labels.keysToStr());
+    settings_storage.writeString("label-tonic", settings.labels.tonic);
+    settings_storage.writeString("markers-color", settings.markers.color);
+    settings_storage.writeString("markers-keys", settings.markers.keysToStr());
 }
 
 
@@ -284,12 +285,31 @@ export function saveGraphicsQualitySetting() {
 }
 
 
+/** @param {boolean} value */
+export function saveFirstTimeTag(value) {
+    if ( value != undefined )
+        settings_storage.writeBool("first-time", Boolean(value));
+    else {
+        if ( settings.first_time )
+            session_storage.writeBool("first-session", true);
+        settings_storage.writeBool("first-time", false);
+    }
+}
+
+
+function loadFirstTimeTag() {
+    settings.first_time = 
+        settings_storage.readBool("first-time", true) ||
+        session_storage.readBool("first-session", false);
+}
+
+
 export function writeSettings(sound_type = null) {
-    settings_storage.writeBool("first-time", false);
+    saveFirstTimeTag();
     saveLanguageSetting();
     saveAppearanceSettings();
     savePedalSettings();
-    saveLabelsAndStickersSettings();
+    saveAnnotationSettings();
     saveDeviceSetting();
     if ( sound_type ) saveSoundSetting(sound_type); 
     writeSessionSettings();
@@ -297,22 +317,21 @@ export function writeSettings(sound_type = null) {
 
 
 export function loadSettings() {
-    settings.first_time = settings_storage.readBool("first-time", true);
+    loadFirstTimeTag();
     settings.graphics_quality = settings_storage.readNumber("graphics-quality", settings.graphics_quality);
-    // settings.lowperf = settings_storage.readBool("lowperf", settings.lowperf);
     settings.language = settings_storage.readString("language", settings.language);
     settings.height_factor = settings_storage.readNumber("height-factor", is_mobile ? 0.75 : settings.height_factor);
     settings.number_of_keys = settings_storage.readNumber("number-of-keys", is_mobile ? 20 : settings.number_of_keys);
     settings.color_white = settings_storage.readString("color-white", settings.color_white);
     settings.color_black = settings_storage.readString("color-black", settings.color_black);
     settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight);
-    settings.labels.type = settings_storage.readString("labels-type", settings.labels.type);
-    settings.labels.octave = settings_storage.readBool("labels-octave", settings.labels.octave);
-    settings.labels.played = settings_storage.readBool("labels-played", settings.labels.played);
-    settings.labels.strToKeys(settings_storage.readString("labels-keys", ''));
-    settings.labels.tonic = settings_storage.readString("labels-tonic", settings.labels.tonic);
-    settings.stickers.color = settings_storage.readString("sticker-color", settings.stickers.color);
-    settings.stickers.strToKeys(settings_storage.readString("stickers-keys", ''));
+    settings.labels.type = settings_storage.readString("label-type", settings.labels.type);
+    settings.labels.octave = settings_storage.readBool("label-octave", settings.labels.octave);
+    settings.labels.played = settings_storage.readBool("label-played", settings.labels.played);
+    settings.labels.strToKeys(settings_storage.readString("label-keys", ''));
+    settings.labels.tonic = settings_storage.readString("label-tonic", settings.labels.tonic);
+    settings.markers.color = settings_storage.readString("markers-color", settings.markers.color);
+    settings.markers.strToKeys(settings_storage.readString("markers-keys", ''));
     settings.perspective = settings_storage.readBool("perspective", settings.perspective);
     settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
     settings.highlight_opacity = settings_storage.readString("highlight-opacity", settings.highlight_opacity);
@@ -326,6 +345,8 @@ export function loadSettings() {
 
 
 export function writeSessionSettings() {
+    if ( is_firefox )
+        session_storage.writeString("midi-access-firefox", settings.midi_access_firefox);
     session_storage.writeNumber("semitones", settings.semitones);
     session_storage.writeNumber("octaves", settings.octaves);
     session_storage.writeBool("toolbar", settings.toolbar);
@@ -333,6 +354,8 @@ export function writeSessionSettings() {
 
 
 export function loadSessionSettings() {
+    if ( is_firefox )
+        settings.midi_access_firefox = session_storage.readString("midi-access-firefox", "");
     settings.semitones = session_storage.readNumber("semitones", 0);
     settings.octaves = session_storage.readNumber("octaves", 0);
     settings.toolbar = session_storage.readBool("toolbar", settings.toolbar);
@@ -341,17 +364,15 @@ export function loadSessionSettings() {
 
 /** @param {boolean} ask */
 export function resetSettings(ask = false) {
-    console.log("resetSettings() called");
-    if ( ask ) {
-        console.log("asking");
-        const response = window.confirm(i18n.get("reset-confirm-msg",
+    if ( ask && window.confirm(i18n.get("reset-confirm-msg",
             "This will reset all your settings to their default values. Are you sure you want to continue?"
-        ));
-        if ( !response ) return;
+        )) ) 
+    {
+        session_storage.clear();
+        settings_storage.clear();
+        saveFirstTimeTag(settings.first_time);
+        window.location.reload();
     }
-    session_storage.clear();
-    settings_storage.clear();
-    window.location.reload();
 }
 
 

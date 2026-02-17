@@ -29,8 +29,8 @@ import { attachToolbarTransposeEventListeners, updateTransposeButton } from './t
 import { attachToolbarSizeEventListeners } from './toolbar-size.js';
 import { attachToolbarAppearanceEventListeners } from './toolbar-appearance.js';
 import { attachToolbarPedalsEventListeners, updatePedalsButton } from './toolbar-pedals.js';
-import { attachToolbarLabelsEventListeners, updateLabelsButton } from './toolbar-labels.js';
-import { attachToolbarStickersEventListeners, updateStickersButton } from './toolbar-stickers.js';
+import { attachToolbarLabelEventListeners, updateLabelButton } from './toolbar-labels.js';
+import { attachToolbarMarkersEventListeners, updateMarkersButton } from './toolbar-markers.js';
 import { attachToolbarToggleEventListeners, updateToolbarToggleButton } from './toolbar-toggle.js';
 import { attachToolbarOptionsEventListeners } from './toolbar-options.js';
 
@@ -41,7 +41,7 @@ export * from './toolbar-size.js';
 export * from './toolbar-appearance.js';
 export * from './toolbar-pedals.js';
 export * from './toolbar-labels.js';
-export * from './toolbar-stickers.js';
+export * from './toolbar-markers.js';
 export * from './toolbar-options.js';
 export * from './toolbar-toggle.js';
 
@@ -60,23 +60,23 @@ export * from './toolbar-toggle.js';
  * This ensures that after initialization, toolbar properties directly reference DOM elements for efficient access.
  */
 export const toolbar = {
-    self: _id("top-toolbar"),
+    self: _id("toolbar"),
     title: _id("toolbar-title"),
     dropdowns: {
-        control: _id("dropdown-connect"),
-        sound: _id("dropdown-sound"),
-        transpose: _id("dropdown-transpose"),
-        size: _id("dropdown-size"),
-        appearance: _id("dropdown-colors"),
-        pedals: _id("dropdown-pedals"),
-        labels: _id("dropdown-labels"),
-        stickers: _id("dropdown-stickers"),
-        options: _id("dropdown-options"),
+        control: _id("dd-connect"),
+        sound: _id("dd-sound"),
+        transpose: _id("dd-transpose"),
+        size: _id("dd-size"),
+        appearance: _id("dd-colors"),
+        pedals: _id("dd-pedals"),
+        labels: _id("dd-labels"),
+        markers: _id("dd-markers"),
+        options: _id("dd-options"),
         /** @returns {HTMLElement[]} */
         get all() { return [
             this.control, this.sound, this.transpose,
             this.size, this.appearance, this.pedals, 
-            this.labels, this.stickers, this.options
+            this.labels, this.markers, this.options
         ]; },
         /** @returns {void} */
         closeAll() {
@@ -95,12 +95,12 @@ export const toolbar = {
         size: _id("btn-size"),
         appearance: _id("btn-colors"),
         pedals: _id("btn-pedals"),
-        labels_group: _id("btn-labels-group"),
-        labels_left: _id("btn-labels-switch"),
-        labels_right: _id("btn-labels-dropdown"),
-        stickers_group: _id("btn-stickers-group"),
-        stickers_left: _id("btn-stickers-switch"),
-        stickers_right: _id("btn-stickers-dropdown"),
+        label_group: _id("btn-label-group"),
+        label_left: _id("btn-label-switch"),
+        label_right: _id("btn-label-dropdown"),
+        markers_group: _id("btn-mark-group"),
+        markers_left: _id("btn-mark-switch"),
+        markers_right: _id("btn-mark-dropdown"),
         options: _id("btn-options"),
         panic: _id("btn-panic"),
         hide_toolbar: _id("btn-hide-toolbar"),
@@ -110,19 +110,19 @@ export const toolbar = {
         control: {
             top: _id("midi-connection-menu"),
             divider: _selectorFirst("#midi-connection-menu sl-divider"),
-            denied: _id("menu-connect-item-midi-denied"),
-            unavailable: _id("menu-connect-item-midi-unavailable"),
-            prompt: _id("menu-connect-item-midi-prompt"),
-            kbd: _id("menu-connect-item-computer-keyboard"),
-            touch: _id("menu-connect-item-touch"),
-            template: _id("menu-connect-item-midi-port-template"),
+            denied: _id("mi-control-midi-denied"),
+            unavailable: _id("mi-control-midi-unavailable"),
+            prompt: _id("mi-control-midi-prompt"),
+            kbd: _id("mi-control-computer-keyboard"),
+            touch: _id("mi-control-touch"),
+            template: _id("mi-control-midi-port-template"),
             /** @type {() => HTMLElement[]} */
-            getMidiItems: _f(_selectorAll(".menu-connect-item-midi-input"))
+            getMidiItems: _f(_selectorAll(".mi-control-midi-input"))
         },
         sound: {
             top: _id("menu-sound"),
-            unavailable: _id("menu-sound-item-unavailable"),
-            items: _selectorAll(".menu-sound-item")
+            unavailable: _id("mi-sound-unavailable"),
+            items: _selectorAll(".mi-sound")
         },
         transpose: {
             top: _id("menu-transpose"),
@@ -136,37 +136,36 @@ export const toolbar = {
                 btn_minus: _id("btn-octave-minus"),
                 btn_plus: _id("btn-octave-plus"),
             },
-            item_reset: _id("reset-transpose")
+            item_reset: _id("mi-transpose-reset")
         },
         size: _id("menu-size"),
         appearance: {
-            top: _id("menu-colors"),
+            top: _id("menu-appearance"),
             highlight_opacity: _id("menu-highlight-opacity"),
             picker_color_white: _id("color-white"),
             picker_color_black: _id("color-black"),
             picker_color_pressed: _id("color-pressed"),
-            item_perspective: _id("menu-perspective"),
-            item_top_felt: _id("menu-top-felt"),
+            item_perspective: _id("mi-appearance-perspective"),
+            item_top_felt: _id("mi-appearance-red-felt"),
         },
         labels: {
-            top: _id("menu-labels-top"),
-            labeling_mode: _id("menu-labeling-mode"),
-            played: _id("menu-labels-played-keys"),
-            type: _id("menu-labels-type"),
-            type_badge: _id("menu-labels-type-badge"),
-            tonic: _id("menu-labels-tonic"),
-            // tonic_badge: _id("menu-labels-tonic-badge"),
-            octave: _id("menu-item-labels-octave"),
-            clear: _id("menu-labels-clear"),
+            top: _id("menu-label-top"),
+            labeling_mode: _id("mi-labeling-mode"),
+            played: _id("mi-label-played"),
+            type: _id("menu-label-type"),
+            type_badge: _id("mi-label-format-badge"),
+            tonic: _id("mi-label-tonic"),
+            octave: _id("mi-label-octave"),
+            clear: _id("mi-label-clear"),
         },
-        stickers: {
-            top: _id("menu-stickers-top"),
-            clear: _id("menu-stickers-clear")
+        markers: {
+            top: _id("menu-mark-top"),
+            clear: _id("mi-mark-clear")
         },
         pedals: {
             top: _id("pedal-menu"),
-            item_follow: _id("menu-pedal-follow"),
-            item_dim: _id("menu-pedal-dim")
+            item_follow: _id("mi-pedals-follow"),
+            item_dim: _id("mi-pedals-dim")
         } ,
         options: {
             top: _id("menu-options"),
@@ -174,22 +173,22 @@ export const toolbar = {
                 top: _id("menu-language")
             },
             graphics_quality: _id("menu-graphics-quality"),
-            reset: _id("menu-options-reset")
+            reset: _id("mi-options-reset")
         }
     },
     leds: {
         control: _id("connection-power-icon"),
         transpose: _id("transpose-power-icon"),
         sound: _id("sound-power-icon"),
-        labels: _id("labels-power-icon"),
-        stickers: _id("stickers-power-icon"),
+        labels: _id("label-power-icon"),
+        markers: _id("mark-power-icon"),
         pedal_r: _id("pedr"),
         pedal_m: _id("pedm"),
         pedal_l: _id("pedl")
     },
     tooltips: {
-        connect: _id("dropdown-connect-tooltip"),
-        labels: _id("btn-labels-tooltip"),
+        control: _id("dd-control-tooltip"),
+        labels: _id("btn-label-tooltip"),
         options: _id("btn-options-tooltip"),
         panic: _id("btn-panic-tooltip"),
         hide_toolbar: _id("btn-hide-toolbar-tooltip"),
@@ -198,9 +197,6 @@ export const toolbar = {
     resize: {
         observer: undefined,
         timeout: undefined
-    },
-    other: {
-        show_toolbar_hover_area: _id("show-toolbar-btn-hover-area")
     }
 };
 
@@ -239,14 +235,14 @@ const toolbar_shrink_list = [
     { elm: () => toolbar.buttons.control,        action: "hide-label" },
     { elm: () => toolbar.buttons.pedals,         action: "hide-label" },
     { elm: () => toolbar.buttons.transpose,      action: "hide-label" },
-    { elm: () => toolbar.buttons.stickers_left,  action: "hide-label" },
-    { elm: () => toolbar.buttons.labels_left,    action: "hide-label" },
+    { elm: () => toolbar.buttons.markers_left,  action: "hide-label" },
+    { elm: () => toolbar.buttons.label_left,    action: "hide-label" },
     { elm: () => toolbar.dropdowns.appearance,   action: "hide-elm" },
     { elm: () => toolbar.dropdowns.size,         action: "hide-elm" },
     { elm: () => toolbar.dropdowns.sound,        action: "hide-elm" },
     { elm: () => toolbar.dropdowns.pedals,       action: "hide-elm" },
-    { elm: () => toolbar.buttons.stickers_group, action: "hide-elm" },
-    { elm: () => toolbar.buttons.labels_group,   action: "hide-elm" },
+    { elm: () => toolbar.buttons.markers_group, action: "hide-elm" },
+    { elm: () => toolbar.buttons.label_group,   action: "hide-elm" },
     { elm: () => toolbar.buttons.panic,          action: "hide-elm" },
     { elm: () => toolbar.buttons.options,        action: "hide-elm" },
     { elm: () => toolbar.self,                   action: "hide-elm" }
@@ -259,8 +255,8 @@ export function updateToolbar() {
         updateSoundButton();
         updateTransposeButton();
         updatePedalsButton();
-        updateLabelsButton();
-        updateStickersButton();
+        updateLabelButton();
+        updateMarkersButton();
     }
     updateToolbarToggleButton();
 }
@@ -331,19 +327,17 @@ export function initializeToolbar() {
     }
 
     // Convert toolbar properties into element references
-    const recurse = (obj) => {
+    const recurse = (obj, path) => {
         for ( const [key, val] of Object.entries(obj) ) {
-            if ( typeof(val) === "object" && typeof(val.__f) === "function" )
+            if ( typeof(val) === "object" && typeof(val.__f) === "function" ) {
                 obj[key] = val.__f();
-            // // If it's a function, call it and replace with the result
-            // if ( typeof(val) === "function" )
-            //     obj[key] = val();
-            // If it's an object, recurse into it
+                console.assert(obj[key], `initializeToolbar(): ${path}.${key} is ${obj[key]}.`);
+            }
             else if ( typeof(val) === "object" && !isGetter(obj, key) )
-                recurse(obj[key]);
+                recurse(obj[key], path+'.'+key);
         }
     }
-    recurse(toolbar);
+    recurse(toolbar, "toolbar");
 
     // Attach toolbar-related event listeners
 
@@ -353,8 +347,8 @@ export function initializeToolbar() {
     attachToolbarSizeEventListeners();
     attachToolbarAppearanceEventListeners();
     attachToolbarPedalsEventListeners();
-    attachToolbarLabelsEventListeners();
-    attachToolbarStickersEventListeners();
+    attachToolbarLabelEventListeners();
+    attachToolbarMarkersEventListeners();
     attachToolbarToggleEventListeners();
     attachToolbarOptionsEventListeners();
 

@@ -17,16 +17,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { KbdNav } from "./lib/libkbdnav.js";
-import { midi, MIDI_WATCHDOG_FAST_INTERVAL, MIDI_WATCHDOG_SLOW_INTERVAL, toggleInput } from "./connect.js";
+import { midi_control, MIDI_WATCHDOG_FAST_INTERVAL, MIDI_WATCHDOG_SLOW_INTERVAL, toggleInput } from "./control.js";
 import { getOpenDropdowns, toggleToolbarVisibility } from "./toolbar/toolbar.js";
 import { triggerPanic } from "./panic.js";
 import { setTransposition } from "./transpose.js";
 
 import { 
-    isLabelingModeOn, isMarkingModeOn, isStickerModeOn, setLabelsType, 
-    toggleLabelingMode, toggleLabelsOctave, toggleLabelsPlayed, 
-    toggleStickerMode, exitMarkingMode, toggleTonicMode, tonic_mode
-} from "./markings.js";
+    isLabelingModeOn, isAnnotationModeOn, isMarkerModeOn, setLabelType, 
+    toggleLabelingMode, toggleLabelOctave, toggleLabelPlayed, 
+    toggleMarkerMode, exitAnnotationMode, toggleTonicMode, tonic_mode
+} from "./annotations.js";
 
 import { 
     setNumberOfKeys, settings, switchKeyDepth, 
@@ -56,7 +56,7 @@ function handleKeyDown(e) {
 
     const kbd_shortcuts = new Map([
         ["f2", toggleLabelingMode],
-        ["f3", toggleStickerMode],
+        ["f3", toggleMarkerMode],
         ["f4", toggleTonicMode],
         ["f9", toggleToolbarVisibility],
         ["escape", () => { 
@@ -66,8 +66,8 @@ function handleKeyDown(e) {
                 open_dropdown.querySelector("sl-button[slot=trigger]").blur();
             } else if ( tonic_mode ) {
                 toggleTonicMode(false);
-            } else if ( isMarkingModeOn() ) {
-                exitMarkingMode();
+            } else if ( isAnnotationModeOn() ) {
+                exitAnnotationMode();
             } else
                 triggerPanic();
         }],
@@ -97,21 +97,26 @@ var kbdnav = null;
 
 export function initializeKbdNavigator() {
     kbdnav = new KbdNav(
-        document.getElementById("keyboard-navigator"), 
+        getKbdNavigatorElement(), 
         buildKbdNavStructure()
     );
 
     kbdnav.onmenuenter = (s) => {
-        midi.setWatchdog(( s === i18n.get("kbdnav-control-noampersand", "Control") )
+        midi_control.setWatchdog(( s === i18n.get("kbdnav-control-noampersand", "Control") )
             ? MIDI_WATCHDOG_FAST_INTERVAL 
             : MIDI_WATCHDOG_SLOW_INTERVAL);
         kbdnav.replaceStructure(buildKbdNavStructure());
     };
 
     kbdnav.onoptionenter = () => kbdnav.replaceStructure(buildKbdNavStructure());
-    kbdnav.onshow = () => midi.setWatchdog(MIDI_WATCHDOG_FAST_INTERVAL);
-    kbdnav.onhide = () => midi.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
+    kbdnav.onshow = () => midi_control.setWatchdog(MIDI_WATCHDOG_FAST_INTERVAL);
+    kbdnav.onhide = () => midi_control.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
 
+}
+
+
+export function getKbdNavigatorElement() {
+    return document.getElementById("keyboard-navigator");
 }
 
 
@@ -145,7 +150,7 @@ export function setKbdNavVerticalPosition(value) {
 
 function buildKbdNavStructure() {
     const populateControlNav = () => {
-        const list = midi.ports.map((p) => [
+        const list = midi_control.ports.map((p) => [
             p.name,
             () => toggleInput(p.name, true),
             {checked: ( settings.device_name == p.name )}
@@ -179,7 +184,7 @@ function buildKbdNavStructure() {
                 ? i18n.get("kbdnav-size-depth-3/4", "1/2") 
                 : i18n.get("kbdnav-size-depth-1/2", "3/4");
     };
-    const sticker_mode = isStickerModeOn();
+    const marker_mode = isMarkerModeOn();
     return [
         ['', [
             [i18n.get("kbdnav-control", "&Control"), populateControlNav()],
@@ -210,28 +215,28 @@ function buildKbdNavStructure() {
                 [i18n.get("kbdnav-pedals-follow", "&Follow pedals"), () => togglePedalsFollow(), {checked: settings.pedals}],
                 [i18n.get("kbdnav-pedals-dim", "&Dim pedalized notes"), () => togglePedalsDim(), {checked: settings.pedal_dim}]
             ]],
-            [i18n.get("kbdnav-labels", "&Labels"), [
-                [i18n.get("kbdnav-labels-labeling-mode", "&Toggle Labeling mode (F2)"), () => toggleLabelingMode(), {checked: isLabelingModeOn()}],
-                [i18n.get("kbdnav-labels-format", "&Format"), [
-                    [i18n.get("kbdnav-labels-format-english", "&English"), () => setLabelsType("english"), {checked: settings.labels.type === "english"}],
-                    [i18n.get("kbdnav-labels-format-german", "&German"), () => setLabelsType("german"), {checked: settings.labels.type === "german"}],
-                    [i18n.get("kbdnav-labels-format-italian", "&Italian"), () => setLabelsType("italian"), {checked: settings.labels.type === "italian"}],
-                    [i18n.get("kbdnav-labels-format-movdo", "&Solfège"), () => setLabelsType("movdo"), {checked: settings.labels.type === "movdo"}],
-                    [i18n.get("kbdnav-labels-format-pc", "&Pitch-class"), () => setLabelsType("pc"), {checked: settings.labels.type === "pc"}],
-                    [i18n.get("kbdnav-labels-format-midi", "&MIDI value"), () => setLabelsType("midi"), {checked: settings.labels.type === "midi"}],
-                    [i18n.get("kbdnav-labels-format-freq", "&Frequency"), () => setLabelsType("freq"), {checked: settings.labels.type === "freq"}],
-                    [i18n.get("kbdnav-labels-octave", "Show &octave"), () => toggleLabelsOctave(), {checked: settings.labels.octave}]
+            [i18n.get("kbdnav-label", "&Label"), [
+                [i18n.get("kbdnav-label-labeling-mode", "&Toggle Labeling mode (F2)"), () => toggleLabelingMode(), {checked: isLabelingModeOn()}],
+                [i18n.get("kbdnav-label-format", "&Format"), [
+                    [i18n.get("kbdnav-label-format-english", "&English"), () => setLabelType("english"), {checked: settings.labels.type === "english"}],
+                    [i18n.get("kbdnav-label-format-german", "&German"), () => setLabelType("german"), {checked: settings.labels.type === "german"}],
+                    [i18n.get("kbdnav-label-format-italian", "&Italian"), () => setLabelType("italian"), {checked: settings.labels.type === "italian"}],
+                    [i18n.get("kbdnav-label-format-movdo", "&Solfège"), () => setLabelType("movdo"), {checked: settings.labels.type === "movdo"}],
+                    [i18n.get("kbdnav-label-format-pc", "&Pitch-class"), () => setLabelType("pc"), {checked: settings.labels.type === "pc"}],
+                    [i18n.get("kbdnav-label-format-midi", "&MIDI value"), () => setLabelType("midi"), {checked: settings.labels.type === "midi"}],
+                    [i18n.get("kbdnav-label-format-freq", "&Frequency"), () => setLabelType("freq"), {checked: settings.labels.type === "freq"}],
+                    [i18n.get("kbdnav-label-octave", "Show &octave"), () => toggleLabelOctave(), {checked: settings.labels.octave}]
                 ]],
-                [i18n.get("kbdnav-labels-played-keys", "&Show on played keys"), () => toggleLabelsPlayed(), {checked: settings.labels.played}],
-                [i18n.get("kbdnav-labels-clear", "&Clear"), () => settings.labels.clear()],
+                [i18n.get("kbdnav-label-played-keys", "&Show on played keys"), () => toggleLabelPlayed(), {checked: settings.labels.played}],
+                [i18n.get("kbdnav-label-clear", "&Clear"), () => settings.labels.clear()],
             ]],
-            [i18n.get("kbdnav-stickers", "Stic&kers"), [
-                [i18n.get("kbdnav-stickers-red", "&Red"), () => toggleStickerMode(undefined, "red"), {checked: sticker_mode && settings.stickers.color === "red"}],
-                [i18n.get("kbdnav-stickers-yellow", "&Yellow"), () => toggleStickerMode(undefined, "yellow"), {checked: sticker_mode && settings.stickers.color === "yellow"}],
-                [i18n.get("kbdnav-stickers-green", "&Green"), () => toggleStickerMode(undefined, "green"), {checked: sticker_mode && settings.stickers.color === "green"}],
-                [i18n.get("kbdnav-stickers-blue", "&Blue"), () => toggleStickerMode(undefined, "blue"), {checked: sticker_mode && settings.stickers.color === "blue"}],
-                [i18n.get("kbdnav-stickers-violet", "&Violet"), () => toggleStickerMode(undefined, "violet"), {checked: sticker_mode && settings.stickers.color === "violet"}],
-                [i18n.get("kbdnav-stickers-clear", "&Clear"), () => settings.stickers.clear()],
+            [i18n.get("kbdnav-mark", "Stic&kers"), [
+                [i18n.get("kbdnav-mark-red", "&Red"), () => toggleMarkerMode(undefined, "red"), {checked: marker_mode && settings.markers.color === "red"}],
+                [i18n.get("kbdnav-mark-yellow", "&Yellow"), () => toggleMarkerMode(undefined, "yellow"), {checked: marker_mode && settings.markers.color === "yellow"}],
+                [i18n.get("kbdnav-mark-green", "&Green"), () => toggleMarkerMode(undefined, "green"), {checked: marker_mode && settings.markers.color === "green"}],
+                [i18n.get("kbdnav-mark-blue", "&Blue"), () => toggleMarkerMode(undefined, "blue"), {checked: marker_mode && settings.markers.color === "blue"}],
+                [i18n.get("kbdnav-mark-violet", "&Violet"), () => toggleMarkerMode(undefined, "violet"), {checked: marker_mode && settings.markers.color === "violet"}],
+                [i18n.get("kbdnav-mark-clear", "&Clear"), () => settings.markers.clear()],
             ]],
             [i18n.get("kbdnav-panic", "Panic!"), triggerPanic],
             [(settings.toolbar 

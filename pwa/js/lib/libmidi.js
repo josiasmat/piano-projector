@@ -64,7 +64,7 @@ export const Midi = {
             callback?.("unavailable");
             return false;
         } else {
-            navigator.permissions.query({ name: "midi", sysex: false })
+            navigator.permissions.query({ name: "midi" })
             .then((perm) => {
                 switch ( perm.state ) {
                     case "granted":
@@ -91,7 +91,7 @@ export const Midi = {
             callback_fail?.();
             return;
         }
-        navigator.requestMIDIAccess({ sysex: false })
+        navigator.requestMIDIAccess()
         .then(callback_granted, callback_fail);
     },
 
@@ -106,7 +106,7 @@ export const Midi = {
             callback_fail?.();
             return;
         }
-        navigator.requestMIDIAccess({sysex: false})
+        navigator.requestMIDIAccess()
         .then((access) => {
             const ports = [];
             if ( access.inputs.size > 0 ) {

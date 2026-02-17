@@ -54,8 +54,8 @@ export function attachToolbarPedalsEventListeners() {
     .addEventListener("sl-select", (e) => {
         const item = e.detail.item;
         switch ( item.id ) {
-            case "menu-pedal-follow": settings.pedals = item.checked; break;
-            case "menu-pedal-dim": settings.pedal_dim = item.checked; break;
+            case "mi-pedals-follow": settings.pedals = item.checked; break;
+            case "mi-pedals-dim": settings.pedal_dim = item.checked; break;
         }
         setDisabledAttr(toolbar.menus.pedals.item_dim, !settings.pedals);
         updatePedalIcons();

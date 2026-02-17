@@ -108,14 +108,14 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
     const black_key_label_y1 = black_key_height - black_key_bevel.bottom_height1
             - white_key_width_third*height_factor;
 
-    const w_sticker_gap_x = 8 + STROKE_WIDTH;
-    const w_sticker_gap_y = 5 + STROKE_WIDTH;
-    const b_sticker_gap_x = 9 + STROKE_WIDTH;
-    const b_sticker_gap_y = 3 + STROKE_WIDTH;
-    const w_sticker_width = white_key_width - (w_sticker_gap_x * 2);
-    const b_sticker_width = black_key_width - (b_sticker_gap_x * 2);
-    const w_sticker_height = w_sticker_width / 6;
-    const b_sticker_height = w_sticker_width / 7;
+    const w_marker_gap_x = 8 + STROKE_WIDTH;
+    const w_marker_gap_y = 5 + STROKE_WIDTH;
+    const b_marker_gap_x = 9 + STROKE_WIDTH;
+    const b_marker_gap_y = 3 + STROKE_WIDTH;
+    const w_marker_width = white_key_width - (w_marker_gap_x * 2);
+    const b_marker_width = black_key_width - (b_marker_gap_x * 2);
+    const w_marker_height = w_marker_width / 6;
+    const b_marker_height = w_marker_width / 7;
 
     svg.innerHTML = "";
 
@@ -344,25 +344,25 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
 
         const label = createWhiteKeyLabel(key, offset);
 
-        const sticker_x = offset+w_sticker_gap_x;
-        const sticker_y = white_key_height-w_sticker_height-w_sticker_gap_y;
-        const sticker = SvgTools.makeRect(
-            w_sticker_width, w_sticker_height, sticker_x, sticker_y, stroke_width_half, stroke_width_half,
-            { class: join("key-sticker", "white-key-sticker") }
+        const marker_x = offset+w_marker_gap_x;
+        const marker_y = white_key_height-w_marker_height-w_marker_gap_y;
+        const marker = SvgTools.makeRect(
+            w_marker_width, w_marker_height, marker_x, marker_y, stroke_width_half, stroke_width_half,
+            { class: join("key-marker", "white-key-marker") }
         )
         
-        const key_marker_group = SvgTools.createGroup({ 
-            class: join("key-marker-group", notran),
+        const key_annotation_group = SvgTools.createGroup({ 
+            class: join("key-annotation-group", notran),
             press_transform: `translateY(${white_key_label_y1-white_key_label_y}px)`,
         });
-        key_marker_group.appendChild(label);
-        key_marker_group.appendChild(sticker);
+        key_annotation_group.appendChild(label);
+        key_annotation_group.appendChild(marker);
 
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
         key_group.appendChild(dark_border);
         key_group.appendChild(light_border);
-        key_group.appendChild(key_marker_group);
+        key_group.appendChild(key_annotation_group);
         key_group.appendChild(key_touch_area);
         return key_group;
     }
@@ -590,21 +590,21 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
 
         const label = createBlackKeyLabel(key, offset);
 
-        const sticker_x = offset+b_sticker_gap_x+lateral_displacement;
-        const sticker_y = black_key_height-black_key_bevel.bottom_height-b_sticker_height-b_sticker_gap_y;
-        const sticker = SvgTools.makeRect(
-            b_sticker_width, b_sticker_height, sticker_x, sticker_y, stroke_width_half, stroke_width_half,
-            { class: join("key-sticker", "white-key-sticker") }
+        const marker_x = offset+b_marker_gap_x+lateral_displacement;
+        const marker_y = black_key_height-black_key_bevel.bottom_height-b_marker_height-b_marker_gap_y;
+        const marker = SvgTools.makeRect(
+            b_marker_width, b_marker_height, marker_x, marker_y, stroke_width_half, stroke_width_half,
+            { class: join("key-marker", "white-key-marker") }
         )
 
-        const key_marker_group = SvgTools.createGroup({ 
-            class: join("key-marker-group", notran),
+        const key_annotation_group = SvgTools.createGroup({ 
+            class: join("key-annotation-group", notran),
             press_transform: `translateX(${(lateral_displacement1_bottom-lateral_displacement)*0.7}px) translateY(${black_key_label_y1-black_key_label_y}px)`,
         });
-        key_marker_group.appendChild(label);
-        key_marker_group.appendChild(sticker);
+        key_annotation_group.appendChild(label);
+        key_annotation_group.appendChild(marker);
 
-        key_group.appendChild(key_marker_group);
+        key_group.appendChild(key_annotation_group);
         key_group.appendChild(key_touch_area);
 
         return key_group;
@@ -761,14 +761,14 @@ export function drawPianoKeyboardLP(svg, keys, options = {}) {
     const white_key_label_y = white_key_height - white_key_width_half*height_factor;
     const black_key_label_y = black_key_height - white_key_width_half*height_factor;
 
-    const w_sticker_gap_x = 8 + STROKE_WIDTH;
-    const w_sticker_gap_y = 6 + STROKE_WIDTH;
-    const b_sticker_gap_x = 5 + STROKE_WIDTH;
-    const b_sticker_gap_y = 5 + STROKE_WIDTH;
-    const w_sticker_width = white_key_width - (w_sticker_gap_x * 2);
-    const b_sticker_width = black_key_width - (b_sticker_gap_x * 2);
-    const w_sticker_height = w_sticker_width / 5;
-    const b_sticker_height = w_sticker_height;
+    const w_marker_gap_x = 8 + STROKE_WIDTH;
+    const w_marker_gap_y = 6 + STROKE_WIDTH;
+    const b_marker_gap_x = 5 + STROKE_WIDTH;
+    const b_marker_gap_y = 5 + STROKE_WIDTH;
+    const w_marker_width = white_key_width - (w_marker_gap_x * 2);
+    const b_marker_width = black_key_width - (b_marker_gap_x * 2);
+    const w_marker_height = w_marker_width / 5;
+    const b_marker_height = w_marker_height;
 
     svg.innerHTML = "";
 
@@ -841,22 +841,22 @@ export function drawPianoKeyboardLP(svg, keys, options = {}) {
 
         const label = createWhiteKeyLabel(key, offset);
 
-        const sticker_x = offset+w_sticker_gap_x;
-        const sticker_y = white_key_height-w_sticker_height-w_sticker_gap_y;
-        const sticker = SvgTools.makeRect(
-            w_sticker_width, w_sticker_height, sticker_x, sticker_y, 0, 0,
-            { class: join("key-sticker", "white-key-sticker") }
+        const marker_x = offset+w_marker_gap_x;
+        const marker_y = white_key_height-w_marker_height-w_marker_gap_y;
+        const marker = SvgTools.makeRect(
+            w_marker_width, w_marker_height, marker_x, marker_y, 0, 0,
+            { class: join("key-marker", "white-key-marker") }
         )
         
-        const key_marker_group = SvgTools.createGroup({ 
-            class: join("key-marker-group", "lowperf"),
+        const key_annotation_group = SvgTools.createGroup({ 
+            class: join("key-annotation-group", "lowperf"),
         });
-        key_marker_group.appendChild(label);
-        key_marker_group.appendChild(sticker);
+        key_annotation_group.appendChild(label);
+        key_annotation_group.appendChild(marker);
 
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
-        key_group.appendChild(key_marker_group);
+        key_group.appendChild(key_annotation_group);
         return key_group;
     }
 
@@ -889,22 +889,22 @@ export function drawPianoKeyboardLP(svg, keys, options = {}) {
 
         const label = createBlackKeyLabel(key, offset);
 
-        const sticker_x = offset+b_sticker_gap_x;
-        const sticker_y = black_key_height-b_sticker_height-b_sticker_gap_y;
-        const sticker = SvgTools.makeRect(
-            b_sticker_width, b_sticker_height, sticker_x, sticker_y, 0, 0,
-            { class: join("key-sticker", "white-key-sticker") }
+        const marker_x = offset+b_marker_gap_x;
+        const marker_y = black_key_height-b_marker_height-b_marker_gap_y;
+        const marker = SvgTools.makeRect(
+            b_marker_width, b_marker_height, marker_x, marker_y, 0, 0,
+            { class: join("key-marker", "white-key-marker") }
         )
 
-        const key_marker_group = SvgTools.createGroup({ 
-            class: join("key-marker-group", "lowperf"),
+        const key_annotation_group = SvgTools.createGroup({ 
+            class: join("key-annotation-group", "lowperf"),
         });
-        key_marker_group.appendChild(label);
-        key_marker_group.appendChild(sticker);
+        key_annotation_group.appendChild(label);
+        key_annotation_group.appendChild(marker);
         
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
-        key_group.appendChild(key_marker_group);
+        key_group.appendChild(key_annotation_group);
 
         return key_group;
     }

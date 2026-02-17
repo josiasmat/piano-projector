@@ -17,9 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { 
-    midi, connectInput, midiWatchdog, 
+    midi_control, connectInput, checkMidiState, 
     MIDI_WATCHDOG_SLOW_INTERVAL 
-} from "./connect.js";
+} from "./control.js";
 
 import { 
     is_mobile, is_safari, 
@@ -28,7 +28,8 @@ import {
 
 import { 
     settings, loadSettings, 
-    setGraphicsQuality
+    setGraphicsQuality,
+    saveFirstTimeTag
 } from "./settings.js";
 
 import { 
@@ -47,7 +48,7 @@ import {
 } from "./piano/piano.js";
 
 import { 
-    attachKeyboardHandlers, hideKbdNavigator, 
+    attachKeyboardHandlers, getKbdNavigatorElement, hideKbdNavigator, 
     initializeKbdNavigator, showKbdNavigator 
 } from "./keyboard.js";
 
@@ -129,10 +130,10 @@ async function initializeApp() {
                 switch ( step ) {
                     case 11:
                         showKbdNavigator();
-                        document.getElementById("keyboard-navigator").style.visibility = "hidden";
+                        getKbdNavigatorElement().style.visibility = "hidden";
                         break;
                     case 12:
-                        document.getElementById("keyboard-navigator").style.removeProperty("visibility");
+                        getKbdNavigatorElement().style.removeProperty("visibility");
                 }
             },
             onFinish: () => {
@@ -140,6 +141,7 @@ async function initializeApp() {
                 attachKeyboardHandlers();
                 attachPianoPointerAndTouchHandlers();
                 connectInputStartup();
+                if ( settings.first_time ) saveFirstTimeTag();
                 showUpdatedMsg();
             }
         });
@@ -147,11 +149,14 @@ async function initializeApp() {
         attachKeyboardHandlers();
         attachPianoPointerAndTouchHandlers();
         connectInputStartup();
+        if ( settings.first_time ) saveFirstTimeTag();
         showUpdatedMsg();
     }
 
-    midiWatchdog();
-    midi.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
+    midi_control.queryAccess(() => {
+        checkMidiState();
+        midi_control.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
+    });
 
 }
 
@@ -204,16 +209,16 @@ function disableContextMenu() {
 
 
 function showMobileTouchTooltip() {
-    const connect_tooltip = document.getElementById("dropdown-connect-tooltip");
-    const connect_tooltip_text = connect_tooltip.querySelector("span[slot='content']");
-    connect_tooltip_text.setAttribute("i18n", "connect-tooltip-touch");
-    connect_tooltip_text.textContent = i18n.get("connect-tooltip-touch",
+    const control_tooltip = toolbar.tooltips.control;
+    const control_tooltip_text = control_tooltip.querySelector("span[slot='content']");
+    control_tooltip_text.setAttribute("i18n", "control-tooltip-touch");
+    control_tooltip_text.textContent = i18n.get("control-tooltip-touch",
         "Play your keyboard using your fingers! " +
         "Or change the input method by tapping this button."
     );
-    connect_tooltip.open = true;
+    control_tooltip.open = true;
     window.addEventListener("touchstart", 
-        () => connect_tooltip.hide(), 
+        () => control_tooltip.hide(), 
         {capture: true, once: true, passive: true}
     );
 }
@@ -231,7 +236,7 @@ function connectInputStartup() {
         if ( ["pckbd","touch"].includes(settings.device_name) )
             connectInput(settings.device_name);
         else
-            midi.queryAccess((access) => {
+            midi_control.queryAccess((access) => {
                 if ( access == "granted" )
                     connectInput(settings.device_name);
             });

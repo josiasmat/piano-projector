@@ -17,59 +17,59 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { toolbar, changeLed } from "./toolbar.js";
-import { saveLabelsAndStickersSettings, settings } from "../settings.js";
+import { saveAnnotationSettings, settings } from "../settings.js";
 import { 
-    isStickerModeOn, toggleStickerMode, tonic_mode
-} from "../markings.js";
+    isMarkerModeOn, toggleMarkerMode, tonic_mode
+} from "../annotations.js";
 
 
-export function updateStickersMenuAndButton() {
-    updateStickersButton();
-    updateStickersMenu();
+export function updateMarkersMenuAndButton() {
+    updateMarkersButton();
+    updateMarkersMenu();
 }
 
 
-export function updateStickersButton() {
-    changeLed(toolbar.leds.stickers, isStickerModeOn() && !tonic_mode, {
+export function updateMarkersButton() {
+    changeLed(toolbar.leds.markers, isMarkerModeOn() && !tonic_mode, {
         red: "red", yellow: "yellow", green: "#0b0", blue: "blue", violet: "violet"
-    }[settings.stickers.color]);
+    }[settings.markers.color]);
 }
 
 
-export function updateStickersMenu() {
-    const sticker_mode_on = isStickerModeOn();
-    for ( const item of toolbar.menus.stickers.top.children )
+export function updateMarkersMenu() {
+    const marker_mode_on = isMarkerModeOn();
+    for ( const item of toolbar.menus.markers.top.children )
         if ( item.getAttribute("type") === "checkbox" ) {
-            const is_current_color = (item.value === settings.stickers.color);
-            item.checked = ( sticker_mode_on && is_current_color );
+            const is_current_color = (item.value === settings.markers.color);
+            item.checked = ( marker_mode_on && is_current_color );
             item.querySelector(".menu-keyboard-shortcut")
                 .classList.toggle("invisible", !is_current_color);
         }
-    toolbar.menus.stickers.clear.disabled = (settings.stickers.keys.size === 0);
+    toolbar.menus.markers.clear.disabled = (settings.markers.keys.size === 0);
 }
 
 
-export function attachToolbarStickersEventListeners() {
+export function attachToolbarMarkersEventListeners() {
 
-    toolbar.dropdowns.stickers.addEventListener("sl-show", updateStickersMenu);
+    toolbar.dropdowns.markers.addEventListener("sl-show", updateMarkersMenu);
 
-    toolbar.menus.stickers.top
+    toolbar.menus.markers.top
     .addEventListener("sl-select", (e) => {
         if ( e.detail.item.getAttribute("type") === "checkbox" ) {
-            toggleStickerMode(undefined, e.detail.item.value);
-            toolbar.dropdowns.stickers.hide();
+            toggleMarkerMode(undefined, e.detail.item.value);
+            toolbar.dropdowns.markers.hide();
         }
-        saveLabelsAndStickersSettings();
+        saveAnnotationSettings();
     });
     
-    toolbar.buttons.stickers_left
+    toolbar.buttons.markers_left
     .addEventListener("click", () => {
-        toggleStickerMode();
+        toggleMarkerMode();
     });
     
-    toolbar.menus.stickers.clear
+    toolbar.menus.markers.clear
     .addEventListener("click", () => {
-        settings.stickers.clear();
+        settings.markers.clear();
     });
     
 }

@@ -19,19 +19,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { is_mobile, is_safari } from "../common.js";
 import { clamp, range, degToRad } from "../lib/utils.js";
 import { toolbar } from "../toolbar/toolbar.js";
-import { saveAppearanceSettings, saveLabelsAndStickersSettings, settings } from "../settings.js";
+import { saveAppearanceSettings, saveAnnotationSettings, settings } from "../settings.js";
 import { piano, touch, updatePianoCursor, updatePianoPosition } from "./piano.js";
-import { isLabelingModeOn, isMarkingModeOn, isStickerModeOn, toggleTonicMode, tonic_mode } from "../markings.js";
+import { isLabelingModeOn, isAnnotationModeOn, isMarkerModeOn, toggleTonicMode, tonic_mode } from "../annotations.js";
 
 
 export const drag = {
     /** @type {number} 0=off, 1=clicked, 2=started moving.*/
     state: 0,
+    vertical_move: false,
     origin: { x: 0, y: 0 },
     previous_offset: { x: 0, y: 0 }
 };
 
-const marking_action = {
+const annotation_action = {
     /** @type {boolean|null} */
     value: null,
     id: null
@@ -72,8 +73,9 @@ export function attachPianoResizeObserver() {
 function handlePianoDragPointerDown(e) {
     toolbar.dropdowns.closeAll();
     if ( e.pointerType === "touch" ) return;
-    if ( e.button !== 0 || !(touch.enabled || isMarkingModeOn()) ) {
+    if ( e.button !== 0 || !(touch.enabled || isAnnotationModeOn()) ) {
         drag.state = 1;
+        drag.vertical_move = false;
         drag.origin.x = e.screenX;
         drag.origin.y = e.screenY;
         drag.previous_offset.x = settings.offset.x;
@@ -102,7 +104,8 @@ function handlePianoDragPointerMove(e) {
     if ( e.pointerType === "touch" ) return;
     if ( drag.state ) {
 
-        const SNAP_THRESHOLD = 0.06;
+        const SNAP_THRESHOLD = settings.zoom === 1.0 ? 0.05 : 0.07;
+        const Y_START_THRESHOLD = settings.zoom === 1.0 ? 0.1 : 0.5;
 
         const kbd_rect = piano.svg.getBoundingClientRect();
         const cnt_rect = piano.container.getBoundingClientRect();
@@ -119,10 +122,15 @@ function handlePianoDragPointerMove(e) {
         if ( settings.zoom < max_zoom - ((max_zoom - 1.0) / 10) ) {
             const offset_y = e.screenY - drag.origin.y;
             const ratio_y = offset_y / (cnt_rect.height - kbd_rect.height);
-            settings.offset.y = clamp(drag.previous_offset.y + ratio_y, 0.0, 1.0);
+
+            if ( !drag.vertical_move && Math.abs(ratio_y) >= Y_START_THRESHOLD )
+                drag.vertical_move = true;
+
+            if ( drag.vertical_move || e.ctrlKey )
+                settings.offset.y = clamp(drag.previous_offset.y + ratio_y, 0.0, 1.0);
     
             // Snap vertically
-            if ( !e.ctrlKey ) {
+            if ( drag.vertical_move || !e.ctrlKey ) {
                 if ( settings.offset.y < SNAP_THRESHOLD ) settings.offset.y = 0.0;
                 if ( settings.offset.y > 1-SNAP_THRESHOLD ) settings.offset.y = 1.0;
                 if ( Math.abs(0.5-settings.offset.y) < SNAP_THRESHOLD ) settings.offset.y = 0.5;
@@ -173,9 +181,9 @@ function handlePianoPointerDown(e) {
         if ( tonic_mode ) {
             setNoteAsTonic(key%12, e.shiftKey);
             e.preventDefault();
-        } else if ( isMarkingModeOn() ) {
-            marking_action.id = e.pointerId;
-            setKeyMarking(key, e.ctrlKey || e.shiftKey);
+        } else if ( isAnnotationModeOn() ) {
+            annotation_action.id = e.pointerId;
+            setKeyAnnotation(key, e.ctrlKey || e.shiftKey);
             e.preventDefault();
         } else if ( touch.enabled && !touch.started(e.pointerId) ) {
             touch.add(e.pointerId, new Set([key]));
@@ -192,9 +200,9 @@ function handlePianoPointerUp(e) {
         touch.remove(e.pointerId);
         e.preventDefault();
     }
-    if ( marking_action.id === e.pointerId ) {
-        marking_action.id = null;
-        marking_action.value = null;
+    if ( annotation_action.id === e.pointerId ) {
+        annotation_action.id = null;
+        annotation_action.value = null;
         e.preventDefault();
     }
 }
@@ -210,10 +218,10 @@ function handlePianoPointerMove(e) {
             e.preventDefault();
         }
     }
-    if ( marking_action.id === e.pointerId ) {
+    if ( annotation_action.id === e.pointerId ) {
         const key = findKeyUnderPoint(e.clientX, e.clientY);
         if ( key ) {
-            setKeyMarking(key, e.ctrlKey || e.shiftKey);
+            setKeyAnnotation(key, e.ctrlKey || e.shiftKey);
             e.preventDefault();
         }
     }
@@ -230,12 +238,12 @@ function handlePianoTouchStart(e) {
                 e.preventDefault();
             }
         }
-    } else if ( isMarkingModeOn() ) {
+    } else if ( isAnnotationModeOn() ) {
         for ( const t of e.changedTouches ) {
             const key = findKeyUnderPoint(t.clientX, t.clientY);
             if ( key ) {
-                marking_action.id = t.identifier;
-                setKeyMarking(key, e.ctrlKey || e.shiftKey);
+                annotation_action.id = t.identifier;
+                setKeyAnnotation(key, e.ctrlKey || e.shiftKey);
                 e.preventDefault();
             }
         }
@@ -266,9 +274,9 @@ function handlePianoTouchEnd(e) {
             touch.remove(t.identifier);
             e.preventDefault();
         }
-        if ( marking_action.id === t.identifier ) {
-            marking_action.id = null;
-            marking_action.value = null;
+        if ( annotation_action.id === t.identifier ) {
+            annotation_action.id = null;
+            annotation_action.value = null;
             e.preventDefault();
         }
     }
@@ -290,11 +298,11 @@ function handlePianoTouchMove(e) {
             }
             e.preventDefault();
         }
-        if ( marking_action.id === t.identifier ) {
+        if ( annotation_action.id === t.identifier ) {
             const key = findKeyUnderPoint(t.clientX, t.clientY);
             if ( key ) {
-                marking_action.id = t.identifier;
-                setKeyMarking(key, e.ctrlKey || e.shiftKey);
+                annotation_action.id = t.identifier;
+                setKeyAnnotation(key, e.ctrlKey || e.shiftKey);
                 e.preventDefault();
             }
         }
@@ -306,7 +314,7 @@ function handlePianoTouchMove(e) {
 function setNoteAsTonic(new_tonic, shift_labels) {
     const previous_tonic = settings.labels.tonic;
     settings.labels.tonic = (new_tonic-settings.transpose)%12;
-    saveLabelsAndStickersSettings();
+    saveAnnotationSettings();
 
     if ( settings.labels.keys.size === 0 ) {
         settings.labels.toggleOctaves(new_tonic, true);
@@ -324,32 +332,32 @@ function setNoteAsTonic(new_tonic, shift_labels) {
  * @param {number} key
  * @param {boolean} all_octaves
  */
-function setKeyMarking(key, all_octaves) {
-    if ( !isMarkingModeOn() ) {
-        marking_action.id = null;
-        marking_action.value = null;
+function setKeyAnnotation(key, all_octaves) {
+    if ( !isAnnotationModeOn() ) {
+        annotation_action.id = null;
+        annotation_action.value = null;
         return;
     }
     if ( key ) {
         // if just clicked, detect correct value
-        if ( marking_action.value === null ) {
+        if ( annotation_action.value === null ) {
             if ( isLabelingModeOn() )
-                marking_action.value = !settings.labels.has(key);
-            else if ( isStickerModeOn() )
-                marking_action.value = !settings.stickers.has(key);
+                annotation_action.value = !settings.labels.has(key);
+            else if ( isMarkerModeOn() )
+                annotation_action.value = !settings.markers.has(key);
         }
-        // do marking if value is set
-        if ( marking_action.value !== null ) {
+        // do annotation if value is set
+        if ( annotation_action.value !== null ) {
             if ( isLabelingModeOn() ) {
                 if ( all_octaves )
-                    settings.labels.toggleOctaves(key, marking_action.value);
+                    settings.labels.toggleOctaves(key, annotation_action.value);
                 else
-                    settings.labels.toggle(key, marking_action.value);
-            } else if ( isStickerModeOn() ) {
+                    settings.labels.toggle(key, annotation_action.value);
+            } else if ( isMarkerModeOn() ) {
                 if ( all_octaves )
-                    settings.stickers.toggleOctaves(key, marking_action.value);
+                    settings.markers.toggleOctaves(key, annotation_action.value);
                 else
-                    settings.stickers.toggle(key, marking_action.value);
+                    settings.markers.toggle(key, annotation_action.value);
             }
         }
     }

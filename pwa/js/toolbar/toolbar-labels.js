@@ -20,10 +20,10 @@ import { toolbar, changeLed } from "./toolbar.js";
 import { settings } from "../settings.js";
 import { is_mobile, setHiddenAttr } from "../common.js";
 import { 
-    isLabelingModeOn, setLabelsType, toggleTonicMode, 
-    toggleLabelingMode, toggleLabelsOctave, toggleLabelsPlayed,
+    isLabelingModeOn, setLabelType, toggleTonicMode, 
+    toggleLabelingMode, toggleLabelOctave, toggleLabelPlayed,
     tonic_mode, 
-} from "../markings.js";
+} from "../annotations.js";
 
 
 const blinking_led = {
@@ -32,17 +32,17 @@ const blinking_led = {
 }
 
 
-export function updateLabelsMenuAndButton() {
-    updateLabelsButton();
-    updateLabelsMenu();
+export function updateLabelMenuAndButton() {
+    updateLabelButton();
+    updateLabelMenu();
 }
 
 
-export function updateLabelsButton() {
+export function updateLabelButton() {
     if ( tonic_mode ) {
         blinking_led.state = !blinking_led.state;
         if ( !blinking_led.timer )
-            blinking_led.timer = setInterval(updateLabelsButton, 350);
+            blinking_led.timer = setInterval(updateLabelButton, 350);
     } else if ( blinking_led.timer ) {
         clearInterval(blinking_led.timer);
         blinking_led.timer = null;
@@ -57,7 +57,7 @@ export function updateLabelsButton() {
 }
 
 
-export function updateLabelsMenu() {
+export function updateLabelMenu() {
     toolbar.menus.labels.labeling_mode.checked = isLabelingModeOn();
     toolbar.menus.labels.played.checked = settings.labels.played;
     for ( const item of toolbar.menus.labels.type.children )
@@ -73,16 +73,16 @@ export function updateLabelsMenu() {
 }
 
 
-export function attachToolbarLabelsEventListeners() {
+export function attachToolbarLabelEventListeners() {
 
-    toolbar.dropdowns.labels.addEventListener("sl-show", updateLabelsMenu);
+    toolbar.dropdowns.labels.addEventListener("sl-show", updateLabelMenu);
 
     toolbar.menus.labels.type
     .addEventListener("sl-select", (e) => {
         if ( e.detail.item.value === toolbar.menus.labels.octave.value )
-            toggleLabelsOctave(e.detail.item.checked);
+            toggleLabelOctave(e.detail.item.checked);
         else {
-            if ( setLabelsType(e.detail.item.value) ) {
+            if ( setLabelType(e.detail.item.value) ) {
                 if ( settings.labels.type === "movdo" ) {
                     toggleTonicMode(true, true);
                     toolbar.dropdowns.labels.hide();
@@ -107,14 +107,14 @@ export function attachToolbarLabelsEventListeners() {
         if ( e.detail.item.id === toolbar.menus.labels.labeling_mode.id ) {
             labelingModeClick();
         } else if ( e.detail.item.id === toolbar.menus.labels.played.id ) {
-            toggleLabelsPlayed(e.detail.item.checked);
+            toggleLabelPlayed(e.detail.item.checked);
             if ( is_mobile ) toolbar.dropdowns.labels.hide();
         } else if ( e.detail.item.id === toolbar.menus.labels.tonic.id ) {
             toggleTonicMode() && toolbar.dropdowns.labels.hide();
         }
     });
     
-    toolbar.buttons.labels_left
+    toolbar.buttons.label_left
     .addEventListener("click", labelingModeClick);
     
     toolbar.menus.labels.clear

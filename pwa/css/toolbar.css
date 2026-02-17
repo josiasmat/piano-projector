@@ -38,7 +38,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     }
 }
 
-#top-toolbar {
+#toolbar {
     width: 100%;
     height: auto;
     background-image: linear-gradient(to top, #272727, #171717);
@@ -90,27 +90,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         }
     }
 
-    #menu-group-scale-bottom {
-        display: flex;
-        flex-direction: row;
-        #menu-group-scale-type {
-            margin-left: 20px;
-        }
-        #menu-group-scale-accidental sl-button::part(base) {
-            font-size: larger;
-        }
-        div {
-            text-align: left;
-        }
-    }
-
-    #menu-group-number-of-keys {
+    #mg-number-of-keys {
         .btn-number-of-keys {
             width: 6ch;
         }
     }
 
-    #dropdown-labels>sl-menu {
+    #dd-labels>sl-menu {
         min-width: 23ch;
     }
 
@@ -124,7 +110,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
     .space-before { margin-left: 12px; }
 
-    #top-toolbar-right { 
+    #toolbar-right { 
         margin-left: 15px; 
         padding-right: 12px;
     }
@@ -149,7 +135,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
         }
     }
 
-    #dropdown-pedals[hidden] { display: none; }
+    #dd-pedals[hidden] { display: none; }
 
     .pedal-indicator {
         margin-bottom: -2px;
@@ -184,7 +170,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             &#connection-power-icon { color: #4f4; }
             &#sound-power-icon { color: #4af; }
             &#transpose-power-icon { color: #ff0; }
-            &#labels-power-icon { color: #ccf; }
+            &#label-power-icon { color: #ccf; }
         }
     }
 }

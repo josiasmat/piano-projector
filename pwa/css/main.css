@@ -62,15 +62,12 @@ body {
     display: flex;
     flex-direction: column;
     &:not(.ready) {
-        #dialog-about, #top-toolbar, #outer-main-area, #alert-sound-connection-fail {
+        #dialog-about, #toolbar, #outer-main-area, #alert-sound-connection-fail {
             visibility: hidden;
             opacity: 0%;
         }
     }
     &.ready {
-        /* #top-toolbar, #outer-main-area {
-            transition: opacity 1s;
-        } */
         #loading-title {
             visibility: hidden;
             display: none;

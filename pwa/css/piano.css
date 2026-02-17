@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 /* Import key label font */
 @import url('https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap');
 
-@import url('stickers.css');
+@import url('markers.css');
 
 :root {
     --color-highlight: #f00;
@@ -68,7 +68,7 @@ svg#piano {
         cursor: grabbing;
     }
 
-    &.marking-mode:not(.grabbing) {
+    &.annotation-mode:not(.grabbing) {
         cursor: crosshair !important;
     }
 
@@ -193,12 +193,12 @@ svg#piano {
     
     /* Key labels */
 
-    .key-marker-group:not(.lowperf) {
+    .key-annotation-group:not(.lowperf) {
         transform-origin: center center;
         transform-box: content-box;
     }
 
-    .key:not(.pressed) .key-marker-group:not(.lowperf, .notransition) {
+    .key:not(.pressed) .key-annotation-group:not(.lowperf, .notransition) {
         transition: transform var(--unpress-transition-duration) ease-in;
     }
     
@@ -259,7 +259,7 @@ svg#piano {
         fill: var(--color-label-black-key-active);
     }
 
-    .white-key.has-sticker {
+    .white-key.has-marker {
         .key-label:not(.rotated) {
             transform: translateY(-11px);
         }
@@ -269,7 +269,7 @@ svg#piano {
         }
     }
 
-    .black-key.has-sticker {
+    .black-key.has-marker {
         .key-label:not(.rotated) {
             transform: translateY(-14px);
         }
@@ -279,7 +279,7 @@ svg#piano {
         }
     }
 
-    .key:not(.has-sticker) .key-label.rotated {
+    .key:not(.has-marker) .key-label.rotated {
         &.white-key-label {
             transform-origin: left center;
             transform: translateY(-3px) rotate(-90deg) translateX(-18px) scale(70%);
@@ -292,9 +292,14 @@ svg#piano {
 
     /* Top red felt */
 
+    &[top-felt-hidden] #top-felt {
+        display: none;
+    }
+
     #top-felt {
-        &[hidden] { display: none; }
-        &.lowperf { fill: var(--color-felt-top); }
+        &.lowperf { 
+            fill: var(--color-felt-top); 
+        }
         &:not(.lowperf) { 
             fill: url("#top-felt-gradient"); 
         }
@@ -304,7 +309,7 @@ svg#piano {
 
     .key:not(.lowperf) {
         .key-highlight { will-change: opacity, d; }
-        .key-marker-group { will-change: fill, transform; }
+        .key-annotation-group { will-change: fill, transform; }
         path:not(.key-highlight) { will-change: d; }
     }
 

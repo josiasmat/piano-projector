@@ -1,7 +1,8 @@
-import { isMobile, isSafari } from "./lib/utils.js";
+import { isFirefox, isMobile, isSafari } from "./lib/utils.js";
 
 export const is_mobile = isMobile();
 export const is_safari = isSafari();
+export const is_firefox = isFirefox();
 
 /** 
  * @param {Element} elm 

@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import tinycolor from "tinycolor2";
 
 
-class StickerColors {
+class MarkerColors {
     /** @type { tinycolor.Instance } */
     base;
     /** @type {string} */
@@ -67,14 +67,14 @@ class StickerColors {
 
     setStyleVariables() {
         const rs = document.documentElement.style;
-        rs.setProperty(`--color-sticker-${this.name}-fill-white-key`, this.fill_white_key);
-        rs.setProperty(`--color-sticker-${this.name}-fill-black-key`, this.fill_black_key);
-        rs.setProperty(`--color-sticker-${this.name}-fill-highlight-white-key`, this.fill_highlight_white_key);
-        rs.setProperty(`--color-sticker-${this.name}-fill-highlight-black-key`, this.fill_highlight_black_key);
-        rs.setProperty(`--color-sticker-${this.name}-stroke-white-key`, this.stroke_white_key);
-        rs.setProperty(`--color-sticker-${this.name}-stroke-black-key`, this.stroke_black_key);
-        rs.setProperty(`--color-sticker-${this.name}-stroke-highlight-white-key`, this.stroke_highlight_white_key);
-        rs.setProperty(`--color-sticker-${this.name}-stroke-highlight-black-key`, this.stroke_highlight_black_key);
+        rs.setProperty(`--color-marker-${this.name}-fill-white-key`, this.fill_white_key);
+        rs.setProperty(`--color-marker-${this.name}-fill-black-key`, this.fill_black_key);
+        rs.setProperty(`--color-marker-${this.name}-fill-highlight-white-key`, this.fill_highlight_white_key);
+        rs.setProperty(`--color-marker-${this.name}-fill-highlight-black-key`, this.fill_highlight_black_key);
+        rs.setProperty(`--color-marker-${this.name}-stroke-white-key`, this.stroke_white_key);
+        rs.setProperty(`--color-marker-${this.name}-stroke-black-key`, this.stroke_black_key);
+        rs.setProperty(`--color-marker-${this.name}-stroke-highlight-white-key`, this.stroke_highlight_white_key);
+        rs.setProperty(`--color-marker-${this.name}-stroke-highlight-black-key`, this.stroke_highlight_black_key);
     }
 
     #getFill(bg) {
@@ -154,11 +154,11 @@ const _colors = {
     black_key: tinycolor("#222"),
     felt : tinycolor("#920"),
 
-    sticker_red:    new StickerColors("red", "red"),
-    sticker_yellow: new StickerColors("#ee0", "yellow"),
-    sticker_green:  new StickerColors("#0b0", "green"),
-    sticker_blue:   new StickerColors("blue", "blue"),
-    sticker_violet: new StickerColors("#d0d", "violet"),
+    marker_red:    new MarkerColors("red", "red"),
+    marker_yellow: new MarkerColors("#ee0", "yellow"),
+    marker_green:  new MarkerColors("#0b0", "green"),
+    marker_blue:   new MarkerColors("blue", "blue"),
+    marker_violet: new MarkerColors("#d0d", "violet"),
 
     updateStyles() {
         const rs = document.documentElement.style;
@@ -184,12 +184,12 @@ const _colors = {
             tinycolor.mix(this.black_key, this.highlight, this.highlight.getAlpha()*100)
             .isLight() ? "#000d" : "#fffd" );
         
-        // update sticker colors
-        this.sticker_red.setStyleVariables();
-        this.sticker_yellow.setStyleVariables();
-        this.sticker_green.setStyleVariables();
-        this.sticker_blue.setStyleVariables();
-        this.sticker_violet.setStyleVariables();
+        // update marker colors
+        this.marker_red.setStyleVariables();
+        this.marker_yellow.setStyleVariables();
+        this.marker_green.setStyleVariables();
+        this.marker_blue.setStyleVariables();
+        this.marker_violet.setStyleVariables();
     },
 
 }

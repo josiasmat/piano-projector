@@ -16,7 +16,7 @@ You can change the keyboard position by dragging it with the mouse. When touch/m
 
 Pressing the **ALT** key will open a keyboard navigation menu; press the underlined characters to navigate, while holding **ALT**.
 
-**F2** toggles Labeling mode, and **F3** toggles Sticker mode (with the last used sticker color). Clicking on a key while holding **CTRL** in one of these modes marks all octaves. **F4** toggles tonic selection mode when "Solfège" is selected as label format.
+**F2** toggles Labeling mode, and **F3** toggles Marker mode (with the last used marker color). Clicking on a key while holding **CTRL** in one of these modes marks all octaves. **F4** toggles tonic selection mode when "Solfège" is selected as label format.
 
 **ESC** triggers the MIDI Panic button. This is useful mainly for resetting stuck keys.
 

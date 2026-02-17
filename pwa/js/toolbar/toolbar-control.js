@@ -17,9 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { 
-    midi, togglePcKeyboardConnection, toggleTouchConnection, toggleInput,
+    midi_control, togglePcKeyboardConnection, toggleTouchConnection, toggleInput,
     MIDI_WATCHDOG_SLOW_INTERVAL, MIDI_WATCHDOG_FAST_INTERVAL
-} from "../connect.js";
+} from "../control.js";
 
 import { changeLed, toolbar, updateToolbar } from "./toolbar.js";
 import { Midi } from "../lib/libmidi.js";
@@ -38,25 +38,25 @@ export function updateControlButton() {
 
 export function updateControlMenu() {
 
-    setHiddenAttr(toolbar.menus.control.denied, midi.access !== "denied");
-    setHiddenAttr(toolbar.menus.control.unavailable, is_mobile || midi.access !== "unavailable");
-    setHiddenAttr(toolbar.menus.control.prompt, midi.access !== "prompt");
+    setHiddenAttr(toolbar.menus.control.denied, midi_control.access !== "denied");
+    setHiddenAttr(toolbar.menus.control.unavailable, is_mobile || midi_control.access !== "unavailable");
+    setHiddenAttr(toolbar.menus.control.prompt, midi_control.access !== "prompt" );
     setHiddenAttr(toolbar.menus.control.divider, 
-        (midi.access === "granted" && !midi.ports?.length) 
-        || ( is_mobile && midi.access === "unavailable")
+        (midi_control.access === "granted" && !midi_control.ports?.length) 
+        || ( is_mobile && midi_control.access === "unavailable")
     );
 
     setCheckedAttr(toolbar.menus.control.kbd, settings.pc_keyboard_connected);
     setCheckedAttr(toolbar.menus.control.touch, touch.enabled);
 
-    if ( midi.access !== "granted" ) {
-        midi.clearMenuItems();
+    if ( midi_control.access !== "granted" ) {
+        midi_control.clearMenuItems();
         return;
     }
 
     // Add menu items for new ports
-    for ( const port of midi.ports ?? [] ) {
-        if ( !midi.menu_items.some((menu_item) =>
+    for ( const port of midi_control.ports ?? [] ) {
+        if ( !midi_control.menu_items.some((menu_item) =>
                 port.name === menu_item.value,
         ) ) {
             const new_menu_item = cloneTemplate(
@@ -73,9 +73,9 @@ export function updateControlMenu() {
     }
 
     // Check/uncheck menu items, and remove obsolete ports
-    for ( const menu_item of midi.menu_items ?? [] ) {
-        if ( midi.ports.some((port) => menu_item.value === port.name) ) {
-            setCheckedAttr(menu_item, menu_item.value === midi.connected_port?.name);
+    for ( const menu_item of midi_control.menu_items ?? [] ) {
+        if ( midi_control.ports?.some((port) => menu_item.value === port.name) ) {
+            setCheckedAttr(menu_item, menu_item.value === midi_control.connected_port?.name);
         } else{
             menu_item.remove();
         }
@@ -87,22 +87,20 @@ export function updateControlMenu() {
 export function attachToolbarControlEventListeners() {
 
     toolbar.dropdowns.control.addEventListener("sl-show", () => {
-        updateControlMenu();
-        midi.setWatchdog(MIDI_WATCHDOG_FAST_INTERVAL);
-        midi.queryAccess((access) => {
-            if ( access !== "granted" )
-                updateControlMenu();
+        midi_control.queryAccess((access) => {
+            updateControlMenu();
             if ( ["granted", "prompt"].includes(access) )
-                midi.requestAccess((result) => {
+                midi_control.requestAccess((result) => {
                     updateControlMenu();
+                    midi_control.setWatchdog(MIDI_WATCHDOG_FAST_INTERVAL);
                     if ( result )
-                        midi.requestPorts(updateControlMenu);
+                        midi_control.requestPorts(updateControlMenu);
                 });
         });
     });
 
     toolbar.dropdowns.control.addEventListener("sl-hide", () => {
-        midi.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
+        midi_control.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
         updateToolbar();
     });
 

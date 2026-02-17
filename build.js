@@ -12,23 +12,23 @@ const targetBrowsers = ['chrome130','firefox132'];
 
 const BASE_PATH = resolve();
 
-const SRC_PATH = resolve('.', 'src');
+const SRC_PWA_PATH = resolve('.', 'pwa');
 const PUB_PATH = resolve('.', 'pub');
-const PWA_PATH = resolve(PUB_PATH, 'pwa');
+const PUB_PWA_PATH = resolve(PUB_PATH, 'pwa');
 
-const CSS_SRC_FILEPATH = resolve(SRC_PATH, 'css', 'main.css');
+const CSS_SRC_FILEPATH = resolve(SRC_PWA_PATH, 'css', 'main.css');
 const CSS_OUT_FILENAME = 'bundle.css';
-const CSS_OUT_FILEPATH = resolve(PWA_PATH, CSS_OUT_FILENAME);
-const CSS_MAP_FILEPATH = resolve(PWA_PATH, CSS_OUT_FILENAME+'.map');
+const CSS_OUT_FILEPATH = resolve(PUB_PWA_PATH, CSS_OUT_FILENAME);
+const CSS_MAP_FILEPATH = resolve(PUB_PWA_PATH, CSS_OUT_FILENAME+'.map');
 
-const JS_SRC_FILEPATH = resolve(SRC_PATH, 'js', 'main.js');
+const JS_SRC_FILEPATH = resolve(SRC_PWA_PATH, 'js', 'main.js');
 const JS_OUT_FILENAME = 'bundle.js';
-const JS_OUT_FILEPATH = resolve(PWA_PATH, JS_OUT_FILENAME);
-const JS_MAP_FILEPATH = resolve(PWA_PATH, JS_OUT_FILENAME+'.map');
+const JS_OUT_FILEPATH = resolve(PUB_PWA_PATH, JS_OUT_FILENAME);
+const JS_MAP_FILEPATH = resolve(PUB_PWA_PATH, JS_OUT_FILENAME+'.map');
 
 const SW_FILENAME = 'sw.js';
-const SW_TEMPLATE_FILE = resolve(SRC_PATH, `${SW_FILENAME}.template`);
-const SW_OUT_FILEPATH = resolve(PWA_PATH, SW_FILENAME);
+const SW_TEMPLATE_FILE = resolve(SRC_PWA_PATH, `${SW_FILENAME}.template`);
+const SW_OUT_FILEPATH = resolve(PUB_PWA_PATH, SW_FILENAME);
 
 const DATA_DIRNAME = 'data';
 const LANDING_DIRNAME = 'landing';
@@ -38,10 +38,10 @@ const I18N_DIRNAME = 'i18n';
 const COPY_LIST = [
   {src: LANDING_DIRNAME, dest: PUB_PATH},
   {src: 'LICENSE.md', dest: resolve(PUB_PATH, 'LICENSE.md')},
-  {src: join(SRC_PATH, 'index.html'), dest: join(PWA_PATH, 'index.html')},
-  {src: join(SRC_PATH, 'manifest.json'), dest: join(PWA_PATH, 'manifest.json')},
-  {src: join(DATA_DIRNAME, ASSETS_DIRNAME), dest: join(PWA_PATH, ASSETS_DIRNAME)},
-  {src: join(DATA_DIRNAME, I18N_DIRNAME), dest: join(PWA_PATH, I18N_DIRNAME)},
+  {src: join(SRC_PWA_PATH, 'index.html'), dest: join(PUB_PWA_PATH, 'index.html')},
+  {src: join(SRC_PWA_PATH, 'manifest.json'), dest: join(PUB_PWA_PATH, 'manifest.json')},
+  {src: join(DATA_DIRNAME, ASSETS_DIRNAME), dest: join(PUB_PWA_PATH, ASSETS_DIRNAME)},
+  {src: join(DATA_DIRNAME, I18N_DIRNAME), dest: join(PUB_PWA_PATH, I18N_DIRNAME)},
 ];
 
 /** CSS bundle parameters @type {esbuild.BuildOptions} */
@@ -69,7 +69,11 @@ const jsBuildOptions = {
     bundle: true,
     target: targetBrowsers,
     drop: productionMode ? ['debugger'] : [],
-    pure: productionMode ? ['console.debug', 'console.info'] : [],
+    pure: productionMode ? [
+      'console.debug', 
+      'console.info', 
+      'console.assert'
+    ] : [],
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
     sourcemap: !productionMode,
@@ -105,7 +109,7 @@ const PRECACHE = {
 console.log(`Starting ${ productionMode ? 'Production' : 'Development' } build...`);
 
 createDirectory(PUB_PATH);
-createDirectory(PWA_PATH);
+createDirectory(PUB_PWA_PATH);
 await copyFilesAndDirs(COPY_LIST);
 
 if ( productionMode ) {
@@ -115,7 +119,7 @@ if ( productionMode ) {
 
   deleteSourceMaps();
   await bundleCssAndJs(cssBuildOptions, jsBuildOptions);
-  const precacheAssets = buildPrecacheAssetsList(PRECACHE, PWA_PATH);
+  const precacheAssets = buildPrecacheAssetsList(PRECACHE, PUB_PWA_PATH);
   const hash = computeHexHash([SW_TEMPLATE_FILE, ...precacheAssets]);
   const cacheName = 'pp-' + hash.slice(0, 16);
   generateServiceWorker(SW_TEMPLATE_FILE, cacheName, precacheAssets);
@@ -324,7 +328,7 @@ function computeHexHash(files) {
 
   for (const asset of files) {
     if (asset === './') { continue; }
-    const assetPath = resolve(PWA_PATH, asset);
+    const assetPath = resolve(PUB_PWA_PATH, asset);
     computeFileHash(assetPath);
   }
 

@@ -26,9 +26,9 @@ import { KbdNotes } from "../lib/kbdnotes.js";
 import { 
     getEnglishLabel, getFrequencyLabel, getGermanLabel, getItalianLabel, 
     getMovableDoLabel, 
-    isLabelingModeOn, isMarkingModeOn, isStickerModeOn, 
+    isLabelingModeOn, isAnnotationModeOn, isMarkerModeOn, 
     tonic_mode
-} from "../markings.js";
+} from "../annotations.js";
 
 import { drag } from "./piano-events.js";
 export * from "./piano-events.js";
@@ -36,9 +36,9 @@ export * from "./piano-events.js";
 
 export const piano = {
     /** @type {SVGElement} */
-    svg: document.querySelector("svg#piano"),
+    svg: undefined,
     /** @type {HTMLDivElement} */
-    container: document.getElementById("main-area"),
+    container: undefined,
     /** @type {number?} */
     first_key: null,
     /** @type {number?} */
@@ -48,11 +48,13 @@ export const piano = {
     /** @type {[SVGElement?]} */
     labels: Array(128).fill(null),
     /** @type {[SVGElement?]} */
-    marking_groups: Array(128).fill(null),
+    annotation_groups: Array(128).fill(null),
     /** @type {boolean} */
     loaded: false,
+
     resize: {
         timeout: null,
+        /** @type {ResizeObserver} */
         observer: null,
     }
 };
@@ -142,6 +144,8 @@ export const touch = {
 
 
 export function createPianoKeyboard() {
+    if ( !piano.svg ) piano.svg = document.querySelector("svg#piano");
+    if ( !piano.container ) piano.container = document.getElementById("main-area");
     const first_last_notes = new Map([
         [88, ["a0", "c8"]],
         [61, ["c2", "c7"]],
@@ -166,7 +170,7 @@ export function createPianoKeyboard() {
     else
         drawPianoKeyboard(piano.svg, piano.keys, options);
     for ( const [i,key_elm] of piano.keys.entries() ) {
-        piano.marking_groups[i] = key_elm?.querySelector(".key-marker-group");
+        piano.annotation_groups[i] = key_elm?.querySelector(".key-annotation-group");
         piano.labels[i] = key_elm?.querySelector(".key-label");
     }
     piano.loaded = true;
@@ -175,7 +179,7 @@ export function createPianoKeyboard() {
 
 
 export function updatePianoTopFelt() {
-    document.getElementById("top-felt")?.toggleAttribute("hidden", !settings.top_felt);
+    piano.svg.toggleAttribute("top-felt-hidden", !settings.top_felt);
 }
 
 
@@ -196,7 +200,7 @@ export function updatePianoKey(key) {
         for ( const child of elm.children )
             if ( child.hasAttribute(dn) )
                 child.setAttribute("d", child.getAttribute(dn));
-        updatePianoKeyMarkings(key, note_on, key_pressed);
+        updatePianoKeyAnnotations(key, note_on, key_pressed);
     }
 }
 
@@ -217,10 +221,10 @@ export function updatePianoKeys(keys) {
  * @param {boolean} is_on 
  * @param {boolean} is_pressed 
  */
-function updatePianoKeyMarkings(key, is_on, is_pressed) {
+function updatePianoKeyAnnotations(key, is_on, is_pressed) {
 
     const key_elm = piano.keys[key];
-    const group_elm = piano.marking_groups[key];
+    const group_elm = piano.annotation_groups[key];
     const label_elm = piano.labels[key];
 
     function setLabelText(k = key) {
@@ -264,14 +268,14 @@ function updatePianoKeyMarkings(key, is_on, is_pressed) {
 
         label_elm.classList.toggle("rotated", settings.labels.type === "freq");
 
-        const has_sticker = settings.stickers.keys.has(key);
-        const sticker_color = has_sticker ? settings.stickers.keys.get(key) : null;
-        key_elm.classList.toggle("has-sticker", has_sticker);
-        key_elm.classList.toggle("has-sticker-red", sticker_color === "red");
-        key_elm.classList.toggle("has-sticker-yellow", sticker_color === "yellow");
-        key_elm.classList.toggle("has-sticker-green", sticker_color === "green");
-        key_elm.classList.toggle("has-sticker-blue", sticker_color === "blue");
-        key_elm.classList.toggle("has-sticker-violet", sticker_color === "violet");
+        const has_marker = settings.markers.keys.has(key);
+        const marker_color = has_marker ? settings.markers.keys.get(key) : null;
+        key_elm.classList.toggle("has-marker", has_marker);
+        key_elm.classList.toggle("has-marker-red", marker_color === "red");
+        key_elm.classList.toggle("has-marker-yellow", marker_color === "yellow");
+        key_elm.classList.toggle("has-marker-green", marker_color === "green");
+        key_elm.classList.toggle("has-marker-blue", marker_color === "blue");
+        key_elm.classList.toggle("has-marker-violet", marker_color === "violet");
 
         if ( is_pressed && group_elm.hasAttribute("press_transform") )
             group_elm.style.setProperty("transform", group_elm.getAttribute("press_transform"));
@@ -285,9 +289,9 @@ function updatePianoKeyMarkings(key, is_on, is_pressed) {
 export function updatePianoCursor() {
     piano.svg.classList.toggle("touch-input", touch.enabled);
     piano.svg.classList.toggle("grabbing", drag.state !== 0);
-    piano.svg.classList.toggle("marking-mode", isMarkingModeOn());
+    piano.svg.classList.toggle("annotation-mode", isAnnotationModeOn());
     piano.svg.classList.toggle("labeling-mode", isLabelingModeOn());
-    piano.svg.classList.toggle("sticker-mode", isStickerModeOn());
+    piano.svg.classList.toggle("marker-mode", isMarkerModeOn());
     piano.svg.classList.toggle("tonic-mode", tonic_mode);
 }
 
