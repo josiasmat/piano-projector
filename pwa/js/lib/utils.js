@@ -526,3 +526,33 @@ export function newlinesToBrTags(str) {
 export function linesToHtmlParagraphs(str) {
     return str.split('\n').map((s) => '<p>'+s+'</p>').join('');
 }
+
+
+/** 
+ * Returns the value in _list_ that is closest to _value_.
+ * Returns _value_ itself if _list_ is not a valid list or if
+ * it is empty.
+ * @param {number} value 
+ * @param {number[]} list 
+ * @returns {number} 
+ */
+export function closest(value, list) {
+    if ( !Array.isArray(list) || list.length === 0 )
+        return value;
+
+    let best = list[0];
+    let best_diff = Math.abs(best - value);
+    if ( best_diff === 0 ) return best;
+
+    for ( let i = 1; i < list.length; i++ ) {
+        const current = list[i];
+        const diff = Math.abs(current - value);
+        if ( diff === 0 ) return current;
+        if ( diff < best_diff ) {
+            best = current;
+            best_diff = diff;
+        }
+    }
+
+    return best;
+}
