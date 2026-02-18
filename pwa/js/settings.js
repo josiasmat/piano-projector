@@ -318,7 +318,7 @@ export function writeSettings(sound_type = null) {
 
 export function loadSettings() {
     // Ignore errors
-    const attempt = f => { try { f(); } catch (e) { console.error(e)} };
+    const attempt = f => { try { f(); } catch (e) { console.error(e); } };
 
     attempt(loadFirstTimeTag);
     attempt(()=> settings.graphics_quality = settings_storage.readNumber("graphics-quality", settings.graphics_quality));
