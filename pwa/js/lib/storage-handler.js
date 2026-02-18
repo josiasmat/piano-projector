@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 class GenericStorageHandler {
 
+    /** @type {Storage} */
     #storage_object = null;
     #prefix = "";
 
@@ -72,7 +73,7 @@ class GenericStorageHandler {
      */
     readString(key, default_value = "") {
         try {
-            if ( !this.isAvailable() ) throw Error();
+            if ( !this.isAvailable() ) throw Error("Storage not available");
             const val = this.#storage_object.getItem(this.#with_prefix(key));
             return (val == null) ? default_value : val;
         } catch {
@@ -83,13 +84,13 @@ class GenericStorageHandler {
     /**
      * Writes a string value to storage.
      * @param {String} key name of the key.
-     * @param {String} value value associated with the specified key.
+     * @param {String} value value to write.
      * @returns {Boolean} _true_ if write succeeds, _false_ otherwise.
      */
     writeString(key, value) {
         try {
-            if ( !this.isAvailable() ) throw Error();
-            this.#storage_object.setItem(this.#with_prefix(key), value);
+            if ( !this.isAvailable() ) throw Error("Storage not available");
+            this.#storage_object.setItem(this.#with_prefix(key), String(value));
         } catch {
             return false;
         }
@@ -112,12 +113,12 @@ class GenericStorageHandler {
     /**
      * Writes a number value to storage.
      * @param {String} key name of the key.
-     * @param {Number} value value associated with the specified key.
+     * @param {Number} value value to write.
      * @returns {Boolean} _true_ if write succeeds, _false_ otherwise.
      */
     writeNumber(key, value) {
         if ( isNaN(value) ) return false;
-        return this.writeString(key, value.toString());
+        return this.writeString(key, String(value));
     }
 
     /**
@@ -128,18 +129,19 @@ class GenericStorageHandler {
      * @returns {Boolean} boolean value from local storage, or *default_value*.
      */
     readBool(key, default_value = false) {
-        return (this.readString(key, default_value.toString()) === true.toString());
+        const val = this.readString(key, default_value);
+        if ( val === default_value ) return default_value;
+        return ( String(val) === String(true) );
     }
 
     /**
      * Writes a boolean value to storage.
      * @param {String} key name of the key.
-     * @param {Boolean} value value associated with the specified key.
+     * @param {Boolean} value value to writey.
      * @returns {Boolean} _true_ if write succeeds, _false_ otherwise.
      */
     writeBool(key, value) {
-        if ( value != true && value != false ) return false;
-        return this.writeString(key, value.toString());
+        return this.writeString(key, String(Boolean(value)));
     }
 
     /**
@@ -149,7 +151,7 @@ class GenericStorageHandler {
      */
     remove(key) {
         try {
-            if ( !this.isAvailable() ) throw Error();
+            if ( !this.isAvailable() ) throw Error("Storage not available");
             this.#storage_object.removeItem(this.#with_prefix(key));
         } catch {
             return false;
@@ -172,22 +174,29 @@ class GenericStorageHandler {
      * Returns a list with the stored keys.
      * @returns {String[]} list of stored keys.
      */
-    keys() {
-        let result = [];
+    get keys() {
         const prefix_length = this.#prefix.length;
-        for ( let i = 0; i < this.#storage_object.length; i++ ) {
-            const full_key = this.#storage_object.key(i);
-            if ( full_key.startsWith(this.#prefix) )
-                result.push(full_key.substring(prefix_length));
-        }
-        return result;
+        return Object.keys(this.#storage_object)
+               .filter(key => key.startsWith(this.#prefix))
+               .map(key => key.substring(prefix_length));
+    }
+
+    /**
+     * Returns a list with the stored key/value pairs.
+     * @returns {[string, string]} list of stored key/value pairs.
+     */
+    get entries() {
+        const prefix_length = this.#prefix.length;
+        return Object.entries(this.#storage_object)
+               .filter(e => e[0].startsWith(this.#prefix))
+               .map(([k,v]) => [k.substring(prefix_length), v]);
     }
 
     /**
      * Removes all stored key/value pairs.
      */
     clear() {
-        for ( let key of this.keys() ) {
+        for ( let key of this.keys ) {
             this.remove(key);
         }
     }
