@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { is_firefox, is_mobile } from "./common.js";
 import { LocalStorageHandler, SessionStorageHandler } from "./lib/storage-handler.js";
-import { nextOf, range } from "./lib/utils.js";
+import { closest, nextOf, range } from "./lib/utils.js";
 import { createPianoKeyboard, updatePianoKey, updatePianoKeys } from "./piano/piano.js";
 import { updateAppearanceMenu, updateLabelMenu, updatePedalsMenu, updateSizeMenu, updateMarkersMenu, updateToolbarBasedOnWidth } from "./toolbar/toolbar.js";
 import { i18n } from "./lib/i18n.js";
@@ -31,18 +31,142 @@ import { colors } from "./colors.js";
 export const settings_storage = new LocalStorageHandler("piano-projector");
 export const session_storage = new SessionStorageHandler("piano-projector-session");
 
-// Settings object
-export const settings = {
+// Internal settings object
+const _settings = {
     first_time: true,
     graphics_quality: 2, // 2 = max, 1 = medium, 0 = min
-    // lowperf: false,
     language: null,
     number_of_keys: 88,
     height_factor: 1.0,
     device_name: null,
     midi_access_firefox: "",
     sound: null,
+    zoom: 1.0,
+    pedals: true,
+    pedal_dim: true,
+    perspective: true,
+    top_felt: true,
+    toolbar: true,
+    semitones: 0,
+    octaves: 0,
+}
+
+/** @returns {string | null} */
+function strOrNull(s) {
+    return typeof(s) === "string" ? s : null;
+}
+
+// Exposed settings object
+export const settings = {
+    /** @type {boolean} */
+    get first_time() { return Boolean(_settings.first_time); },
+    set first_time(v) { _settings.first_time = Boolean(v); },
+
+    /** @type {number} // 2 = max, 1 = medium, 0 = min */
+    get graphics_quality() { 
+        const v = Number(_settings.graphics_quality);
+        return [0,1,2].includes(v) ? v : 2;
+    },
+    set graphics_quality(v) {
+        v = Number(v);
+        _settings.graphics_quality = [0,1,2].includes(v) ? v : 0;
+    },
+    
+    /** @type {string|null} */
+    get language() {
+        return strOrNull(_settings.language);
+    },
+    set language(v) {
+        _settings.language = strOrNull(v);
+    },
+    
+    /** @type {number} 88, 61, 49, 37, 25 or 20 */
+    get number_of_keys() {
+        return closest(
+            Number(_settings.number_of_keys), 
+            is_mobile ? [20,25,37,49,61,88] : [88,61,49,37,25]
+        );
+    },
+    set number_of_keys(v) {
+        _settings.number_of_keys = closest(Number(v), 
+            is_mobile ? [20,25,37,49,61,88] : [88,61,49,37,25]
+        );
+    },
+    
+    /** @type {number} 1.0, 0.75 or 0.5 */
+    get height_factor() {
+        return closest(Number(_settings.height_factor), [1.0, 0.75, 0.5]);
+
+    },
+    set height_factor(v) {
+        _settings.height_factor = closest(Number(v), [1.0, 0.75, 0.5]);
+    },
+    
+    /** @type {string|null} */
+    get device_name() {
+        return strOrNull(_settings.device_name);
+    },
+    set device_name(v) {
+        _settings.device_name = strOrNull(v);
+    },
+    
+    /** @type {string|null} */
+    get midi_access_firefox() {
+        return strOrNull(_settings.midi_access_firefox);
+    },
+    set midi_access_firefox(v) {
+        _settings.midi_access_firefox = strOrNull(v);
+    },
+
+    /** @type {string|null} */
+    get sound() {
+        return strOrNull(_settings.sound);
+    },
+    set sound(v) {
+        _settings.sound = strOrNull(v);
+    },
+
+    /** @type {number} */
+    get zoom() {
+        return Math.max(Number(_settings.zoom), 1.0);
+    },
+    set zoom(v) {
+        _settings.zoom = Math.max(Number(v), 1.0);
+    },
+
+    /** @type {boolean} */
+    get pedals() { return Boolean(_settings.pedals); },
+    set pedals(v) { _settings.pedals = Boolean(v); },
+
+    /** @type {boolean} */
+    get pedal_dim() { return Boolean(_settings.pedal_dim); },
+    set pedal_dim(v) { _settings.pedal_dim = Boolean(v); },
+
+    /** @type {boolean} */
+    get perspective() { return Boolean(_settings.perspective); },
+    set perspective(v) { _settings.perspective = Boolean(v); },
+
+    /** @type {boolean} */
+    get top_felt() { return Boolean(_settings.top_felt); },
+    set top_felt(v) { _settings.top_felt = Boolean(v); },
+
+    /** @type {boolean} */
+    get toolbar() { return Boolean(_settings.toolbar); },
+    set toolbar(v) { _settings.toolbar = Boolean(v); },
+
+    /** @type {number} */
+    get semitones() { return Math.round(Number(_settings.semitones)); },
+    set semitones(v) { _settings.semitones = Math.round(Number(v)); },
+
+    /** @type {number} */
+    get octaves() { return Math.round(Number(_settings.octaves)); },
+    set octaves(v) { _settings.octaves = Math.round(Number(v)); },
+
+    /** @type {number} */
+    get transpose() { return this.semitones + (this.octaves*12); },
+
     offset: { x: 0.5, y: 0.5 },
+
     labels: {
         /** @type {string} "english", "german", "italian", "pc", "midi", "freq" */
         type: "english",
@@ -145,6 +269,7 @@ export const settings = {
             ][this.tonic].replaceAll('.','\u2007');
         }
     },
+
     markers: {
         color: "red",
         /** @type {Map<number,string>} */
@@ -201,15 +326,6 @@ export const settings = {
                 }
         }
     },
-    zoom: 1.0,
-    pedals: true,
-    pedal_dim: true,
-    perspective: true,
-    top_felt: true,
-    toolbar: true,
-    semitones: 0,
-    octaves: 0,
-    get transpose() { return this.semitones + (this.octaves*12); },
 
     get highlight_opacity() { return `${Math.round(colors.highlight_opacity*100)}%`; },
     set highlight_opacity(value) { colors.highlight_opacity = parseInt(value)/100; },
