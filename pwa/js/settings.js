@@ -317,30 +317,33 @@ export function writeSettings(sound_type = null) {
 
 
 export function loadSettings() {
-    loadFirstTimeTag();
-    settings.graphics_quality = settings_storage.readNumber("graphics-quality", settings.graphics_quality);
-    settings.language = settings_storage.readString("language", settings.language);
-    settings.height_factor = settings_storage.readNumber("height-factor", is_mobile ? 0.75 : settings.height_factor);
-    settings.number_of_keys = settings_storage.readNumber("number-of-keys", is_mobile ? 20 : settings.number_of_keys);
-    settings.color_white = settings_storage.readString("color-white", settings.color_white);
-    settings.color_black = settings_storage.readString("color-black", settings.color_black);
-    settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight);
-    settings.labels.type = settings_storage.readString("label-type", settings.labels.type);
-    settings.labels.octave = settings_storage.readBool("label-octave", settings.labels.octave);
-    settings.labels.played = settings_storage.readBool("label-played", settings.labels.played);
-    settings.labels.strToKeys(settings_storage.readString("label-keys", ''));
-    settings.labels.tonic = settings_storage.readString("label-tonic", settings.labels.tonic);
-    settings.markers.color = settings_storage.readString("markers-color", settings.markers.color);
-    settings.markers.strToKeys(settings_storage.readString("markers-keys", ''));
-    settings.perspective = settings_storage.readBool("perspective", settings.perspective);
-    settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt);
-    settings.highlight_opacity = settings_storage.readString("highlight-opacity", settings.highlight_opacity);
-    settings.pedals = settings_storage.readBool("pedals", settings.pedals);
-    settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim);
-    settings.offset.y = settings_storage.readNumber("offset-y", settings.offset.y);
-    settings.device_name = settings_storage.readString("device", null);
-    settings.sound = settings_storage.readString("sound", "");
-    loadSessionSettings();
+    // Ignore errors
+    const attempt = f => { try { f(); } catch (e) { console.error(e)} };
+
+    attempt(loadFirstTimeTag);
+    attempt(()=> settings.graphics_quality = settings_storage.readNumber("graphics-quality", settings.graphics_quality));
+    attempt(()=> settings.language = settings_storage.readString("language", settings.language));
+    attempt(()=> settings.height_factor = settings_storage.readNumber("height-factor", is_mobile ? 0.75 : settings.height_factor));
+    attempt(()=> settings.number_of_keys = settings_storage.readNumber("number-of-keys", is_mobile ? 20 : settings.number_of_keys));
+    attempt(()=> settings.color_white = settings_storage.readString("color-white", settings.color_white));
+    attempt(()=> settings.color_black = settings_storage.readString("color-black", settings.color_black));
+    attempt(()=> settings.color_highlight = settings_storage.readString("color-pressed", settings.color_highlight));
+    attempt(()=> settings.labels.type = settings_storage.readString("label-type", settings.labels.type));
+    attempt(()=> settings.labels.octave = settings_storage.readBool("label-octave", settings.labels.octave));
+    attempt(()=> settings.labels.played = settings_storage.readBool("label-played", settings.labels.played));
+    attempt(()=> settings.labels.strToKeys(settings_storage.readString("label-keys", '')));
+    attempt(()=> settings.labels.tonic = settings_storage.readString("label-tonic", settings.labels.tonic));
+    attempt(()=> settings.markers.color = settings_storage.readString("markers-color", settings.markers.color));
+    attempt(()=> settings.markers.strToKeys(settings_storage.readString("markers-keys", '')));
+    attempt(()=> settings.perspective = settings_storage.readBool("perspective", settings.perspective));
+    attempt(()=> settings.top_felt = settings_storage.readBool("top-felt", settings.top_felt));
+    attempt(()=> settings.highlight_opacity = settings_storage.readString("highlight-opacity", settings.highlight_opacity));
+    attempt(()=> settings.pedals = settings_storage.readBool("pedals", settings.pedals));
+    attempt(()=> settings.pedal_dim = settings_storage.readBool("pedal-dim", settings.pedal_dim));
+    attempt(()=> settings.offset.y = settings_storage.readNumber("offset-y", settings.offset.y));
+    attempt(()=> settings.device_name = settings_storage.readString("device", null));
+    attempt(()=> settings.sound = settings_storage.readString("sound", ""));
+    attempt(loadSessionSettings);
 }
 
 
@@ -377,17 +380,22 @@ export function resetSettings(ask = false) {
 
 
 export function changeLanguage(code) {
-    const new_code = i18n.setLanguage(code);
-    if ( new_code === code ) {
-        settings.language = new_code;
-        document.documentElement.setAttribute("lang", code);
-        i18n.translateDOM(document.body);
-        updateKbdNavigator();
-        updateToolbarBasedOnWidth();
-        updateOnboardingTour();
-        saveLanguageSetting();
+    try {
+        const new_code = i18n.setLanguage(code);
+        if ( new_code === code ) {
+            settings.language = new_code;
+            document.documentElement.setAttribute("lang", code);
+            i18n.translateDOM(document.body);
+            updateKbdNavigator();
+            updateToolbarBasedOnWidth();
+            updateOnboardingTour();
+            saveLanguageSetting();
+        }
+        return new_code;
+    } catch (e) {
+        console.error(e);
+        return settings.language;
     }
-    return new_code;
 }
 
 
