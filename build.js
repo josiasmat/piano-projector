@@ -4,11 +4,13 @@ import fs from 'node:fs';
 import { copyFile, cp } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, resolve, relative, basename, dirname, sep } from 'node:path';
+import { URL } from 'node:url';
 import { minifyTemplates, writeFiles } from "esbuild-minify-templates";
 import { sassPlugin } from 'esbuild-sass-plugin';
 import posthtml from "posthtml";
 import include from "posthtml-include";
 import htmlnano from "htmlnano";
+import { minify } from '@putout/minify';
 
 const productionMode = ('--dev' !== (argv[2] || process.env.NODE_ENV));
 const targetBrowsers = ['chrome130','firefox132'];
@@ -278,7 +280,7 @@ function buildPrecacheAssetsList(obj, basePath) {
     
     for (const entry of entries) {
       const fullPath = resolve(dir, entry.name);
-      const relativePath = join(basePrefix, entry.name);
+      const relativePath = basePrefix + entry.name;
       
       if (entry.isDirectory()) {
         files.push(...collectAssets(fullPath, relativePath + '/'));
@@ -298,7 +300,8 @@ function buildPrecacheAssetsList(obj, basePath) {
   // Collect all assets from folders listed in precache.folders
   for (const folder of obj.folders) {
     const folderPath = resolve(basePath, folder);
-    const allAssets = collectAssets(folderPath, folder).sort();
+    const relativeFolder = folder.endsWith('/') ? folder : folder + '/';
+    const allAssets = collectAssets(folderPath, relativeFolder).sort();
     
     // Filter out excluded assets
     const filteredAssets = allAssets.filter(asset => !obj.exclude.includes(asset));
@@ -361,7 +364,8 @@ function generateServiceWorker(templateFile, cacheName, assetsList) {
       .replace("'%%CACHE_NAME%%'", JSON.stringify(cacheName))
       .replace("'%%PRECACHE_ASSETS%%'", JSON.stringify(assetsList, null, 2));
 
-    fs.writeFileSync(SW_OUT_FILEPATH, swContent);
+    const swMinified = minify(swContent);
+    fs.writeFileSync(SW_OUT_FILEPATH, swMinified);
     console.log(`wrote production ${SW_FILENAME} from template with embedded cache list\n`+
                 `  cache name: ${cacheName}\n`+
                 `  precache assets: ${assetsList.length} files`
@@ -425,7 +429,7 @@ async function buildHtml(minify = true) {
     minifyCss: false,
     minifyHtmlTemplate: true,
     minifyConditionalComments: true,
-    minifyJs: false,
+    minifyJs: true,
     minifyJson: false,
     minifyAttributes: false,
     minifySvg: false,
