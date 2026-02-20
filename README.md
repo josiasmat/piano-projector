@@ -39,7 +39,7 @@ The app (`/pwa`) accepts the following URL query parameters:
 
 Feel free to contact me: josiasmatschulat@outlook.com
 
-Copyright 2025 Josias Matschulat
+Copyright 2025-2026 Josias Matschulat
 
 This software is licensed under the terms of the [GNU Affero General Public License v3](https://www.gnu.org/licenses/agpl-3.0.html).
 
