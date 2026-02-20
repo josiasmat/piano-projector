@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import { copyFile, cp } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, resolve, relative, basename, dirname, sep } from 'node:path';
-import { URL } from 'node:url';
 import { minifyTemplates, writeFiles } from "esbuild-minify-templates";
 import { sassPlugin } from 'esbuild-sass-plugin';
 import posthtml from "posthtml";
@@ -39,7 +38,6 @@ const SW_FILENAME = 'sw.js';
 const SW_TEMPLATE_FILE = resolve(SRC_PWA_PATH, `${SW_FILENAME}.template`);
 const SW_OUT_FILEPATH = resolve(PUB_PWA_PATH, SW_FILENAME);
 
-const DATA_DIRNAME = 'data';
 const LANDING_DIRNAME = 'landing';
 const ASSETS_DIRNAME = 'assets';
 const I18N_DIRNAME = 'i18n';
@@ -48,8 +46,8 @@ const COPY_LIST = [
   {src: LANDING_DIRNAME, dest: PUB_PATH},
   {src: 'LICENSE.md', dest: resolve(PUB_PATH, 'LICENSE.md')},
   {src: join(SRC_PWA_PATH, 'manifest.json'), dest: join(PUB_PWA_PATH, 'manifest.json')},
-  {src: join(DATA_DIRNAME, ASSETS_DIRNAME), dest: join(PUB_PWA_PATH, ASSETS_DIRNAME)},
-  {src: join(DATA_DIRNAME, I18N_DIRNAME), dest: join(PUB_PWA_PATH, I18N_DIRNAME)},
+  {src: join(SRC_PWA_PATH, ASSETS_DIRNAME), dest: join(PUB_PWA_PATH, ASSETS_DIRNAME)},
+  {src: join(SRC_PWA_PATH, I18N_DIRNAME), dest: join(PUB_PWA_PATH, I18N_DIRNAME)},
 ];
 
 /** CSS bundle parameters @type {esbuild.BuildOptions} */
@@ -118,7 +116,6 @@ console.log(`Starting ${ productionMode ? 'Production' : 'Development' } build..
 
 createDirectory(PUB_PATH);
 createDirectory(PUB_PWA_PATH);
-await buildHtml();
 await copyFilesAndDirs(COPY_LIST);
 
 
@@ -128,6 +125,7 @@ if ( productionMode ) {
   // generates a service worker to cache files for offline usage
 
   deleteSourceMaps();
+  await buildHtml(true);
   await bundleCssAndJs(cssBuildOptions, jsBuildOptions);
   const precacheAssets = buildPrecacheAssetsList(PRECACHE, PUB_PWA_PATH);
   const hash = computeHexHash([SW_TEMPLATE_FILE, ...precacheAssets]);
@@ -140,6 +138,8 @@ if ( productionMode ) {
   // builds and watches for changes while running a HTTP server
 
   deleteServiceWorker();
+
+  await buildHtml(false);
 
   const buildCSS = await esbuild.context(cssBuildOptions);
   const buildJS = await esbuild.context(jsBuildOptions);
@@ -414,7 +414,7 @@ function watchForHtmlChanges() {
     { recursive: true },
     () => {
       clearTimeout(timeout);
-      timeout = setTimeout(() => buildHtml(), DEBOUNCE_MS);
+      timeout = setTimeout(() => buildHtml(false), DEBOUNCE_MS);
     }
   );
   
@@ -451,5 +451,5 @@ async function buildHtml(minify = true) {
     fs.writeFileSync(HTML_OUT_FILEPATH, combined.html);
   }
 
-  console.log(`file ${HTML_OUT_FILEPATH} built.`);
+  console.log(`file "${relative(BASE_PATH, HTML_OUT_FILEPATH)}" built.`);
 }
