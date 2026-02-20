@@ -1,0 +1,71 @@
+<!--
+Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
+Copyright (C) 2026 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<sl-dropdown id="dd-colors" stay-open-on-select>
+    <sl-button id="btn-colors" slot="trigger" caret>
+        <span data-nosnippet i18n="appearance-btn-label">Appearance</span>
+    </sl-button>
+    <sl-menu id="menu-appearance">
+        <sl-menu-item>
+            <span data-nosnippet i18n="appearance-menu-highlight-color">Highlight color</span>
+            <sl-menu slot="submenu">
+                <sl-color-picker id="color-pressed" no-format-toggle inline value="#f00" 
+                    swatches="#f00; #f70; #ff0; #0f0; #0ff; #00f; #70f; #f0f;
+                                #a00; #a50; #aa0; #0a0; #0aa; #00a; #50a; #a0a;"
+                    label="Pressed key color">
+                </sl-color-picker>
+            </sl-menu>
+        </sl-menu-item>
+        <sl-menu-item>
+            <span data-nosnippet i18n="appearance-menu-highlight-opacity">Highlight opacity</span>
+            <sl-menu id="menu-highlight-opacity" slot="submenu">
+                <sl-menu-item type="checkbox" value="100%" i18n="appearance-menu-highlight-opacity-opaque">Opaque</sl-menu-item>
+                <sl-menu-item type="checkbox" value="70%"  i18n="appearance-menu-highlight-opacity-semiopaque">Semiopaque</sl-menu-item>
+                <sl-menu-item type="checkbox" value="40%"  i18n="appearance-menu-highlight-opacity-semitransparent">Semitransparent</sl-menu-item>
+            </sl-menu>
+        </sl-menu-item>
+        <sl-divider></sl-divider>
+        <sl-menu-item>
+            <span data-nosnippet i18n="appearance-menu-white-key-color">White key color</span>
+            <sl-menu slot="submenu">
+                <sl-color-picker id="color-white" no-format-toggle inline value="#fff" 
+                    swatches="#fff; #eee; #ddd; #aaa; #555; #222; #111; #000;"
+                    label="White key color">
+                </sl-color-picker>
+            </sl-menu>
+        </sl-menu-item>
+        <sl-menu-item>
+            <span data-nosnippet i18n="appearance-menu-black-key-color">Black key color</span>
+            <sl-menu slot="submenu">
+                <sl-color-picker id="color-black" no-format-toggle inline value="#000" 
+                    swatches="#fff; #eee; #ddd; #aaa; #555; #222; #111; #000;"
+                    label="Black key color">
+                </sl-color-picker>
+            </sl-menu>
+        </sl-menu-item>
+        <sl-divider></sl-divider>
+        <sl-menu-item id="mi-appearance-perspective" type="checkbox" checked>
+            <span data-nosnippet i18n="appearance-menu-perspective">Perspective view</span>
+        </sl-menu-item>
+        <sl-menu-item id="mi-appearance-red-felt" type="checkbox" checked>
+            <span data-nosnippet i18n="appearance-menu-red-felt">Show red felt</span>
+        </sl-menu-item>
+    </sl-menu>
+</sl-dropdown>

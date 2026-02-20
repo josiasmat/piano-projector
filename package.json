@@ -7,6 +7,9 @@
     "esbuild": "0.27.x",
     "esbuild-minify-templates": "^0.13.x",
     "esbuild-sass-plugin": "^3.6.0",
+    "htmlnano": "^3.1.0",
+    "posthtml": "^0.16.7",
+    "posthtml-include": "^2.0.1",
     "smplr": "^0.16.1",
     "soundfont2": "^0.5.0",
     "tinycolor2": "^1.6.0"

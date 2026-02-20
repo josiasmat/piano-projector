@@ -1,0 +1,54 @@
+<!--
+Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
+Copyright (C) 2026 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<sl-tooltip id="dd-control-tooltip" trigger="manual" distance="10" placement="bottom-start" index="0">
+    <span slot="content"></span>
+    <sl-dropdown id="dd-connect">
+        <sl-button id="btn-connect" slot="trigger" caret>
+            <span data-nosnippet i18n="control-btn-label">Control</span>
+            <sl-icon id="connection-power-icon" class="led-strong" slot="prefix" name="power"></sl-icon>
+        </sl-button>
+        <sl-menu id="midi-connection-menu">
+            <sl-menu-item id="mi-control-midi-prompt" disabled loading>
+                <span data-nosnippet i18n="control-menu-midi-requesting">Requesting MIDI access…</span>
+            </sl-menu-item>
+            <sl-menu-item id="mi-control-midi-denied" disabled>
+                <span data-nosnippet i18n="control-menu-midi-denied">MIDI access denied.</span>
+            </sl-menu-item>
+            <sl-menu-item id="mi-control-midi-unavailable" disabled>
+                <span data-nosnippet i18n="control-menu-midi-browser-unsupported">
+                    Your browser does not support the Web MIDI API.<br />
+                    To use MIDI, try updating your browser or switching<br />
+                    to <a href="https://www.mozilla.org/firefox/" rel="external" target="_blank">Mozilla Firefox</a>
+                    or <a href="https://www.google.com/chrome/" rel="external" target="_blank">Google Chrome</a>.
+                </span>
+            </sl-menu-item>
+            <sl-divider></sl-divider>
+            <sl-menu-item id="mi-control-computer-keyboard" type="checkbox">
+                <span data-nosnippet i18n="control-menu-computer-kbd">Computer keyboard</span>
+                <sl-icon name="keyboard" slot="prefix"></sl-icon>
+            </sl-menu-item>
+            <sl-menu-item id="mi-control-touch" type="checkbox">
+                <span data-nosnippet i18n="control-menu-touch-mouse">Touch or mouse</span>
+                <sl-icon name="hand-index" slot="prefix"></sl-icon>
+            </sl-menu-item>
+        </sl-menu>
+    </sl-dropdown>
+</sl-tooltip>

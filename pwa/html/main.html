@@ -1,0 +1,95 @@
+<!--
+Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
+Copyright (C) 2025 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html>
+<html lang="en" class="sl-theme-dark">
+
+    <head>
+        <meta name="author" content="Josias Matschulat" />
+        <meta name="color-scheme" content="dark" />
+        <meta name="theme-color" content="#171717" />
+        <meta name="keywords" content="music,piano,music keyboard,music theory,on-screen piano" />
+        <meta name="description" 
+            content="A versatile and easy-to-use on-screen piano keyboard for music education. Control it with a MIDI device, computer keyboard, mouse or touch."
+        />
+        <meta name="viewport" content="user-scalable=no" />
+        <title i18n="main-title">Piano Projector</title>
+        <include src="sw-script.html"></include>
+        <link rel="manifest" href="manifest.json" />
+        <link rel="preload" href="i18n/en.json" as="fetch" type="application/json" hreflang="en" crossorigin />
+        <link rel="preload" href="i18n/es.json" as="fetch" type="application/json" hreflang="es" crossorigin />
+        <link rel="preload" href="i18n/pt.json" as="fetch" type="application/json" hreflang="pt" crossorigin />
+        <link rel="stylesheet" blocking="render" href="bundle.css" />
+        <script type="module" src="bundle.js" async></script>
+        <link rel="icon" type="image/svg+xml" sizes="any" href="assets/favicon/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="128x128" href="assets/favicon/favicon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon/favicon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon/favicon-512.png" />
+        <link rel="license" type="text/markdown" href="/LICENSE.md" />
+    </head>
+
+    <body>
+
+        <div id="loading-title" class="title-text">Piano Projector</div>
+
+        <include src="dialog-about.html"></include>
+
+        <div id="toolbar">
+
+            <div id="toolbar-left">
+                <span id="toolbar-title" class="title-text">Piano Projector</span>
+                <include src="btn-control.html"></include>
+                <include src="btn-sound.html"></include>
+                <include src="btn-transpose.html"></include>
+                <include src="btn-size.html"></include>
+                <include src="btn-appearance.html"></include>
+                <include src="btn-pedals.html"></include>
+                <include src="btn-label.html"></include>
+                <include src="btn-mark.html"></include>
+            </div>
+
+            <div id="toolbar-right">
+                <include src="btn-options.html"></include>
+                <include src="btns-right.html"></include>
+            </div>
+
+        </div>
+
+        <div id="outer-main-area">
+
+            <div id="main-area">
+                <div id="keyboard-navigator" hidden>
+                    <sl-breadcrumb></sl-breadcrumb>
+                </div>
+                <svg id="piano"></svg>
+                <sl-tooltip id="btn-show-toolbar-tooltip">
+                    <span slot="content" i18n="toolbar-show-btn-tooltip">Show toolbar (F9)</span>
+                    <sl-button id="btn-show-toolbar" hidden>
+                        <sl-icon name="chevron-down" label="Show toolbar"></sl-icon>
+                    </sl-button>
+                </sl-tooltip>
+            </div>
+
+        </div>
+        
+        <include src="templates.html"></include>
+        
+    </body>
+</html>

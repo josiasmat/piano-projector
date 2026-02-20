@@ -1,0 +1,59 @@
+<!--
+Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
+Copyright (C) 2026 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<sl-dropdown id="dd-transpose" stay-open-on-select>
+    <sl-button id="btn-transpose" slot="trigger" caret>
+        <span data-nosnippet i18n="transpose-btn-label">Transpose</span>
+        <sl-icon id="transpose-power-icon" class="led-strong" name="arrow-down-up" slot="prefix" label="Enable transpose"></sl-icon>
+    </sl-button>
+    <sl-menu id="menu-transpose">
+        <div id="transpose-controls" class="custom-menu-item">
+            <div>
+                <span class="custom-menu-item-label" data-nosnippet i18n="transpose-menu-semitones">Semitones</span><br />
+                <sl-button-group label="Transpose semitones">
+                    <sl-button id="btn-semitone-minus" pill>
+                        <sl-icon name="dash" label="Settings"></sl-icon>
+                    </sl-button>
+                    <sl-input id="input-semitones" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
+                    <sl-button id="btn-semitone-plus" pill>
+                        <sl-icon name="plus" label="Settings"></sl-icon>
+                    </sl-button>
+                </sl-button-group>
+            </div>
+            <div>
+                <span class="custom-menu-item-label" data-nosnippet i18n="transpose-menu-octaves">Octaves</span><br />
+                <sl-button-group label="Transpose octaves">
+                    <sl-button id="btn-octave-minus" pill>
+                        <sl-icon name="dash" label="Settings"></sl-icon>
+                    </sl-button>
+                    <sl-input id="input-octaves" readonly valueAsNumber value="0" style="width: 7ch;"></sl-input>
+                    <sl-button id="btn-octave-plus" pill>
+                        <sl-icon name="plus" label="Settings"></sl-icon>
+                    </sl-button>
+                </sl-button-group>
+            </div>
+        </div>
+        <sl-divider style="margin-top: 8px;"></sl-divider>
+        <sl-menu-item id="mi-transpose-reset" disabled>
+            <span data-nosnippet i18n="transpose-menu-reset">Reset transposition</span>
+            <sl-icon slot="prefix" name="arrow-counterclockwise"></sl-icon>
+        </sl-menu-item>
+    </sl-menu>
+</sl-dropdown>

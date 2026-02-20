@@ -1,0 +1,41 @@
+<!--
+Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
+Copyright (C) 2026 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<sl-dropdown id="dd-sound">
+    <sl-button id="btn-sound" slot="trigger" caret>
+        <span data-nosnippet i18n="sound-btn-label">Sound</span>
+        <sl-icon id="sound-power-icon" class="led-weak" slot="prefix" name="music-note-beamed"></sl-icon>
+    </sl-button>
+    <sl-menu id="menu-sound">
+        <sl-menu-item id="mi-sound-unavailable" disabled>
+            <span data-nosnippet i18n="sound-menu-unavailable">Sound not available.</span>
+            <sl-icon name="ban" slot="prefix"></sl-icon>
+        </sl-menu-item>
+        <sl-menu-item class="mi-sound" i18n="sound-menu-disabled" value="" type="checkbox" checked hidden>Disabled</sl-menu-item>
+        <sl-menu-item class="mi-sound" i18n="sound-menu-apiano" value="apiano"  type="checkbox" hidden>Acoustic Piano</sl-menu-item>
+        <sl-menu-item class="mi-sound" i18n="sound-menu-epiano1" value="epiano1" type="checkbox" hidden>Electric Piano 1</sl-menu-item>
+        <sl-menu-item class="mi-sound" i18n="sound-menu-epiano2" value="epiano2" type="checkbox" hidden>Electric Piano 2</sl-menu-item>
+        <sl-menu-item class="mi-sound" i18n="sound-menu-epiano3" value="epiano3" type="checkbox" hidden>Electric Piano 3</sl-menu-item>
+        <sl-menu-item class="mi-sound" i18n="sound-menu-organ1" value="organ1" type="checkbox" hidden>B3 Organ Slow</sl-menu-item>
+        <sl-menu-item class="mi-sound" i18n="sound-menu-organ2" value="organ2" type="checkbox" hidden>B3 Organ Fast</sl-menu-item>
+        <sl-menu-item class="mi-sound" i18n="sound-menu-organ3" value="organ3" type="checkbox" hidden>Percussive Organ</sl-menu-item>
+        <sl-menu-item class="mi-sound" i18n="sound-menu-harpsi" value="harpsi" type="checkbox" hidden>Harpsichord</sl-menu-item>
+    </sl-menu>
+</sl-dropdown>

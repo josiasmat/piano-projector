@@ -6,6 +6,9 @@ import { createHash } from 'node:crypto';
 import { join, resolve, relative, basename, dirname, sep } from 'node:path';
 import { minifyTemplates, writeFiles } from "esbuild-minify-templates";
 import { sassPlugin } from 'esbuild-sass-plugin';
+import posthtml from "posthtml";
+import include from "posthtml-include";
+import htmlnano from "htmlnano";
 
 const productionMode = ('--dev' !== (argv[2] || process.env.NODE_ENV));
 const targetBrowsers = ['chrome130','firefox132'];
@@ -15,6 +18,10 @@ const BASE_PATH = resolve();
 const SRC_PWA_PATH = resolve('.', 'pwa');
 const PUB_PATH = resolve('.', 'pub');
 const PUB_PWA_PATH = resolve(PUB_PATH, 'pwa');
+
+const HTML_SRC_PATH = resolve(SRC_PWA_PATH, 'html');
+const HTML_SRC_FILEPATH = resolve(HTML_SRC_PATH, 'main.html');
+const HTML_OUT_FILEPATH = resolve(PUB_PWA_PATH, 'index.html');
 
 const CSS_SRC_FILEPATH = resolve(SRC_PWA_PATH, 'css', 'main.css');
 const CSS_OUT_FILENAME = 'bundle.css';
@@ -38,7 +45,6 @@ const I18N_DIRNAME = 'i18n';
 const COPY_LIST = [
   {src: LANDING_DIRNAME, dest: PUB_PATH},
   {src: 'LICENSE.md', dest: resolve(PUB_PATH, 'LICENSE.md')},
-  {src: join(SRC_PWA_PATH, 'index.html'), dest: join(PUB_PWA_PATH, 'index.html')},
   {src: join(SRC_PWA_PATH, 'manifest.json'), dest: join(PUB_PWA_PATH, 'manifest.json')},
   {src: join(DATA_DIRNAME, ASSETS_DIRNAME), dest: join(PUB_PWA_PATH, ASSETS_DIRNAME)},
   {src: join(DATA_DIRNAME, I18N_DIRNAME), dest: join(PUB_PWA_PATH, I18N_DIRNAME)},
@@ -110,7 +116,9 @@ console.log(`Starting ${ productionMode ? 'Production' : 'Development' } build..
 
 createDirectory(PUB_PATH);
 createDirectory(PUB_PWA_PATH);
+await buildHtml();
 await copyFilesAndDirs(COPY_LIST);
+
 
 if ( productionMode ) {
 
@@ -138,6 +146,7 @@ if ( productionMode ) {
   await buildJS.watch();
 
   watchForFileChanges(COPY_LIST);
+  watchForHtmlChanges();
 
   await buildCSS.serve({
     servedir: PUB_PATH
@@ -389,4 +398,54 @@ function watchForFileChanges(copy_list) {
       } 
     )
   );
+}
+
+
+function watchForHtmlChanges() {
+  const DEBOUNCE_MS = 200;
+  let timeout = null;
+
+  fs.watch(
+    HTML_SRC_PATH,
+    { recursive: true },
+    () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => buildHtml(), DEBOUNCE_MS);
+    }
+  );
+  
+}
+
+/** @param {boolean} minify */
+async function buildHtml(minify = true) {
+  console.log("\nBuilding HTML file...");
+
+  const htmlnanoOptions = {
+    collapseWhitespace: 'conservative',
+    minifyCss: false,
+    minifyHtmlTemplate: true,
+    minifyConditionalComments: true,
+    minifyJs: false,
+    minifyJson: false,
+    minifyAttributes: false,
+    minifySvg: false,
+    removeComments: true,
+    removeEmptyAttributes: false
+  };
+
+  const posthtmlIncludeOptions = {
+    root: HTML_SRC_PATH
+  };
+
+  const html = fs.readFileSync(HTML_SRC_FILEPATH, "utf8");
+  const combined = await posthtml([include(posthtmlIncludeOptions)]).process(html);
+  if ( minify ) {
+    const pre_minified = combined.html.replace(/\s+/g, ' ').trim();
+    const minified = await htmlnano.process(pre_minified, htmlnanoOptions);
+    fs.writeFileSync(HTML_OUT_FILEPATH, minified.html);
+  } else {
+    fs.writeFileSync(HTML_OUT_FILEPATH, combined.html);
+  }
+
+  console.log(`file ${HTML_OUT_FILEPATH} built.`);
 }

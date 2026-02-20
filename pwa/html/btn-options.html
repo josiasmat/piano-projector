@@ -1,0 +1,46 @@
+<!--
+Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
+Copyright (C) 2026 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<sl-tooltip id="btn-options-tooltip">
+    <span slot="content" i18n="options-btn-tooltip">More options</span>
+    <sl-dropdown id="dd-options">
+        <sl-button id="btn-options" slot="trigger">
+            <sl-icon name="gear" label="More options"></sl-icon>
+        </sl-button>
+        <sl-menu id="menu-options">
+            <sl-menu-item>
+                <span data-nosnippet i18n="options-menu-language">Language</span>
+                <sl-menu id="menu-language" slot="submenu"></sl-menu>
+            </sl-menu-item>
+            <sl-menu-item>
+                <span data-nosnippet i18n="options-menu-graphics-quality">Graphics quality</span>
+                <sl-menu id="menu-graphics-quality" slot="submenu">
+                    <sl-menu-item type="checkbox" value="2" i18n="options-menu-graphics-quality-high">High</sl-menu-item>
+                    <sl-menu-item type="checkbox" value="1" i18n="options-menu-graphics-quality-medium">Medium</sl-menu-item>
+                    <sl-menu-item type="checkbox" value="0" i18n="options-menu-graphics-quality-low">Low</sl-menu-item>
+                </sl-menu>
+            </sl-menu-item>     
+            <sl-divider></sl-divider>
+            <sl-menu-item id="mi-options-reset">
+                <span data-nosnippet i18n="options-menu-reset">Reset all settings</span>
+            </sl-menu-item>                   
+        </sl-menu>
+    </sl-dropdown>
+</sl-tooltip>

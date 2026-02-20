@@ -1,0 +1,62 @@
+<!--
+Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
+Copyright (C) 2026 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<sl-button-group id="btn-mark-group">
+    <sl-button id="btn-mark-switch">
+        <span data-nosnippet i18n="mark-btn-label">Mark</span>
+        <sl-icon id="mark-power-icon" slot="prefix" name="bookmark-fill" class="led-weak"></sl-icon>
+    </sl-button>
+    <sl-dropdown id="dd-markers" placement="bottom-end" stay-open-on-select>
+        <sl-button id="btn-mark-dropdown" slot="trigger" caret>
+            <sl-visually-hidden data-nosnippet>More marking options</sl-visually-hidden>
+        </sl-button>
+        <sl-menu id="menu-mark-top">
+            <sl-menu-item type="checkbox" value="red">
+                <span data-nosnippet i18n="mark-menu-red">Red</span>
+                <sl-icon slot="prefix" name="bookmark-fill" style="color: red"></sl-icon>
+                <span slot="suffix" class="menu-keyboard-shortcut">F3</span>
+            </sl-menu-item>
+            <sl-menu-item type="checkbox" value="yellow">
+                <span data-nosnippet i18n="mark-menu-yellow">Yellow</span>
+                <sl-icon slot="prefix" name="bookmark-fill" style="color: #dd0"></sl-icon>
+                <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
+            </sl-menu-item>
+            <sl-menu-item type="checkbox" value="green">
+                <span data-nosnippet i18n="mark-menu-green">Green</span>
+                <sl-icon slot="prefix" name="bookmark-fill" style="color: #0b0"></sl-icon>
+                <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
+            </sl-menu-item>
+            <sl-menu-item type="checkbox" value="blue">
+                <span data-nosnippet i18n="mark-menu-blue">Blue</span>
+                <sl-icon slot="prefix" name="bookmark-fill" style="color: blue"></sl-icon>
+                <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
+            </sl-menu-item>
+            <sl-menu-item type="checkbox" value="violet">
+                <span data-nosnippet i18n="mark-menu-violet">Violet</span>
+                <sl-icon slot="prefix" name="bookmark-fill" style="color: violet"></sl-icon>
+                <span slot="suffix" class="menu-keyboard-shortcut invisible">F3</span>
+            </sl-menu-item>
+            <sl-divider></sl-divider>
+            <sl-menu-item id="mi-mark-clear" i18n="mark-menu-clear">
+                Clear all
+            </sl-menu-item>
+        </sl-menu>
+    </sl-dropdown>
+</sl-button-group>

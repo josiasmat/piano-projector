@@ -1,0 +1,68 @@
+<!--
+Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
+Copyright (C) 2026 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<sl-tooltip id="btn-label-tooltip" trigger="manual" distance="10" placement="bottom" index="0">
+    <span i18n="label-btn-tooltip" slot="content"></span>
+    <sl-button-group id="btn-label-group" class="space-before">
+        <sl-button id="btn-label-switch">
+            <span data-nosnippet i18n="label-btn-label">Label</span>
+            <sl-icon id="label-power-icon" slot="prefix" name="tags-fill" class="led-strong"></sl-icon>
+        </sl-button>
+        <sl-dropdown id="dd-labels" placement="bottom-end" stay-open-on-select>
+            <sl-button id="btn-label-dropdown" slot="trigger" caret>
+                <sl-visually-hidden data-nosnippet>More labeling options</sl-visually-hidden>
+            </sl-button>
+            <sl-menu id="menu-label-top">
+                <sl-menu-item id="mi-labeling-mode" type="checkbox" value="labeling-mode" i18n="label-menu-labeling-mode">
+                    Labeling mode
+                    <span slot="suffix" class="menu-keyboard-shortcut">F2</span>
+                </sl-menu-item>
+                <sl-menu-item id="mi-label-played" type="checkbox" value="played-keys" i18n="label-menu-played-keys">
+                    Show on played keys
+                </sl-menu-item>
+                <sl-menu-item>
+                    <span data-nosnippet i18n="label-menu-format">Format</span>
+                    <sl-menu id="menu-label-type" slot="submenu">
+                        <sl-menu-item type="checkbox" i18n="label-menu-format-english" value="english" checked><span data-nosnippet>English</span></sl-menu-item>
+                        <sl-menu-item type="checkbox" i18n="label-menu-format-german" value="german"><span data-nosnippet>German</span></sl-menu-item>
+                        <sl-menu-item type="checkbox" i18n="label-menu-format-italian" value="italian"><span data-nosnippet>Italian</span></sl-menu-item>
+                        <sl-menu-item type="checkbox" i18n="label-menu-format-movdo" value="movdo"><span data-nosnippet>Solfège</span></sl-menu-item>
+                        <sl-menu-item type="checkbox" i18n="label-menu-format-pc" value="pc"><span data-nosnippet>Pitch class</span></sl-menu-item>
+                        <sl-menu-item type="checkbox" i18n="label-menu-format-midi" value="midi"><span data-nosnippet>MIDI value</span></sl-menu-item>
+                        <sl-menu-item type="checkbox" i18n="label-menu-format-freq" value="freq"><span data-nosnippet>Frequency</span></sl-menu-item>
+                        <sl-divider></sl-divider>
+                        <sl-menu-item id="mi-label-octave" type="checkbox" value="octave" checked>
+                            <span data-nosnippet i18n="label-menu-octave">Show octave</span>
+                        </sl-menu-item>
+                    </sl-menu>
+                    <sl-badge id="mi-label-format-badge" slot="suffix" variant="neutral" pill></sl-badge>
+                </sl-menu-item>
+                <sl-menu-item id="mi-label-tonic" type="checkbox" value="tonic-mode">
+                    <span data-nosnippet i18n="label-menu-tonic">Set tonic</span>
+                    <span slot="suffix" class="menu-keyboard-shortcut">F4</span>
+                </sl-menu-item>
+                <sl-divider></sl-divider>
+                <sl-menu-item id="mi-label-clear" i18n="label-menu-clear">
+                    Clear all
+                </sl-menu-item>
+            </sl-menu>
+        </sl-dropdown>
+    </sl-button-group>
+</sl-tooltip>

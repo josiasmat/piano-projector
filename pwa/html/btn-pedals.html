@@ -1,0 +1,38 @@
+<!--
+Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
+Copyright (C) 2026 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<sl-dropdown id="dd-pedals" stay-open-on-select>
+    <sl-button id="btn-pedals" slot="trigger" caret>
+        <span data-nosnippet i18n="pedals-btn-label">Pedals</span>
+        <div slot="prefix">
+            <sl-icon id="pedl" class="pedal-indicator led-weak" slot="prefix" src="assets/icons/lped.svg"></sl-icon>
+            <sl-icon id="pedm" class="pedal-indicator led-weak" slot="prefix" src="assets/icons/mped.svg"></sl-icon>
+            <sl-icon id="pedr" class="pedal-indicator led-weak" slot="prefix" src="assets/icons/rped.svg"></sl-icon>
+        </div>
+    </sl-button>
+    <sl-menu id="pedal-menu">
+        <sl-menu-item id="mi-pedals-follow" type="checkbox" checked>
+            <span data-nosnippet i18n="pedals-menu-follow">Follow pedals</span>
+        </sl-menu-item>
+        <sl-menu-item id="mi-pedals-dim" type="checkbox" checked>
+            <span data-nosnippet i18n="pedals-menu-dim">Dim pedalized notes</span>
+        </sl-menu-item>
+    </sl-menu>
+</sl-dropdown>

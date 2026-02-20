@@ -1,0 +1,44 @@
+<!--
+Piano Projector
+A versatile and easy-to-use on-screen piano keyboard for music education. 
+Control it with a MIDI device, your computer keyboard, mouse or touch.
+
+Copyright (C) 2026 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<sl-dropdown id="dd-size" class="space-before" stay-open-on-select>
+    <sl-button id="btn-size" slot="trigger" caret i18n="size-btn-label">Size</sl-button>
+    <div id="menu-size" class="custom-dropdown-panel">
+        <div id="mg-number-of-keys" class="custom-menu-item">
+            <span class="custom-menu-item-label" data-nosnippet i18n="size-menu-number">Number of keys:</span><br />
+            <sl-button-group>
+                <sl-button class="btn-number-of-keys" value="88">88</sl-button>
+                <sl-button class="btn-number-of-keys" value="61">61</sl-button>
+                <sl-button class="btn-number-of-keys" value="49">49</sl-button>
+                <sl-button class="btn-number-of-keys" value="37">37</sl-button>
+                <sl-button class="btn-number-of-keys" value="25">25</sl-button>
+                <sl-button class="btn-number-of-keys" value="20" hidden>20</sl-button>
+            </sl-button-group>
+        </div>
+        <div id="mg-key-depth" class="custom-menu-item">
+            <span class="custom-menu-item-label" data-nosnippet i18n="size-menu-depth">Key depth:</span><br />
+            <sl-button-group>
+                <sl-button class="btn-key-depth" value="1.0"  i18n="size-menu-depth-full">Full</sl-button>
+                <sl-button class="btn-key-depth" value="0.75" i18n="size-menu-depth-3/4" >3/4</sl-button>
+                <sl-button class="btn-key-depth" value="0.5"  i18n="size-menu-depth-1/2" >1/2</sl-button>
+            </sl-button-group>
+        </div>
+    </div>
+</sl-dropdown>
