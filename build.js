@@ -1,9 +1,10 @@
-import { argv } from 'node:process';
+import { argv, stderr } from 'node:process';
 import * as esbuild from 'esbuild';
 import fs from 'node:fs';
 import { copyFile, cp } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, resolve, relative, basename, dirname, sep } from 'node:path';
+import { stdout } from 'node:process';
 import { minifyTemplates, writeFiles } from "esbuild-minify-templates";
 import { sassPlugin } from 'esbuild-sass-plugin';
 import posthtml from "posthtml";
@@ -14,7 +15,7 @@ import { minify } from '@putout/minify';
 const productionMode = ('--dev' !== (argv[2] || process.env.NODE_ENV));
 const targetBrowsers = ['chrome130','firefox132'];
 
-const BASE_PATH = resolve();
+const BASE_PATH = resolve('.');
 
 const SRC_PWA_PATH = resolve('.', 'pwa');
 const PUB_PATH = resolve('.', 'pub');
@@ -38,16 +39,24 @@ const SW_FILENAME = 'sw.js';
 const SW_TEMPLATE_FILE = resolve(SRC_PWA_PATH, `${SW_FILENAME}.template`);
 const SW_OUT_FILEPATH = resolve(PUB_PWA_PATH, SW_FILENAME);
 
-const LANDING_DIRNAME = 'landing';
 const ASSETS_DIRNAME = 'assets';
+const ASSETS_SRC_PATH = resolve(SRC_PWA_PATH, ASSETS_DIRNAME);
+const ASSETS_OUT_PATH = resolve(PUB_PWA_PATH, ASSETS_DIRNAME);
+
 const I18N_DIRNAME = 'i18n';
+const I18N_SRC_PATH = resolve(SRC_PWA_PATH, I18N_DIRNAME);
+const I18N_OUT_PATH = resolve(PUB_PWA_PATH, I18N_DIRNAME);
+
+const LANDING_PAGE_DIRNAME = 'landing';
+const LANDING_PAGE_SRC_PATH = resolve(BASE_PATH, LANDING_PAGE_DIRNAME);
+const LANDING_PAGE_OUT_PATH = PUB_PATH;
 
 const COPY_LIST = [
-  {src: LANDING_DIRNAME, dest: PUB_PATH},
-  {src: 'LICENSE.md', dest: resolve(PUB_PATH, 'LICENSE.md')},
+  {src: LANDING_PAGE_SRC_PATH, dest: LANDING_PAGE_OUT_PATH},
+  {src: resolve(BASE_PATH, 'LICENSE.md'), dest: resolve(PUB_PATH, 'LICENSE.md')},
   {src: join(SRC_PWA_PATH, 'manifest.json'), dest: join(PUB_PWA_PATH, 'manifest.json')},
-  {src: join(SRC_PWA_PATH, ASSETS_DIRNAME), dest: join(PUB_PWA_PATH, ASSETS_DIRNAME)},
-  {src: join(SRC_PWA_PATH, I18N_DIRNAME), dest: join(PUB_PWA_PATH, I18N_DIRNAME)},
+  {src: ASSETS_SRC_PATH, dest: ASSETS_OUT_PATH},
+  {src: I18N_SRC_PATH, dest: I18N_OUT_PATH},
 ];
 
 /** CSS bundle parameters @type {esbuild.BuildOptions} */
@@ -93,6 +102,7 @@ const jsBuildOptions = {
 
 // define assets to precache
 const PRECACHE = {
+  root: PUB_PWA_PATH,
   folders: [
     ASSETS_DIRNAME,
     I18N_DIRNAME
@@ -112,9 +122,9 @@ const PRECACHE = {
 
 // Begin build
 
-console.log(`Starting ${ productionMode ? 'Production' : 'Development' } build...`);
+console.log(`Starting ${ productionMode ? 'PRODUCTION' : 'DEVELOPMENT' } build:\n`);
 
-createDirectory(PUB_PATH);
+createDirectory(PUB_PATH) || emptyDir(PUB_PATH);
 createDirectory(PUB_PWA_PATH);
 await copyFilesAndDirs(COPY_LIST);
 
@@ -124,13 +134,14 @@ if ( productionMode ) {
   // Production build:
   // generates a service worker to cache files for offline usage
 
-  deleteSourceMaps();
+  // deleteSourceMaps();
   await buildHtml(true);
   await bundleCssAndJs(cssBuildOptions, jsBuildOptions);
-  const precacheAssets = buildPrecacheAssetsList(PRECACHE, PUB_PWA_PATH);
+  const precacheAssets = buildPrecacheAssetsList(PRECACHE);
   const hash = computeHexHash([SW_TEMPLATE_FILE, ...precacheAssets]);
   const cacheName = 'pp-' + hash.slice(0, 16);
   generateServiceWorker(SW_TEMPLATE_FILE, cacheName, precacheAssets);
+  console.log("\nFinished production build.");
 
 } else {
 
@@ -159,13 +170,13 @@ if ( productionMode ) {
 
 /** Removes existing source maps (used only for development). */
 function deleteSourceMaps() {
-  console.log("\nDeleting existing map files...");
+  stdout.write("Deleting existing map files...");
   for ( const mapfile of [CSS_MAP_FILEPATH, JS_MAP_FILEPATH] ) {
     try { 
       fs.unlinkSync(mapfile); 
     } catch {}
   }
-  console.log("done");
+  stdout.write(" done.\n");
 }
 
 
@@ -181,11 +192,13 @@ function createDirectory(dir) {
   try {
     fs.mkdirSync(dir);
     console.log(`Created directory "${relative(BASE_PATH, dir)}".`);
+    return true;
   } catch (e) {
-    if ( e.code == 'EEXIST' )
+    if ( e.code == 'EEXIST' ) {
       console.log(`Directory "${relative(BASE_PATH, dir)}" already exists.`);
-    else
-      throw e;
+      return false;
+    }
+    throw e;
   }
 }
 
@@ -233,15 +246,15 @@ async function copyFilesAndDirs(files, filter = null) {
   );
   if ( filecount > 0 )
     console.log(( errorcount )
-      ? `finished copy of ${filecount-errorcount} file(s) with ${errorcount} error(s).` 
-      : `finished copy of ${filecount} file(s) without errors.`
+      ? `finished copy of ${filecount-errorcount} file(s) with ${errorcount} error(s).\n` 
+      : `finished copy of ${filecount} file(s) without errors.\n`
     );
 }
 
 
 /** Builds CSS and JS files. */
 async function bundleCssAndJs(cssOptions, jsOptions) {
-  console.log("\nBundling CSS and JS files...");
+  stdout.write("Bundling CSS and JS files...");
 
   const builder = (async (options) => {
     const ctx = await esbuild.context(options);
@@ -255,11 +268,13 @@ async function bundleCssAndJs(cssOptions, jsOptions) {
   ]);
 
   if ( cssResult.errors.length || jsResult.errors.length ) {
-    console.error("finished bundle with errors:");
-    console.error(cssResult.errors.toString());
-    console.error(jsResult.errors.toString());
+    stdout.write(" done with errors.\n");
+    stderr.write(cssResult.errors.toString() + '\n');
+    stderr.write(jsResult.errors.toString() + '\n');
+    return false;
   } else {
-    console.log("finished bundle without errors.");
+    stdout.write(" done without errors.\n");
+    return true;
   }
 }
 
@@ -267,12 +282,12 @@ async function bundleCssAndJs(cssOptions, jsOptions) {
 /** 
  * Builds the precache assets list. 
  * @param {object} obj
+ * @param {string} obj.root
  * @param {string[]} obj.folders
  * @param {string[]} obj.include
  * @param {string[]} obj.exclude
- * @param {string} basePath
  */
-function buildPrecacheAssetsList(obj, basePath) {
+function buildPrecacheAssetsList(obj) {
 
   const collectAssets = (dir, basePrefix) => {
     const files = [];
@@ -292,14 +307,14 @@ function buildPrecacheAssetsList(obj, basePath) {
     return files;
   }
 
-  console.log("\nCollecting assets for precache...");
+  stdout.write("Collecting assets for precache...");
 
   // Initialize precache assets list
   const assets = [...obj.include];
 
   // Collect all assets from folders listed in precache.folders
   for (const folder of obj.folders) {
-    const folderPath = resolve(basePath, folder);
+    const folderPath = resolve(obj.root, folder);
     const relativeFolder = folder.endsWith('/') ? folder : folder + '/';
     const allAssets = collectAssets(folderPath, relativeFolder).sort();
     
@@ -308,7 +323,7 @@ function buildPrecacheAssetsList(obj, basePath) {
     assets.push(...filteredAssets);
   }
 
-  console.log(`collected ${assets.length} entries.`);
+  stdout.write(` done: collected ${assets.length} assets.\n`);
 
   return assets;
 }
@@ -329,13 +344,13 @@ function computeHexHash(files) {
       hash.update(content);
       successCount++;
 
-    } catch (error) {
+    } catch (e) {
       errorCount++;
-      console.warn(`  unable to read ${relative(BASE_PATH, path)} for hashing:`, error.message);
+      // stdout.write(`  unable to read ${relative(BASE_PATH, path)} for hashing: ${e}`);
     }
   }
 
-  console.log("\nComputing hash for asset files...");
+  stdout.write("Computing hash for asset files...");
   const hash = createHash('md5');
 
   for (const asset of files) {
@@ -344,7 +359,7 @@ function computeHexHash(files) {
     computeFileHash(assetPath);
   }
 
-  console.log(`done with ${successCount} file(s) cached and ${errorCount} error(s).`);
+  stdout.write(` done: ${successCount} file(s) read, ${errorCount} error(s).\n`);
 
   return hash.digest('hex');
 }
@@ -358,7 +373,7 @@ function computeHexHash(files) {
  */
 function generateServiceWorker(templateFile, cacheName, assetsList) {
   try {
-    console.log("\nGenerating service worker file:");
+    stdout.write("Generating service worker file...");
     const template = fs.readFileSync(templateFile, 'utf8');
     const swContent = template
       .replace("'%%CACHE_NAME%%'", JSON.stringify(cacheName))
@@ -366,12 +381,10 @@ function generateServiceWorker(templateFile, cacheName, assetsList) {
 
     const swMinified = minify(swContent);
     fs.writeFileSync(SW_OUT_FILEPATH, swMinified);
-    console.log(`wrote production ${SW_FILENAME} from template with embedded cache list\n`+
-                `  cache name: ${cacheName}\n`+
-                `  precache assets: ${assetsList.length} files`
-    );
-  } catch (err) {
-    console.error(`failed to write ${SW_FILENAME} from template:`, err);
+    stdout.write(` done: cache name is "${cacheName}."\n`);
+  } catch (e) {
+    stdout.write('\n');
+    stderr.write(` error: ${e}\n`);
   }
 }
 
@@ -395,6 +408,7 @@ function watchForFileChanges(copy_list) {
         debounceMap.set(
           filename,
           setTimeout(() => {
+            stdout.write("[Change detected] ");
             copyFilesAndDirs(copy_list, filename);
             debounceMap.delete(filename);
           }, DEBOUNCE_MS)
@@ -414,7 +428,10 @@ function watchForHtmlChanges() {
     { recursive: true },
     () => {
       clearTimeout(timeout);
-      timeout = setTimeout(() => buildHtml(false), DEBOUNCE_MS);
+      timeout = setTimeout(() => {
+        stdout.write("[Change detected] ");
+        buildHtml(false);
+      }, DEBOUNCE_MS);
     }
   );
   
@@ -422,7 +439,7 @@ function watchForHtmlChanges() {
 
 /** @param {boolean} minify */
 async function buildHtml(minify = true) {
-  console.log("\nBuilding HTML file...");
+  stdout.write("Building HTML file...");
 
   const htmlnanoOptions = {
     collapseWhitespace: 'conservative',
@@ -451,5 +468,28 @@ async function buildHtml(minify = true) {
     fs.writeFileSync(HTML_OUT_FILEPATH, combined.html);
   }
 
-  console.log(`file "${relative(BASE_PATH, HTML_OUT_FILEPATH)}" built.`);
+  stdout.write(` done: "${relative(BASE_PATH, HTML_OUT_FILEPATH)}" built.\n`);
+}
+
+
+/** @param {string} path */
+function emptyDir(path, first=true) {
+  try {
+    if ( first ) stdout.write(`Emptying directory "${relative(BASE_PATH, path)}"...`);
+    const files = fs.readdirSync(path);
+    for ( const file of files ) {
+      const filePath = resolve(path, file);
+      if ( isDir(filePath) ) {
+        emptyDir(filePath, false);
+        fs.rmdirSync(filePath);
+      } else {
+        fs.unlinkSync(filePath);
+      }
+    }
+    if ( first ) stdout.write(` done.\n`);
+  } catch (e) {
+    stdout.write(` error: "${e}"\n`);
+    if ( e.code !== 'ENOENT' )
+      throw e;
+  }
 }
