@@ -1,6 +1,6 @@
 import { argv, stderr } from 'node:process';
 import * as esbuild from 'esbuild';
-import fs from 'node:fs';
+import fs, { readdirSync } from 'node:fs';
 import { copyFile, cp } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, resolve, relative, basename, dirname, sep } from 'node:path';
@@ -52,34 +52,49 @@ const LANDING_PAGE_SRC_PATH = resolve(BASE_PATH, LANDING_PAGE_DIRNAME);
 const LANDING_PAGE_OUT_PATH = PUB_PATH;
 
 const COPY_LIST = [
-  {src: LANDING_PAGE_SRC_PATH, dest: LANDING_PAGE_OUT_PATH},
+  {src: LANDING_PAGE_SRC_PATH, dest: LANDING_PAGE_OUT_PATH, 
+    exclude: ["index.html", "script.js", "style.css"]},
   {src: resolve(BASE_PATH, 'LICENSE.md'), dest: resolve(PUB_PATH, 'LICENSE.md')},
   {src: join(SRC_PWA_PATH, 'manifest.json'), dest: join(PUB_PWA_PATH, 'manifest.json')},
   {src: ASSETS_SRC_PATH, dest: ASSETS_OUT_PATH},
   {src: I18N_SRC_PATH, dest: I18N_OUT_PATH},
 ];
 
-/** CSS bundle parameters @type {esbuild.BuildOptions} */
-const cssBuildOptions = {
-    entryPoints: [ CSS_SRC_FILEPATH ],
+const LANDING_HTML_LIST = getIndexHtmlFiles(LANDING_PAGE_SRC_PATH).map(file => ({
+  src: file, dest: join(LANDING_PAGE_OUT_PATH, relative(LANDING_PAGE_SRC_PATH, file))
+}));
+
+/** @type {esbuild.BuildOptions} */
+const commonCssBuildOptions = {
     bundle: true,
     target: targetBrowsers,
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
     sourcemap: !productionMode,
+    external: ['*.woff2']
+};
+
+/** @type {esbuild.BuildOptions} */
+const pwaCssBuildOptions = {
+  ...commonCssBuildOptions,
+    entryPoints: [CSS_SRC_FILEPATH],
     outfile: CSS_OUT_FILEPATH,
     plugins: [sassPlugin({
       filter: /\.scss$/
     })],
     loader: {
       ".scss": "css",
-    },
-    external: [ '*.woff2' ]
+    }
+};
+
+const landingPageCssBuildOptions = {
+  ...commonCssBuildOptions,
+  entryPoints: [join(LANDING_PAGE_SRC_PATH, "style.css")],
+  outfile: join(LANDING_PAGE_OUT_PATH, "style.css")
 };
 
 /** JS bundle parameters @type {esbuild.BuildOptions} */
-const jsBuildOptions = {
-    entryPoints: [ JS_SRC_FILEPATH ],
+const commonJsBuildOptions = {
     format: 'esm',
     bundle: true,
     target: targetBrowsers,
@@ -91,14 +106,26 @@ const jsBuildOptions = {
     ] : [],
     logLevel: productionMode ? 'error' : 'info',
     minify: productionMode,
-    sourcemap: !productionMode,
+    sourcemap: !productionMode
+};
+
+const pwaJsBuildOptions = {
+    ...commonJsBuildOptions,
+    entryPoints: [JS_SRC_FILEPATH],
     outfile: JS_OUT_FILEPATH,
-    write: false,
     plugins: [
       minifyTemplates({ taggedOnly: true }), 
       writeFiles()
-    ]
+    ],
+    write: false
 };
+
+const landingPageJsBuildOptions = {
+  ...commonJsBuildOptions,
+  entryPoints: [join(LANDING_PAGE_SRC_PATH, "script.js")],
+  outfile: join(LANDING_PAGE_OUT_PATH, "script.js")
+};
+
 
 // define assets to precache
 const PRECACHE = {
@@ -115,7 +142,7 @@ const PRECACHE = {
     'manifest.json',
   ],
   exclude: [
-    ASSETS_DIRNAME+'fonts/orbitron-license.txt'
+    'orbitron-license.txt'
   ]
 }
 
@@ -135,8 +162,14 @@ if ( productionMode ) {
   // generates a service worker to cache files for offline usage
 
   // deleteSourceMaps();
-  await buildHtml(true);
-  await bundleCssAndJs(cssBuildOptions, jsBuildOptions);
+  await buildHtml(HTML_SRC_FILEPATH, HTML_OUT_FILEPATH, true);
+  for ( const {src,dest} of LANDING_HTML_LIST ) await buildHtml(src, dest, true);
+  await bundleCssAndJs([
+    pwaCssBuildOptions, 
+    pwaJsBuildOptions,
+    landingPageCssBuildOptions,
+    landingPageJsBuildOptions
+  ]);
   const precacheAssets = buildPrecacheAssetsList(PRECACHE);
   const hash = computeHexHash([SW_TEMPLATE_FILE, ...precacheAssets]);
   const cacheName = 'pp-' + hash.slice(0, 16);
@@ -150,18 +183,24 @@ if ( productionMode ) {
 
   deleteServiceWorker();
 
-  await buildHtml(false);
+  await buildHtml(HTML_SRC_FILEPATH, HTML_OUT_FILEPATH, false);
+  for ( const {src,dest} of LANDING_HTML_LIST ) await buildHtml(src, dest, false);
 
-  const buildCSS = await esbuild.context(cssBuildOptions);
-  const buildJS = await esbuild.context(jsBuildOptions);
+  watchForHtmlChanges(HTML_SRC_PATH, HTML_SRC_FILEPATH, HTML_OUT_FILEPATH);
+  LANDING_HTML_LIST.forEach(({src,dest}) => watchForHtmlChanges(src, src, dest));
   
-  await buildCSS.watch();
-  await buildJS.watch();
+  const builds = await Promise.all([
+    esbuild.context(pwaCssBuildOptions),
+    esbuild.context(pwaJsBuildOptions),
+    esbuild.context(landingPageCssBuildOptions),
+    esbuild.context(landingPageJsBuildOptions)
+  ]);
+  
+  for ( const build of builds ) await build.watch();
 
   watchForFileChanges(COPY_LIST);
-  watchForHtmlChanges();
 
-  await buildCSS.serve({
+  await builds[0].serve({
     servedir: PUB_PATH
   });
 
@@ -215,14 +254,14 @@ async function copyFilesAndDirs(files, filter = null) {
   let filecount = 0;
   let errorcount = 0;
   await Promise.allSettled(
-    files.map(({src, dest}) => {
+    files.map(({src, dest, exclude}) => {
       if ( isDir(src) ) {
         return cp(src, dest, {
           recursive: true,
           preserveTimestamps: true,
           filter: (sf, df) => { 
             const isFile = !isDir(sf);
-            const result = !(filter) || !isFile || df.endsWith(filter);
+            const result = !isExcluded(sf, exclude) && ( !(filter) || !isFile || df.endsWith(filter) );
             if ( result && isFile ) {
               console.log(`  copying file "${basename(sf)}" to "${relative(BASE_PATH, dirname(df))+sep}"`);
               filecount++;
@@ -234,7 +273,7 @@ async function copyFilesAndDirs(files, filter = null) {
           errorcount++;
         });
       } else {
-        if ( !(filter) || dest.endsWith(filter) ) {
+        if ( !isExcluded(src, exclude) && ( !(filter) || dest.endsWith(filter) ) ) {
           console.log(`  copying file "${basename(src)}" to "${relative(BASE_PATH, dirname(dest))+sep}"`);
           filecount++;
           return copyFile(src, dest).catch((e) => {
@@ -253,7 +292,7 @@ async function copyFilesAndDirs(files, filter = null) {
 
 
 /** Builds CSS and JS files. */
-async function bundleCssAndJs(cssOptions, jsOptions) {
+async function bundleCssAndJs(options_array) {
   stdout.write("Bundling CSS and JS files...");
 
   const builder = (async (options) => {
@@ -263,14 +302,13 @@ async function bundleCssAndJs(cssOptions, jsOptions) {
     return result;
   }); 
 
-  const [cssResult, jsResult] = await Promise.all([
-    builder(cssOptions), builder(jsOptions)
-  ]);
+  const results = await Promise.all(
+    options_array.map(options => builder(options))
+  );
 
-  if ( cssResult.errors.length || jsResult.errors.length ) {
+  if ( results.reduce((sum,r) => sum + r.errors.length), 0) {
     stdout.write(" done with errors.\n");
-    stderr.write(cssResult.errors.toString() + '\n');
-    stderr.write(jsResult.errors.toString() + '\n');
+    results.forEach(r => stderr.write(r.errors.toString() + '\n'));
     return false;
   } else {
     stdout.write(" done without errors.\n");
@@ -336,7 +374,7 @@ function buildPrecacheAssetsList(obj) {
 function computeHexHash(files) {
 
   let successCount = 0;
-  let errorCount = 0;
+  let errors = [];
  
   const computeFileHash = (path) => {
     try {
@@ -345,8 +383,7 @@ function computeHexHash(files) {
       successCount++;
 
     } catch (e) {
-      errorCount++;
-      // stdout.write(`  unable to read ${relative(BASE_PATH, path)} for hashing: ${e}`);
+      errors.push(`  "${relative(BASE_PATH, path)}": ${e}`);
     }
   }
 
@@ -359,7 +396,12 @@ function computeHexHash(files) {
     computeFileHash(assetPath);
   }
 
-  stdout.write(` done: ${successCount} file(s) read, ${errorCount} error(s).\n`);
+  if ( !errors.length ) {
+    stdout.write(` done: ${successCount} file(s) read.\n`);
+  } else {
+    stdout.write(` done: ${successCount} file(s) read, ${errors.length} error(s):\n`);
+    errors.forEach(e => stderr.write(e + '\n'));
+  }
 
   return hash.digest('hex');
 }
@@ -419,27 +461,33 @@ function watchForFileChanges(copy_list) {
 }
 
 
-function watchForHtmlChanges() {
+function watchForHtmlChanges(watched, src, dest) {
   const DEBOUNCE_MS = 200;
   let timeout = null;
+  console.log(`Watching for changes in "${relative(BASE_PATH, watched)}"...`);
 
   fs.watch(
-    HTML_SRC_PATH,
-    { recursive: true },
-    () => {
+    watched,
+    { recursive: isDir(watched) },
+    (type, filename) => {
+      if ( !filename.endsWith(".html") && !filename.endsWith(".htm") ) return;
       clearTimeout(timeout);
       timeout = setTimeout(() => {
         stdout.write("[Change detected] ");
-        buildHtml(false);
+        buildHtml(src, dest, false);
       }, DEBOUNCE_MS);
     }
   );
   
 }
 
-/** @param {boolean} minify */
-async function buildHtml(minify = true) {
-  stdout.write("Building HTML file...");
+/** 
+ * @param {string} src
+ * @param {string} dest
+ * @param {boolean} minify 
+ */
+async function buildHtml(src, dest, minify = true) {
+  stdout.write(`Building HTML file "${relative(BASE_PATH, dest)}"...`);
 
   const htmlnanoOptions = {
     collapseWhitespace: 'conservative',
@@ -455,20 +503,20 @@ async function buildHtml(minify = true) {
   };
 
   const posthtmlIncludeOptions = {
-    root: HTML_SRC_PATH
+    root: dirname(src)
   };
 
-  const html = fs.readFileSync(HTML_SRC_FILEPATH, "utf8");
+  const html = fs.readFileSync(src, "utf8");
   const combined = await posthtml([include(posthtmlIncludeOptions)]).process(html);
   if ( minify ) {
     const pre_minified = combined.html.replace(/\s+/g, ' ').trim();
     const minified = await htmlnano.process(pre_minified, htmlnanoOptions);
-    fs.writeFileSync(HTML_OUT_FILEPATH, minified.html);
+    fs.writeFileSync(dest, minified.html);
   } else {
-    fs.writeFileSync(HTML_OUT_FILEPATH, combined.html);
+    fs.writeFileSync(dest, combined.html);
   }
 
-  stdout.write(` done: "${relative(BASE_PATH, HTML_OUT_FILEPATH)}" built.\n`);
+  stdout.write(` done.\n`);
 }
 
 
@@ -492,4 +540,33 @@ function emptyDir(path, first=true) {
     if ( e.code !== 'ENOENT' )
       throw e;
   }
+}
+
+
+/** @param {string} path @param {string[]} exclude_list */
+function isExcluded(path, exclude_list) {
+  if ( !exclude_list ) return false;
+  for ( const exclude of exclude_list ) {
+    if ( path.includes(exclude) )
+      return true;
+  }
+  return false;
+}
+
+
+/**
+ * @param {string} path 
+ * @returns {string[]}
+ */
+function getIndexHtmlFiles(path) {
+  const result = [];
+  for ( const child of readdirSync(LANDING_PAGE_SRC_PATH) ) {
+    const childPath = join(path, child);
+    if ( isDir(childPath) )
+      result.push(...getIndexHtmlFiles(childPath));
+    else
+      if ( child === "index.html" || child === "index.html" )
+        result.push(childPath);
+  }
+  return result;
 }
