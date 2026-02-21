@@ -5,6 +5,9 @@
     "categories": ["music", "education"],
     "start_url": "/pwa/",
     "scope": "/pwa/",
+    "launch_handler": {
+        "client_mode": ["focus-existing", "auto"]
+    },
     "icons": [
         {
             "src": "/pwa/assets/favicon/favicon.png",
