@@ -6,7 +6,7 @@
     
     "strings": {
         "about-description": "A versatile and easy-to-use on-screen piano keyboard for music education.",
-        "about-license-text": "Licensed under the %0%1.",
+        "about-license-text": "This application is licensed under the %0%1.",
         "about-license-link": "GNU Affero General Public License version 3",
         "about-homepage-text": "Visit the %0 for more info.",
         "about-homepage-link": "home page",

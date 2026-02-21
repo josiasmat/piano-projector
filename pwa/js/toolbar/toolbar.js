@@ -369,7 +369,13 @@ export function initializeToolbar() {
     }
 
     toolbar.buttons.panic.addEventListener("click", triggerPanic);
-    toolbar.title.addEventListener("click", () => document.getElementById("dialog-about").show());
+    
+    toolbar.title.addEventListener("click", () => {
+        document.getElementById("about-homepage-link").setAttribute("href",
+            settings.language === "en" || settings.language == null 
+                ? '/' : `/${settings.language}/`);
+        document.getElementById("dialog-about").show();
+    });
 
     // Attach resize observer
     toolbar.resize.observer = new ResizeObserver(handleToolbarResize);

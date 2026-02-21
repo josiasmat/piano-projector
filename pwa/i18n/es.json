@@ -6,7 +6,7 @@
     
     "strings": {
         "about-description": "Un teclado de piano en la pantalla versátil y fácil de usar para educación musical.",
-        "about-license-text": "Licenciado bajo la %0%1.",
+        "about-license-text": "Esta aplicación está licenciada bajo la %0%1.",
         "about-license-link": "Licencia Pública General GNU Affero versión 3",
         "about-homepage-text": "Visita la %0 para más información.",
         "about-homepage-link": "página principal",
