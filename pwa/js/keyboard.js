@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { KbdNav } from "./lib/libkbdnav.js";
-import { midi_control, MIDI_WATCHDOG_FAST_INTERVAL, MIDI_WATCHDOG_SLOW_INTERVAL, toggleInput } from "./control.js";
+import { midi_control, toggleInput } from "./control.js";
 import { getOpenDropdowns, toggleToolbarVisibility } from "./toolbar/toolbar.js";
 import { triggerPanic } from "./panic.js";
 import { setTransposition } from "./transpose.js";
@@ -102,15 +102,13 @@ export function initializeKbdNavigator() {
     );
 
     kbdnav.onmenuenter = (s) => {
-        midi_control.setWatchdog(( s === i18n.get("kbdnav-control-noampersand", "Control") )
-            ? MIDI_WATCHDOG_FAST_INTERVAL 
-            : MIDI_WATCHDOG_SLOW_INTERVAL);
+        midi_control.setWatchdog(( s === i18n.get("kbdnav-control-noampersand", "Control") ));
         kbdnav.replaceStructure(buildKbdNavStructure());
     };
 
     kbdnav.onoptionenter = () => kbdnav.replaceStructure(buildKbdNavStructure());
-    kbdnav.onshow = () => midi_control.setWatchdog(MIDI_WATCHDOG_FAST_INTERVAL);
-    kbdnav.onhide = () => midi_control.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
+    kbdnav.onshow = () => midi_control.setWatchdog();
+    kbdnav.onhide = () => midi_control.setWatchdog();
 
 }
 
@@ -240,8 +238,8 @@ function buildKbdNavStructure() {
             ]],
             [i18n.get("kbdnav-panic", "Panic!"), triggerPanic],
             [(settings.toolbar 
-                ? i18n.get("kbdnav-hide-toolbar", "Hide toolbar [<u>F9</u>]")
-                : i18n.get("kbdnav-show-toolbar", "Show toolbar [<u>F9</u>]")
+                ? i18n.get("kbdnav-show-toolbar", "Show toolbar [<u>F9</u>]")
+                : i18n.get("kbdnav-hide-toolbar", "Hide toolbar [<u>F9</u>]")
              ), toggleToolbarVisibility, {key: "f9"}]
         ]]
     ];

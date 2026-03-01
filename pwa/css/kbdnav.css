@@ -1,0 +1,72 @@
+/*
+Piano Projector
+Copyright (C) 2025 Josias Matschulat
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#keyboard-navigator {
+    position: fixed;
+    z-index: 999;
+    left: 20px;
+    padding: 10px 25px 12px 15px;
+    height: auto;
+    width: auto;
+    border-radius: 20px;
+    text-indent: 1.8ch hanging;
+    color: var(--sl-color-neutral-600);
+    background-color: var(--sl-panel-background-color);
+    transition: all 0.1s ease-out;
+    box-shadow: 3px 3px 4px #0008;
+    &[position-top] { 
+        top: 75px; 
+        &[hidden] { top: 55px; }
+    }
+    &:not([position-top]) { 
+        bottom: 20px; 
+        &[hidden] { bottom: 0px; }
+    }
+    &[hidden] { 
+        opacity: 0%;
+        display: block; 
+        visibility: hidden;
+    }
+    span {
+        display: inline-block;
+        line-height: 1.1lh;
+        vertical-align: middle;
+        margin: 0;
+        padding: 0;
+        font-family: monospace;
+    }
+    .kbdnav-menu-item { 
+        color: var(--sl-color-neutral-800); 
+        u { text-decoration: underline; }
+        .checkbox {
+            line-height: 0.7lh;
+            margin-right: 0.7ch;
+            font-size: 120%;
+            vertical-align: -10%;
+            min-width: 1.8ch;
+        }
+    }
+    .kbdnav-menu-item.checked {
+        color: lightgreen;
+        .checkbox { filter: drop-shadow(0px 0px 1px #fff7); }
+    }
+    .kbdnav-menu-divider {
+        margin-left: 1ch;
+        margin-right: 1ch;
+    }
+}

@@ -254,7 +254,8 @@ function updatePianoKeyAnnotations(key, is_on, is_pressed) {
     if ( key_elm ) {
 
         // transpose labels unless control mode is mouse/touch
-        const key_transposed = touch.enabled ? key : key-settings.transpose;
+        const key_transposed = touch.enabled || !settings.labels.transposed 
+                               ? key : key-settings.transpose;
         const has_fixed_label = settings.labels.keys.has(key_transposed);
         const label_visible = has_fixed_label || ( settings.labels.played && is_on );
         const label_temporary = settings.labels.played && !has_fixed_label;

@@ -16,11 +16,10 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-export const MIDI_WATCHDOG_FAST_INTERVAL = 500;
-export const MIDI_WATCHDOG_SLOW_INTERVAL = 2000;
-
 import { Midi } from "./lib/libmidi.js";
-import { toolbar, updateControlButton, updateControlMenu, updatePedalIcons, updateToolbar } from "./toolbar/toolbar.js";
+import { 
+    toolbar, updateControlButton, updateControlMenu, updatePedalIcons, updateToolbar 
+} from "./toolbar/toolbar.js";
 import { saveDeviceSetting, settings, writeSessionSettings } from "./settings.js";
 import { KbdNotes } from "./lib/kbdnotes.js";
 import { touch } from "./piano/piano.js";
@@ -44,32 +43,32 @@ export const midi_control = {
     /** "granted", "denied", "prompt", "unavailable" */
     access: "unavailable",
     /** @param {(string)} callback */
-    queryAccess(callback = null) {
+    queryMidiAccess(callback = null) {
         Midi.queryMidiAccess(result => { 
             if ( result === "prompt" ) {
-                if ( this.readAccessFirefox() === "granted" )
+                if ( this.readMidiAccessFirefox() === "granted" )
                     this.access = "granted";
                 else
                     this.access = result;
                 callback?.(this.access);
             } else {
                 this.access = result; 
-                this.saveAccessFirefox(result);
+                this.saveMidiAccessFirefox(result);
                 callback?.(this.access);
             }
         });
     },
     /** @param {(boolean)} callback */
-    requestAccess(callback = null) {
+    requestMidiAccess(callback = null) {
         Midi.requestMidiAccess( 
             () => { 
                 this.access = "granted";
-                this.saveAccessFirefox("granted");
+                this.saveMidiAccessFirefox("granted");
                 callback?.(true);
             },
             () => { 
                 this.access = "denied";
-                this.saveAccessFirefox("prompt");
+                this.saveMidiAccessFirefox("prompt");
                 callback?.(false); 
             }
         );
@@ -77,20 +76,20 @@ export const midi_control = {
     // Workaround for Firefox, because it returns "prompt"
     // if permission was granted temporarily
     /** @param {string} access */
-    saveAccessFirefox(access) {
+    saveMidiAccessFirefox(access) {
         if ( is_firefox ) {
             settings.midi_access_firefox = access;
             writeSessionSettings();
         }
     },
     /** @returns {string|null} */
-    readAccessFirefox() {
+    readMidiAccessFirefox() {
         if ( is_firefox && settings.midi_access_firefox !== "" )
             return settings.midi_access_firefox;
         return "prompt";
     },
     /** @param {(MIDIInput[])} callback */
-    requestPorts(callback = null) {
+    requestMidiPorts(callback = null) {
         Midi.requestInputPortList(
             (ports) => {
                 this.ports = ports;
@@ -106,9 +105,32 @@ export const midi_control = {
             menu_item.remove();
     },
     watchdog_id: null,
-    setWatchdog(delay_ms) {
-        if ( this.watchdog_id ) clearInterval(this.watchdog_id);
-        this.watchdog_id = setInterval(checkMidiState, delay_ms);
+    setWatchdog(force = false) {
+        if ( toolbar.dropdowns.control.open || force ) {
+            this.startWatchdogFast();
+        } else {
+            if ( ["pckbd","touch"].includes(settings.device_name) )
+                this.stopWatchdog();
+            else if ( settings.device_name && !midi_control.connected_port )
+                this.startWatchdogMedium();
+            else
+                this.startWatchdogSlow();
+        }
+    },
+    stopWatchdog() {
+        if ( this.watchdog_id ) clearTimeout(this.watchdog_id);
+        this.watchdog_id = null;
+    },
+    startWatchdogFast()   { this.startWatchdog(250);  },
+    startWatchdogMedium() { this.startWatchdog(1000); },
+    startWatchdogSlow()   { this.startWatchdog(2000); },
+    startWatchdog(delay_ms) {
+        if ( this.watchdog_id ) clearTimeout(this.watchdog_id);
+        this.watchdog_id = setTimeout(this.runWatchdog, delay_ms);
+    },
+    runWatchdog() {
+        this.watchdog_id = null;
+        checkMidiState();
     }
 };
 
@@ -148,7 +170,7 @@ export function connectInput(name, save=false) {
             KbdNotes.enable();
             touch.disable();
             settings.device_name = "pckbd";
-            settings.labels.transposed = true;
+            // settings.labels.transposed = true;
             updateToolbar();
             updatePiano();
             if ( save ) saveDeviceSetting();
@@ -157,7 +179,7 @@ export function connectInput(name, save=false) {
             KbdNotes.disable();
             touch.enable();
             settings.device_name = "touch";
-            settings.labels.transposed = false;
+            // settings.labels.transposed = false;
             updateToolbar();
             updatePianoKeys();
             if ( save ) saveDeviceSetting();
@@ -165,12 +187,11 @@ export function connectInput(name, save=false) {
         default:
             KbdNotes.disable();
             touch.disable();
-            settings.device_name = null;
-            settings.labels.transposed = true;
+            settings.device_name = name;
+            // settings.labels.transposed = true;
             updateToolbar();
             updatePianoKeys();
             Midi.connectByPortName(name, () => {
-                settings.device_name = name;
                 updateToolbar();
                 updateKbdNavigator();
                 if ( save ) saveDeviceSetting();
@@ -268,13 +289,13 @@ export async function checkMidiState() {
     // result is stored in a session variable.
     if ( is_firefox ) {
         if ( midi_control.access === "granted" )
-            midi_control.requestAccess(
+            midi_control.requestMidiAccess(
                 result => checkMidiStateInternal(result)
             );
         else
             checkMidiStateInternal(false);
     } else {
-        midi_control.queryAccess(
+        midi_control.queryMidiAccess(
             access => checkMidiStateInternal(access === "granted")
         );
     }
@@ -283,9 +304,15 @@ export async function checkMidiState() {
 
 /** @param {boolean} midi_access_granted */
 function checkMidiStateInternal(midi_access_granted) {
-    const dropdown_control_open = toolbar.dropdowns.control.open;
+    const updateControlUI = () => {
+        updateControlButton();
+        if ( toolbar.dropdowns.control.open ) 
+            updateControlMenu();
+        if ( isKbdNavigatorVisible() ) 
+            updateKbdNavigator();
+    }
     if ( midi_access_granted ) {
-        midi_control.requestPorts( (ports) => {
+        midi_control.requestMidiPorts( (ports) => {
             midi_control.ports = ports;
             if ( settings.device_name 
                  && !["pckbd","touch"].includes(settings.device_name)
@@ -294,23 +321,14 @@ function checkMidiStateInternal(midi_access_granted) {
                     const reconnected_port = 
                         ports.find((p) => p.name === settings.device_name);
                     if ( reconnected_port )
-                        Midi.connect(reconnected_port, () => {
-                            updateToolbar();
-                            if ( dropdown_control_open ) 
-                                updateControlMenu();
-                            if ( isKbdNavigatorVisible() ) 
-                                updateKbdNavigator();
-                        });
+                        Midi.connect(reconnected_port, () => updateControlUI());
                 }
-                updateControlButton();
             }
-            if ( dropdown_control_open ) updateControlMenu();
-            if ( isKbdNavigatorVisible() ) updateKbdNavigator();
+            updateControlUI();
         });
     } else {
         Midi.disconnect();
-        updateControlButton();
-        if ( dropdown_control_open ) updateControlMenu();
-        if ( isKbdNavigatorVisible() ) updateKbdNavigator();
+        updateControlUI();
     }
+    midi_control.setWatchdog();
 }

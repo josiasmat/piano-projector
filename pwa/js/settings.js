@@ -175,7 +175,7 @@ export const settings = {
         /** @type {Set<number>} */
         keys: new Set(),
         tonic: 0,
-        transposed: true,
+        transposed: false,
         _key(key, transposed = this.transposed, inverse = false) {
             return transposed 
                 ? key + (inverse ? settings.transpose : -settings.transpose)

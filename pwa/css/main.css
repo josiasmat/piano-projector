@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 /* Import other css files */
 @import url('piano.css');
 @import url('toolbar.css');
+@import url('kbdnav.css');
 @import url('onboarding.css');
 
 @font-face {
@@ -123,46 +124,4 @@ sl-dialog {
             padding-right: 2px;
         }
     } 
-}
-
-#keyboard-navigator {
-    position: fixed;
-    z-index: 999;
-    left: 20px;
-    padding: 10px 20px 10px 10px;
-    height: auto;
-    width: auto;
-    border-radius: 20px;
-    background-color: var(--sl-panel-background-color);
-    transition: all 0.1s ease-out;
-    box-shadow: 3px 3px 4px #0008;
-    &[position-top] { 
-        top: 75px; 
-        &[hidden] { top: 55px; }
-    }
-    &:not([position-top]) { 
-        bottom: 20px; 
-        &[hidden] { bottom: 0px; }
-    }
-    *, sl-breadcrumb-item::part(label) {
-        font-family: monospace;
-    }
-    &[hidden] { 
-        opacity: 0%;
-        display: block; 
-        visibility: hidden;
-    }
-    span { 
-        color: var(--sl-color-neutral-800);
-        margin-right: 10px;
-        vertical-align: 10%;
-        &:not(:first-child) { margin-left: 10px; }
-        u { text-decoration: underline; }
-        &.checkbox {
-            line-height: 0.7lh;
-            margin-right: -4px;
-            font-size: 120%;
-            vertical-align: -10%;
-        }
-    }
 }

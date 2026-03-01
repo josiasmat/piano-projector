@@ -17,8 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { 
-    midi_control, togglePcKeyboardConnection, toggleTouchConnection, toggleInput,
-    MIDI_WATCHDOG_SLOW_INTERVAL, MIDI_WATCHDOG_FAST_INTERVAL
+    midi_control, togglePcKeyboardConnection, toggleTouchConnection, toggleInput
 } from "../control.js";
 
 import { changeLed, toolbar, updateToolbar } from "./toolbar.js";
@@ -87,20 +86,20 @@ export function updateControlMenu() {
 export function attachToolbarControlEventListeners() {
 
     toolbar.dropdowns.control.addEventListener("sl-show", () => {
-        midi_control.queryAccess((access) => {
+        midi_control.queryMidiAccess((access) => {
             updateControlMenu();
             if ( ["granted", "prompt"].includes(access) )
-                midi_control.requestAccess((result) => {
+                midi_control.requestMidiAccess((result) => {
                     updateControlMenu();
-                    midi_control.setWatchdog(MIDI_WATCHDOG_FAST_INTERVAL);
+                    midi_control.setWatchdog();
                     if ( result )
-                        midi_control.requestPorts(updateControlMenu);
+                        midi_control.requestMidiPorts(updateControlMenu);
                 });
         });
     });
 
     toolbar.dropdowns.control.addEventListener("sl-hide", () => {
-        midi_control.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
+        midi_control.setWatchdog();
         updateToolbar();
     });
 

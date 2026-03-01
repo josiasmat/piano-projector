@@ -18,16 +18,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 export class KbdNav {
 
+    /** @typedef {{html:string, text:string, action:Function, keys:string, checkbox: boolean, checked:boolean}} KbdNavMenuItem */
+
     /** @type {HTMLDivElement} */
     #container;
     /** @type {Array} */
     #structure;
     /** @type {[number]} */
     #current_path = [];
-    /** @type {[{html:string, html:string, action:Function, keys:string, checkbox: boolean, checked:boolean}]} */
+    /** @type {[KbdNavMenuItem]} */
     #current_menu = [];
-    /** @type {[{html:string, html:string, action:Function, keys:string, checkbox: boolean, checked:boolean}]} */
-    #parent_menu = [];
     /** @type {string} */
     #trigger;
 
@@ -117,31 +117,29 @@ export class KbdNav {
     #back() {
         if ( this.#current_path.length > 1 ) {
             this.#current_path.pop();
-            this.onmenuenter?.(this.#parent_menu.text);
+            this.onmenuenter?.(null);
         }
     }
 
     #build() {
         this.#container.innerHTML = '';
-        const breadcrumb_top = document.createElement("sl-breadcrumb");
-        this.#container.appendChild(breadcrumb_top);
         // Build ancestors part
         let menu = this.#structure;
-        for ( const index of this.#current_path) {
-            const item = document.createElement("sl-breadcrumb-item");
-            item.innerHTML = removeAmpersand(menu[index][0]);
+        for ( const index of this.#current_path ) {
+            const item = document.createElement("span");
+            item.classList.add("kbdnav-parent");
+            item.innerHTML = removeAmpersand(menu[index][0]) + ' \u25b6&nbsp;';
             menu = menu[index][1];
-            breadcrumb_top.appendChild(item);
+            this.#container.appendChild(item);
         }
         // Prepare menu
         this.#current_menu = [];
         for ( const [index,item] of menu.entries() ) {
-            this.#parent_menu = this.#current_menu;
             const text = ( item[1] === null || item[2]?.noindex ) 
                 ? item[0] 
                 : `&${index+1}: ${item[0]}`;
             this.#current_menu.push({
-                html: replaceAmpersand(text),
+                html: replaceAmpersand(text).replaceAll(" ", "&nbsp;"),
                 text: removeAmpersand(item[0]),
                 action: Array.isArray(item[1]) ? index : item[1],
                 keys: item[2]?.key 
@@ -172,14 +170,33 @@ export class KbdNav {
             });
         }
         // Build menu part
-        const html = this.#current_menu.map(
-                item => item.checkbox
-                    ? `<span check-item${item.checked ? " checked" : ''}><span class="checkbox">${item.checked ? "🗹" : "☐"}</span> ${item.html}</span>`
-                    : `<span>${item.html}</span>`
-            ).join('|');
-        const menu_elm = document.createElement("sl-breadcrumb-item");
-        menu_elm.innerHTML = '&nbsp;' + html;
-        breadcrumb_top.appendChild(menu_elm);
+        this.#current_menu.forEach((item, index) => {
+            if ( index !== 0 ) {
+                const divider = document.createElement("span");
+                divider.classList.add("kbdnav-menu-divider");
+                divider.innerHTML = "|";
+                this.#container.appendChild(divider);
+            }
+            const menu_item = document.createElement("span");
+            menu_item.classList.add("kbdnav-menu-item");
+            if ( item.checkbox ) {
+                menu_item.classList.add("check-item");
+                if ( item.checked ) menu_item.classList.add("checked");
+                const checkbox = document.createElement("span");
+                checkbox.classList.add("checkbox");
+                checkbox.innerText = item.checked ? "🗹" : "☐";
+                menu_item.appendChild(checkbox);
+            }
+            const menu_label = document.createElement("span");
+            menu_label.innerHTML = item.html;
+            menu_item.appendChild(menu_label);
+            this.#container.appendChild(menu_item);
+        });
+        // }).join('&nbsp;| ');
+        // const menu_elm = document.createElement("span");
+        // menu_elm.classList.add("kbdnav-menu");
+        // menu_elm.innerHTML = html;
+        // this.#container.appendChild(menu_elm);
     }
 
     hide() {

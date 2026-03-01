@@ -17,8 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { 
-    midi_control, connectInput, checkMidiState, 
-    MIDI_WATCHDOG_SLOW_INTERVAL 
+    midi_control, connectInput, checkMidiState
 } from "./control.js";
 
 import { 
@@ -153,11 +152,7 @@ async function initializeApp() {
         showUpdatedMsg();
     }
 
-    midi_control.queryAccess(() => {
-        checkMidiState();
-        midi_control.setWatchdog(MIDI_WATCHDOG_SLOW_INTERVAL);
-    });
-
+    
 }
 
 
@@ -236,11 +231,17 @@ function connectInputStartup() {
         if ( ["pckbd","touch"].includes(settings.device_name) )
             connectInput(settings.device_name);
         else
-            midi_control.queryAccess((access) => {
-                if ( access == "granted" )
+            midi_control.queryMidiAccess((access) => {
+                if ( access === "granted" )
                     connectInput(settings.device_name);
             });
     }
+
+    midi_control.queryMidiAccess(() => {
+        checkMidiState();
+        midi_control.setWatchdog();
+    });
+
 }
 
 
