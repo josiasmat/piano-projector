@@ -283,12 +283,6 @@ export function getOpenDropdowns() {
 }
 
 
-export function blinkMidiPanicButton() {
-    toolbar.buttons.panic.setAttribute("variant", "danger");
-    setTimeout(() => { toolbar.buttons.panic.removeAttribute("variant"); }, 1000);
-}
-
-
 export function handleToolbarResize() {
     if ( toolbar.resize.timeout ) clearTimeout(toolbar.resize.timeout);
     toolbar.resize_timeout = setTimeout(() => {

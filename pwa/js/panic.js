@@ -20,7 +20,7 @@ import KbdNotes from "./lib/kbdnotes";
 import Midi from "./lib/libmidi";
 import { createPianoKeyboard, touch } from "./piano/piano";
 import { sound } from "./sound";
-import { blinkMidiPanicButton, updatePedalIcons } from "./toolbar/toolbar";
+import { toolbar, updatePedalIcons } from "./toolbar/toolbar";
 
 
 export function triggerPanic() {
@@ -31,4 +31,16 @@ export function triggerPanic() {
     createPianoKeyboard();
     updatePedalIcons();
     blinkMidiPanicButton();    
+}
+
+
+var panic_btn_light_timeout = null;
+
+function blinkMidiPanicButton() {
+    toolbar.buttons.panic.setAttribute("variant", "danger");
+    if ( panic_btn_light_timeout ) clearTimeout(panic_btn_light_timeout);
+    panic_btn_light_timeout = setTimeout(() => { 
+        panic_btn_light_timeout = null;
+        toolbar.buttons.panic.removeAttribute("variant"); 
+    }, 500);
 }
