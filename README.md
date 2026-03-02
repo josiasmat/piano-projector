@@ -8,40 +8,47 @@ A tool to display a music keyboard on screen and control it through a MIDI contr
 
 Visit: https://pianoprojector.app
 
-## Usage instructions
+Usage instructions are available in the app's landing page, and in the onboarding tour.
 
-The user interface is mostly self-explanatory. The browser will ask for MIDI access permission before you can use any MIDI device.
-
-You can change the keyboard position by dragging it with the mouse. When touch/mouse input is selected, it is yet possible to move the keyboard using the right or middle mouse buttons. Rotate the mouse wheel over the keyboard to zoom in and out.
-
-Pressing the **ALT** key will open a keyboard navigation menu; press the underlined characters to navigate, while holding **ALT**.
-
-**F2** toggles Labeling mode, and **F3** toggles Marker mode (with the last used marker color). Clicking on a key while holding **CTRL** in one of these modes marks all octaves. **F4** toggles tonic selection mode when "Solfège" is selected as label format.
-
-**ESC** triggers the MIDI Panic button. This is useful mainly for resetting stuck keys.
-
-**F9** toggles the toolbar visibility.
-
-## URL query parameters
+### URL query parameters
 
 The app (`/pwa`) accepts the following URL query parameters:
 
 - `lang` - sets the app's language (example: `/pwa?lang=en`).
 - `mode` - sets graphics quality: `lq` (low), `mq` (medium) or `hq` (high).
 
-## Known issues
+### Known issues
 
 - MIDI doesn't work in Safari browser, as the browser does not support the Web Midi API.
 - MIDI doesn't work on iOS-based devices (iPhone/iPad), because any browser distributed through Apple's App Store have to use Safari's engine. Sound doesn't work either (apparently a bug in the smplr library).
 - On Ubuntu (and perhaps other Linux distributions), browsers installed via Snap packages (e.g. the default installation of Mozilla Firefox) may come with MIDI access disabled by default. To resolve this, you need to go into your system settings and enable browser's permission to access media input devices. Or, install a browser using a native package (.deb/.rpm).
 
-## More info
+## Build and development
 
-Feel free to contact me: josiasmatschulat@outlook.com
+[Node.js](https://nodejs.org/) is required to build this app.
+
+To build the app, clone the repository or download the source code, then run:
+```
+npm install
+npm run build
+```
+
+To run a development server, run:
+```
+npm run dev
+```
+
+The development server will watch for file changes and rebuild automatically.
+
+## Copyright and license
 
 Copyright 2025-2026 Josias Matschulat
 
 This software is licensed under the terms of the [GNU Affero General Public License v3](https://www.gnu.org/licenses/agpl-3.0.html).
+
+### Contact info
+
+Feel free to contact me: josias.matschulat@unila.edu.br
 
 ### 3rd-party libraries used:
 
