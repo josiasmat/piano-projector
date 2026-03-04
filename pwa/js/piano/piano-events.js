@@ -313,7 +313,7 @@ function handlePianoTouchMove(e) {
 /** @param {number} new_tonic @param {boolean} shift_labels */
 function setNoteAsTonic(new_tonic, shift_labels) {
     const previous_tonic = settings.labels.tonic;
-    settings.labels.tonic = (new_tonic-settings.transpose)%12;
+    settings.labels.tonic = new_tonic % 12;
     saveAnnotationSettings();
 
     if ( settings.labels.keys.size === 0 ) {

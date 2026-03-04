@@ -198,6 +198,6 @@ export function getFrequencyLabel(key) {
 
 
 export function getMovableDoLabel(key) {
-    const moved_pc = mod(key - settings.labels.tonic - settings.transpose, 12, false);
-    return `${LABEL_STRINGS.movdo[moved_pc]}`;
+    const pc = mod(key - settings.labels.tonic, 12, false);
+    return `${LABEL_STRINGS.movdo[pc]}`;
 }
