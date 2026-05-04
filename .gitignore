@@ -2,3 +2,4 @@ private/
 node_modules/
 pub/
 *.bk
+dead-code-history.json
