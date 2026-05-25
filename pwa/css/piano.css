@@ -189,6 +189,15 @@ svg#piano {
         .key-right-round-bevel {
             fill: color-mix(in srgb, var(--color-black-key-right-bevel), var(--color-black-key-bottom-bevel) 60%);
         }
+        .top-border-line {
+            &.nogradient {
+                fill: white;
+                fill-opacity: 25%;
+            }
+            &:not(.nogradient) {
+                fill: url(#black-key-top-border-line-gradient);
+            }
+        }
     }
     
     /* Key labels */

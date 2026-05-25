@@ -588,6 +588,21 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         ], { class: join("key-right-round-bevel", "black-key-bevel") });
         key_group.appendChild(bevel_round_right);
 
+        const top_border_line = makeDualPath([
+            'M', body.left_bottom+side_bevel.left_bottom+round, height-black_key_bevel.bottom_height,
+            'H', body.right_bottom-side_bevel.right_bottom-round,
+            'V', height-black_key_bevel.bottom_height-1,
+            'H', body.left_bottom+side_bevel.left_bottom+round,
+            'Z'
+        ], [
+            'M', body.left_bottom1+side_bevel.left_bottom1+round, height-black_key_bevel.bottom_height1,
+            'H', body.right_bottom1-side_bevel.right_bottom1-round,
+            'V', height-black_key_bevel.bottom_height1-1,
+            'H', body.left_bottom1+side_bevel.left_bottom1+round,
+            'Z'
+        ], { class: join("top-border-line", nograd) });
+        key_group.appendChild(top_border_line);
+
         const label = createBlackKeyLabel(key, offset);
 
         const marker_x = offset+b_marker_gap_x+lateral_displacement;
@@ -703,6 +718,14 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
             { offset: "0%", "stop-color": "var(--color-highlight)", "stop-opacity": "60%" },
             { offset: "50%", "stop-color": "var(--color-highlight)" }
         ], true));
+        svg_defs.appendChild(makeGradient("black-key-top-border-line-gradient", [
+            { offset: "0%", "stop-color": "#fff", "stop-opacity": "0%" },
+            { offset: "15%", "stop-color": "#fff", "stop-opacity": "25%" },
+            { offset: "40%", "stop-color": "#fff", "stop-opacity": "50%" },
+            { offset: "60%", "stop-color": "#fff", "stop-opacity": "50%" },
+            { offset: "85%", "stop-color": "#fff", "stop-opacity": "25%" },
+            { offset: "100%", "stop-color": "#fff", "stop-opacity": "0%" }
+        ], false));
     }
     svg_defs.appendChild(makeGradient("top-felt-gradient", [
         { offset: "50%", "stop-color": "var(--color-felt-top)" },
@@ -741,7 +764,6 @@ export function drawPianoKeyboardLP(svg, keys, options = {}) {
     const white_key_width = height * 2.2 / 15.5;
     const black_key_width = height * 1.4 / 15.5;
     const white_key_width_half = white_key_width / 2;
-    const white_key_width_third = white_key_width / 3;
     const black_key_width_half = black_key_width / 2;
 
     const white_key_rounding = white_key_width / 17;
