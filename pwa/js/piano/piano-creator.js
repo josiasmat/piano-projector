@@ -26,7 +26,7 @@ const BK_OFFSET = 0.13;
 const WHITE_KEY_PRESSED_FACTOR = 1.01;
 const EXTRA_BOTTOM_SPACE = 5;
 
-const BLACK_KEY_SIDE_BEVEL = 3.0;
+const BLACK_KEY_SIDE_BEVEL = 3.5;
 
 const BK_OFFSETS = [,-BK_OFFSET,,+BK_OFFSET,,,-1.4*BK_OFFSET,,0,,+1.4*BK_OFFSET,];
 
@@ -90,7 +90,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
     const black_key_bevel = {
         bottom_height: black_key_width/1.8*(Math.max(height_factor-0.5,0)/2+0.75),
         bottom_height1: 0,
-        side_width_bottom: BLACK_KEY_SIDE_BEVEL*2,
+        side_width_bottom: BLACK_KEY_SIDE_BEVEL*1.5,
         side_width_top: BLACK_KEY_SIDE_BEVEL,
         side_width_min: 0,
         side_width_max: 0
@@ -588,20 +588,22 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         ], { class: join("key-right-round-bevel", "black-key-bevel") });
         key_group.appendChild(bevel_round_right);
 
-        const top_border_line = makeDualPath([
-            'M', body.left_bottom+side_bevel.left_bottom+round, height-black_key_bevel.bottom_height,
-            'H', body.right_bottom-side_bevel.right_bottom-round,
-            'V', height-black_key_bevel.bottom_height-1,
-            'H', body.left_bottom+side_bevel.left_bottom+round,
-            'Z'
-        ], [
-            'M', body.left_bottom1+side_bevel.left_bottom1+round, height-black_key_bevel.bottom_height1,
-            'H', body.right_bottom1-side_bevel.right_bottom1-round,
-            'V', height-black_key_bevel.bottom_height1-1,
-            'H', body.left_bottom1+side_bevel.left_bottom1+round,
-            'Z'
-        ], { class: join("top-border-line", nograd) });
-        key_group.appendChild(top_border_line);
+        if ( !nograd ) {
+            const top_border_line = makeDualPath([
+                'M', body.left_bottom+side_bevel.left_bottom+round, height-black_key_bevel.bottom_height,
+                'H', body.right_bottom-side_bevel.right_bottom-round,
+                'V', height-black_key_bevel.bottom_height-1,
+                'H', body.left_bottom+side_bevel.left_bottom+round,
+                'Z'
+            ], [
+                'M', body.left_bottom1+side_bevel.left_bottom1+round, height-black_key_bevel.bottom_height1,
+                'H', body.right_bottom1-side_bevel.right_bottom1-round,
+                'V', height-black_key_bevel.bottom_height1-1,
+                'H', body.left_bottom1+side_bevel.left_bottom1+round,
+                'Z'
+            ], { class: join("top-border-line", nograd) });
+            key_group.appendChild(top_border_line);
+        }
 
         const label = createBlackKeyLabel(key, offset);
 
@@ -720,10 +722,10 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         ], true));
         svg_defs.appendChild(makeGradient("black-key-top-border-line-gradient", [
             { offset: "0%", "stop-color": "#fff", "stop-opacity": "0%" },
-            { offset: "15%", "stop-color": "#fff", "stop-opacity": "25%" },
-            { offset: "40%", "stop-color": "#fff", "stop-opacity": "50%" },
-            { offset: "60%", "stop-color": "#fff", "stop-opacity": "50%" },
-            { offset: "85%", "stop-color": "#fff", "stop-opacity": "25%" },
+            { offset: "15%", "stop-color": "#fff", "stop-opacity": "30%" },
+            { offset: "40%", "stop-color": "#fff", "stop-opacity": "60%" },
+            { offset: "60%", "stop-color": "#fff", "stop-opacity": "60%" },
+            { offset: "85%", "stop-color": "#fff", "stop-opacity": "30%" },
             { offset: "100%", "stop-color": "#fff", "stop-opacity": "0%" }
         ], false));
     }
