@@ -54,8 +54,6 @@ svg#piano {
     position: absolute;
     transform-origin: top left;
     
-    &.lowperf, *.lowperf { shape-rendering: optimizeSpeed; }
-
     &:not(.grabbing, touch-input) {
         cursor: grab;
     }
