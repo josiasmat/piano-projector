@@ -160,25 +160,25 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         // f--------e
 
         const normal = {
-            ax: left_offset, ay: white_key_top,
-            bx: right_offset, by: white_key_top,
-            cx: right_offset, cy: cut_point,
-            dx: right, dy: cut_point,
-            ex: right, ey: height,
-            fx: left, fy: height,
-            gx: left, gy: cut_point,
-            hx: left_offset, hy: cut_point
+            a: xy(left_offset, white_key_top),
+            b: xy(right_offset, white_key_top),
+            c: xy(right_offset, cut_point),
+            d: xy(right, cut_point),
+            e: xy(right, height),
+            f: xy(left, height),
+            g: xy(left, cut_point),
+            h: xy(left_offset, cut_point)
         };
 
         const pressed = {
-            ax: normal.ax, ay: normal.ay,
-            bx: normal.bx, by: normal.by,
-            cx: right_offset1, cy: cut_point1,
-            dx: right - press_h_shrink_cut_point, dy: cut_point1,
-            ex: right - press_h_shrink, ey: height1,
-            fx: left + press_h_shrink, fy: height1,
-            gx: left + press_h_shrink_cut_point, gy: cut_point1,
-            hx: left_offset1, hy: cut_point1,
+            a: normal.a,
+            b: normal.b,
+            c: xy(right_offset1, cut_point1),
+            d: xy(right - press_h_shrink_cut_point, cut_point1),
+            e: xy(right - press_h_shrink, height1),
+            f: xy(left + press_h_shrink, height1),
+            g: xy(left + press_h_shrink_cut_point, cut_point1),
+            h: xy(left_offset1, cut_point1)
         };
 
         const round_quarter = round/4;
@@ -190,17 +190,17 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         });
 
         const key_touch_area = SvgTools.makePath([
-                'M', normal.ax, normal.ay,
-                'H', normal.bx,
+                'M', normal.a.x, normal.a.y,
+                'H', normal.b.x,
                 black_after ? [
-                    'V', normal.cy,
-                    'H', normal.dx
+                    'V', normal.c.y,
+                    'H', normal.d.x
                 ] : null,
-                'V', normal.ey,
-                'H', normal.fx,
+                'V', normal.e.y,
+                'H', normal.f.x,
                 black_before ? [
-                    'V', normal.gy,
-                    'H', normal.hx
+                    'V', normal.g.y,
+                    'H', normal.h.x
                 ] : null,
                 'Z'
             ],
@@ -208,39 +208,39 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         );
 
         const key_fill = makeDualPath([
-                'M', normal.ax, normal.ay,
-                'H', normal.bx,
+                'M', normal.a.x, normal.a.y,
+                'H', normal.b.x,
                 black_after ? [
-                    'L', normal.cx, normal.cy,
-                    'H', normal.dx
+                    'L', normal.c.x, normal.c.y,
+                    'H', normal.d.x
                 ] : null,
-                'L', normal.ex, normal.ey-round,
-                'Q', normal.ex-round_quarter, normal.ey-round_quarter, 
-                    normal.ex-round, normal.ey,
-                'H', normal.fx+round,
-                'Q', normal.fx+round_quarter, normal.fy-round_quarter, 
-                    normal.fx, normal.fy-round,
+                'L', normal.e.x, normal.e.y-round,
+                'Q', normal.e.x-round_quarter, normal.e.y-round_quarter, 
+                    normal.e.x-round, normal.e.y,
+                'H', normal.f.x+round,
+                'Q', normal.f.x+round_quarter, normal.f.y-round_quarter, 
+                    normal.f.x, normal.f.y-round,
                 black_before ? [
-                    'L', normal.gx, normal.gy,
-                    'H', normal.hx
+                    'L', normal.g.x, normal.g.y,
+                    'H', normal.h.x
                 ] : null,
                 'Z'
             ], [
-                'M', pressed.ax, pressed.ay,
-                'H', pressed.bx,
+                'M', pressed.a.x, pressed.a.y,
+                'H', pressed.b.x,
                 black_after ? [
-                    'L', pressed.cx, pressed.cy,
-                    'H', pressed.dx
+                    'L', pressed.c.x, pressed.c.y,
+                    'H', pressed.d.x
                 ] : null,
-                'L', pressed.ex, pressed.ey-round,
-                'Q', pressed.ex-round_quarter, pressed.ey-round_quarter, 
-                     pressed.ex-round, pressed.ey,
-                'H', pressed.fx+round,
-                'Q', pressed.fx+round_quarter, pressed.fy-round_quarter, 
-                     pressed.fx, pressed.fy-round,
+                'L', pressed.e.x, pressed.e.y-round,
+                'Q', pressed.e.x-round_quarter, pressed.e.y-round_quarter, 
+                     pressed.e.x-round, pressed.e.y,
+                'H', pressed.f.x+round,
+                'Q', pressed.f.x+round_quarter, pressed.f.y-round_quarter, 
+                     pressed.f.x, pressed.f.y-round,
                 black_before ? [
-                    'L', pressed.gx, pressed.gy,
-                    'H', pressed.hx
+                    'L', pressed.g.x, pressed.g.y,
+                    'H', pressed.h.x
                 ] : null,
                 'Z'
             ],
@@ -249,39 +249,39 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
 
         const inset = white_key_highlight_inset;
         const key_highlight = makeDualPath([
-                'M', normal.ax+inset, normal.ay-stroke_width_half,
-                'H', normal.bx-inset, 
+                'M', normal.a.x+inset, normal.a.y-stroke_width_half,
+                'H', normal.b.x-inset, 
                 black_after ? [
-                    'L', normal.cx-inset, normal.cy+inset,
-                    'H', normal.dx-inset
+                    'L', normal.c.x-inset, normal.c.y+inset,
+                    'H', normal.d.x-inset
                 ] : null,
-                'L', normal.ex-inset, normal.ey-inset-round+stroke_width_half,
-                'Q', normal.ex-round_quarter-inset+stroke_width_half, normal.ey-round_quarter-inset,
-                     normal.ex-round-inset+stroke_width_half, normal.ey-inset,
-                'H', normal.fx+inset+round-stroke_width_half,
-                'Q', normal.fx+round_quarter+inset, normal.fy-inset-round_quarter+stroke_width_half,
-                     normal.fx+inset, normal.fy-inset-round+stroke_width_half,
+                'L', normal.e.x-inset, normal.e.y-inset-round+stroke_width_half,
+                'Q', normal.e.x-round_quarter-inset+stroke_width_half, normal.e.y-round_quarter-inset,
+                     normal.e.x-round-inset+stroke_width_half, normal.e.y-inset,
+                'H', normal.f.x+inset+round-stroke_width_half,
+                'Q', normal.f.x+round_quarter+inset, normal.f.y-inset-round_quarter+stroke_width_half,
+                     normal.f.x+inset, normal.f.y-inset-round+stroke_width_half,
                 black_before ? [
-                    'L', normal.gx+inset, normal.gy+inset,
-                    'H', normal.hx+inset
+                    'L', normal.g.x+inset, normal.g.y+inset,
+                    'H', normal.h.x+inset
                 ] : null,
                 'Z'
             ], [
-                'M', pressed.ax+inset, pressed.ay-stroke_width_half,
-                'H', pressed.bx-inset, 
+                'M', pressed.a.x+inset, pressed.a.y-stroke_width_half,
+                'H', pressed.b.x-inset, 
                 black_after ? [
-                    'L', pressed.cx-inset, pressed.cy+inset,
-                    'H', pressed.dx-inset
+                    'L', pressed.c.x-inset, pressed.c.y+inset,
+                    'H', pressed.d.x-inset
                 ] : null,
-                'L', pressed.ex-inset, pressed.ey-inset-round+stroke_width_half,
-                'Q', pressed.ex-round_quarter-inset+stroke_width_half, pressed.ey-round_quarter-inset,
-                     pressed.ex-round-inset+stroke_width_half, pressed.ey-inset,
-                'H', pressed.fx+inset+round-stroke_width_half,
-                'Q', pressed.fx+round_quarter+inset, pressed.fy-inset-round_quarter+stroke_width_half,
-                     pressed.fx+inset, pressed.fy-inset-round+stroke_width_half,
+                'L', pressed.e.x-inset, pressed.e.y-inset-round+stroke_width_half,
+                'Q', pressed.e.x-round_quarter-inset+stroke_width_half, pressed.e.y-round_quarter-inset,
+                     pressed.e.x-round-inset+stroke_width_half, pressed.e.y-inset,
+                'H', pressed.f.x+inset+round-stroke_width_half,
+                'Q', pressed.f.x+round_quarter+inset, pressed.f.y-inset-round_quarter+stroke_width_half,
+                     pressed.f.x+inset, pressed.f.y-inset-round+stroke_width_half,
                 black_before ? [
-                    'L', pressed.gx+inset, pressed.gy+inset,
-                    'H', pressed.hx+inset
+                    'L', pressed.g.x+inset, pressed.g.y+inset,
+                    'H', pressed.h.x+inset
                 ] : null,
                 'Z'
             ],
@@ -289,55 +289,55 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         );
 
         const light_border = makeDualPath([
-                'M', normal.ax, normal.ay+stroke_width_half,
+                'M', normal.a.x, normal.a.y+stroke_width_half,
                 black_before ? [
-                    'L', normal.hx, normal.hy,
-                    'H', normal.gx
+                    'L', normal.h.x, normal.h.y,
+                    'H', normal.g.x
                 ] : null,
-                'L', normal.fx, normal.fy-round-stroke_width_half,
+                'L', normal.f.x, normal.f.y-round-stroke_width_half,
                 black_after ? [
-                    'M', normal.cx, normal.cy,
-                    'H', normal.dx
+                    'M', normal.c.x, normal.c.y,
+                    'H', normal.d.x
                 ] : null
             ], [
-                'M', pressed.ax, pressed.ay+stroke_width_half,
+                'M', pressed.a.x, pressed.a.y+stroke_width_half,
                 black_before ? [
-                    'L', pressed.hx, pressed.hy,
-                    'H', pressed.gx
+                    'L', pressed.h.x, pressed.h.y,
+                    'H', pressed.g.x
                 ] : null,
-                'L', pressed.fx, pressed.fy-round-stroke_width_half,
+                'L', pressed.f.x, pressed.f.y-round-stroke_width_half,
                 black_after ? [
-                    'M', pressed.cx, pressed.cy,
-                    'H', pressed.dx
+                    'M', pressed.c.x, pressed.c.y,
+                    'H', pressed.d.x
                 ] : null
             ],
             { class: join("key-light-border", "white-key-border") }
         );
 
         const dark_border = makeDualPath([
-                'M', normal.fx, normal.fy-round,
-                'Q', normal.fx+round_quarter, normal.fy-round_quarter, 
-                     normal.fx+round, normal.fy,
-                'H', normal.ex-round,
-                'Q', normal.ex-round_quarter, normal.ey-round_quarter, 
-                     normal.ex, normal.ey-round,
+                'M', normal.f.x, normal.f.y-round,
+                'Q', normal.f.x+round_quarter, normal.f.y-round_quarter, 
+                     normal.f.x+round, normal.f.y,
+                'H', normal.e.x-round,
+                'Q', normal.e.x-round_quarter, normal.e.y-round_quarter, 
+                     normal.e.x, normal.e.y-round,
                 black_after ? [
-                    'L', normal.dx, normal.dy,
-                    'M', normal.cx, normal.cy,
+                    'L', normal.d.x, normal.d.y,
+                    'M', normal.c.x, normal.c.y,
                 ] : null,
-                'L', normal.bx, normal.by+stroke_width_half
+                'L', normal.b.x, normal.b.y+stroke_width_half
             ], [
-                'M', pressed.fx, pressed.fy-round,
-                'Q', pressed.fx+round_quarter, pressed.fy-round_quarter, 
-                     pressed.fx+round, pressed.fy,
-                'H', pressed.ex-round,
-                'Q', pressed.ex-round_quarter, pressed.ey-round_quarter, 
-                     pressed.ex, pressed.ey-round,
+                'M', pressed.f.x, pressed.f.y-round,
+                'Q', pressed.f.x+round_quarter, pressed.f.y-round_quarter, 
+                     pressed.f.x+round, pressed.f.y,
+                'H', pressed.e.x-round,
+                'Q', pressed.e.x-round_quarter, pressed.e.y-round_quarter, 
+                     pressed.e.x, pressed.e.y-round,
                 black_after ? [
-                    'L', pressed.dx, pressed.dy,
-                    'M', pressed.cx, pressed.cy,
+                    'L', pressed.d.x, pressed.d.y,
+                    'M', pressed.c.x, pressed.c.y,
                 ] : null,
-                'L', pressed.bx, pressed.by+stroke_width_half
+                'L', pressed.b.x, pressed.b.y+stroke_width_half
             ],
         { class: join("key-dark-border", "white-key-border") }
         );
@@ -384,7 +384,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         const lateral_displacement1_bottom = lateral_displacement/2;
         const lateral_displacement1_top = lateral_displacement/1.2;
 
-        const side_bevel = options.perspective ? {
+        const bevel = options.perspective ? {
             left_top: Math.max(0, black_key_bevel.side_width_top + lateral_displacement),
             left_bottom: Math.max(0, black_key_bevel.side_width_bottom + lateral_displacement),
             right_top: Math.max(0, black_key_bevel.side_width_top - lateral_displacement),
@@ -404,7 +404,7 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
             right_bottom1: black_key_bevel.side_width_bottom
         };
 
-        const body = options.perspective ? {
+        const base = options.perspective ? {
             left_top: Math.min(left, left + black_key_bevel.side_width_top + lateral_displacement),
             left_bottom: Math.min(left, left + black_key_bevel.side_width_bottom + lateral_displacement),
             right_top: Math.max(right, right - black_key_bevel.side_width_top + lateral_displacement),
@@ -432,38 +432,38 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
 
         const key_touch_area = SvgTools.makePath(
             [
-                'M', body.left_top1, black_key_base_top,
-                'L', body.left_top1+side_bevel.left_top1, black_key_top1,
-                'H', body.right_top1-side_bevel.right_top1,
-                'L', body.right_top1, black_key_base_top,
-                'L', body.right_bottom1, height-black_key_bevel.bottom_height1-round,
+                'M', base.left_top1, black_key_base_top,
+                'L', base.left_top1+bevel.left_top1, black_key_top1,
+                'H', base.right_top1-bevel.right_top1,
+                'L', base.right_top1, black_key_base_top,
+                'L', base.right_bottom1, height-black_key_bevel.bottom_height1-round,
                 'L', right, height,
                 'H', left,
-                'L', body.left_bottom1, height-black_key_bevel.bottom_height1-round,
+                'L', base.left_bottom1, height-black_key_bevel.bottom_height1-round,
                 'Z'
             ],
             { class: join("key-touch-area", "invisible"), value: key }
         );
 
         const key_fill = makeDualPath([
-                'M', body.left_top, black_key_base_top,
-                'L', body.left_top+side_bevel.left_top, black_key_top,
-                'H', body.right_top-side_bevel.right_top,
-                'L', body.right_top, black_key_base_top,
-                'L', body.right_bottom, height-black_key_bevel.bottom_height-round,
+                'M', base.left_top, black_key_base_top,
+                'L', base.left_top+bevel.left_top, black_key_top,
+                'H', base.right_top-bevel.right_top,
+                'L', base.right_top, black_key_base_top,
+                'L', base.right_bottom, height-black_key_bevel.bottom_height-round,
                 'L', right, height,
                 'H', left,
-                'L', body.left_bottom, height-black_key_bevel.bottom_height-round,
+                'L', base.left_bottom, height-black_key_bevel.bottom_height-round,
                 'Z'
             ], [
-                'M', body.left_top1, black_key_base_top,
-                'L', body.left_top1+side_bevel.left_top1, black_key_top1,
-                'H', body.right_top1-side_bevel.right_top1,
-                'L', body.right_top1, black_key_base_top,
-                'L', body.right_bottom1, height-black_key_bevel.bottom_height1-round,
+                'M', base.left_top1, black_key_base_top,
+                'L', base.left_top1+bevel.left_top1, black_key_top1,
+                'H', base.right_top1-bevel.right_top1,
+                'L', base.right_top1, black_key_base_top,
+                'L', base.right_bottom1, height-black_key_bevel.bottom_height1-round,
                 'L', right, height,
                 'H', left,
-                'L', body.left_bottom1, height-black_key_bevel.bottom_height1-round,
+                'L', base.left_bottom1, height-black_key_bevel.bottom_height1-round,
                 'Z'
             ],
             { class: join("key-fill", nograd) }
@@ -471,36 +471,36 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
 
         const inset = black_key_highlight_inset;
         const key_highlight = makeDualPath([
-                'M', body.left_top+inset, black_key_base_top,
+                'M', base.left_top+inset, black_key_base_top,
                 'L', Math.max(
-                        body.left_top+inset,
-                        body.left_top+side_bevel.left_top
+                        base.left_top+inset,
+                        base.left_top+bevel.left_top
                     ), black_key_top,
                 'H', Math.min(
-                        body.right_top-inset,
-                        body.right_top-side_bevel.right_top
+                        base.right_top-inset,
+                        base.right_top-bevel.right_top
                     ),
-                'L', body.right_top-inset, black_key_base_top,
-                'L', body.right_bottom-inset, height-inset-black_key_bevel.bottom_height-round_half,
+                'L', base.right_top-inset, black_key_base_top,
+                'L', base.right_bottom-inset, height-inset-black_key_bevel.bottom_height-round_half,
                 'L', right-inset, height-inset,
                 'H', left+inset,
-                'L', body.left_bottom+inset, height-inset-black_key_bevel.bottom_height-round_half,
+                'L', base.left_bottom+inset, height-inset-black_key_bevel.bottom_height-round_half,
                 'Z'
             ], [
-                'M', body.left_top1+inset, black_key_base_top,
+                'M', base.left_top1+inset, black_key_base_top,
                 'L', Math.max(
-                        body.left_top1+inset,
-                        body.left_top1+side_bevel.left_top1
+                        base.left_top1+inset,
+                        base.left_top1+bevel.left_top1
                     ), black_key_top1,
                 'H', Math.min(
-                        body.right_top1-inset,
-                        body.right_top1-side_bevel.right_top1
+                        base.right_top1-inset,
+                        base.right_top1-bevel.right_top1
                     ),
-                'L', body.right_top1-inset, black_key_base_top,
-                'L', body.right_bottom1-inset, height-inset-black_key_bevel.bottom_height1-round_half,
+                'L', base.right_top1-inset, black_key_base_top,
+                'L', base.right_bottom1-inset, height-inset-black_key_bevel.bottom_height1-round_half,
                 'L', right-inset, height-inset,
                 'H', left+inset,
-                'L', body.left_bottom1+inset, height-inset-black_key_bevel.bottom_height1-round_half,
+                'L', base.left_bottom1+inset, height-inset-black_key_bevel.bottom_height1-round_half,
                 'Z'
             ],
             { class: join("key-highlight", nograd, notran) }
@@ -509,35 +509,35 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         key_group.appendChild(key_fill);
         key_group.appendChild(key_highlight);
 
-        if ( side_bevel.left_bottom > 0 || side_bevel.left_top > 0 ) {
+        if ( bevel.left_bottom > 0 || bevel.left_top > 0 ) {
             const bevel_left = makeDualPath([
-                'M', body.left_top, black_key_base_top,
-                'L', body.left_bottom, height,
-                'L', body.left_bottom+side_bevel.left_bottom, height-black_key_bevel.bottom_height-round,
-                'L', body.left_top+side_bevel.left_top, black_key_top,
+                'M', base.left_top, black_key_base_top,
+                'L', base.left_bottom, height,
+                'L', base.left_bottom+bevel.left_bottom, height-black_key_bevel.bottom_height-round,
+                'L', base.left_top+bevel.left_top, black_key_top,
                 'Z'
             ], [
-                'M', body.left_top1, black_key_base_top,
-                'L', body.left_bottom1, height,
-                'L', body.left_bottom1+side_bevel.left_bottom1, height-black_key_bevel.bottom_height1-round,
-                'L', body.left_top1+side_bevel.left_top1, black_key_top1,
+                'M', base.left_top1, black_key_base_top,
+                'L', base.left_bottom1, height,
+                'L', base.left_bottom1+bevel.left_bottom1, height-black_key_bevel.bottom_height1-round,
+                'L', base.left_top1+bevel.left_top1, black_key_top1,
                 'Z'
             ], { class: join("key-left-bevel", "black-key-bevel") });
             key_group.appendChild(bevel_left);
         }
 
-        if ( side_bevel.right_bottom > 0 || side_bevel.right_top > 0 ) {
+        if ( bevel.right_bottom > 0 || bevel.right_top > 0 ) {
             const bevel_right = makeDualPath([
-                'M', body.right_top, black_key_base_top,
-                'L', body.right_bottom, height,
-                'L', body.right_bottom-side_bevel.right_bottom, height-black_key_bevel.bottom_height-round,
-                'L', body.right_top-side_bevel.right_top, black_key_top,
+                'M', base.right_top, black_key_base_top,
+                'L', base.right_bottom, height,
+                'L', base.right_bottom-bevel.right_bottom, height-black_key_bevel.bottom_height-round,
+                'L', base.right_top-bevel.right_top, black_key_top,
                 'Z'
             ], [
-                'M', body.right_top1, black_key_base_top,
-                'L', body.right_bottom1, height,
-                'L', body.right_bottom1-side_bevel.right_bottom1, height-black_key_bevel.bottom_height1-round,
-                'L', body.right_top1-side_bevel.right_top1, black_key_top1,
+                'M', base.right_top1, black_key_base_top,
+                'L', base.right_bottom1, height,
+                'L', base.right_bottom1-bevel.right_bottom1, height-black_key_bevel.bottom_height1-round,
+                'L', base.right_top1-bevel.right_top1, black_key_top1,
                 'Z'
             ], { class: join("key-right-bevel", "black-key-bevel") });
             key_group.appendChild(bevel_right);
@@ -546,60 +546,60 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         const bevel_bottom = makeDualPath([
             'M', left, height,
             'H', right,
-            'L', body.right_bottom-side_bevel.right_bottom-round, height-black_key_bevel.bottom_height,
-            'H', body.left_bottom+side_bevel.left_bottom+round,
+            'L', base.right_bottom-bevel.right_bottom-round, height-black_key_bevel.bottom_height,
+            'H', base.left_bottom+bevel.left_bottom+round,
             'Z'
         ], [
             'M', left, height,
             'H', right,
-            'L', body.right_bottom1-side_bevel.right_bottom1-round, height-black_key_bevel.bottom_height1,
-            'H', body.left_bottom1+side_bevel.left_bottom1+round,
+            'L', base.right_bottom1-bevel.right_bottom1-round, height-black_key_bevel.bottom_height1,
+            'H', base.left_bottom1+bevel.left_bottom1+round,
             'Z'
         ], { class: join("key-bottom-bevel", "black-key-bevel") });
         key_group.appendChild(bevel_bottom);
 
         const bevel_round_left = makeDualPath([
             'M', left, height,
-            'L', body.left_bottom+side_bevel.left_bottom, height-black_key_bevel.bottom_height-round,
-            'Q', body.left_bottom+side_bevel.left_bottom+round_quarter, height-black_key_bevel.bottom_height-round_quarter,
-                 body.left_bottom+side_bevel.left_bottom+round, height-black_key_bevel.bottom_height,
+            'L', base.left_bottom+bevel.left_bottom, height-black_key_bevel.bottom_height-round,
+            'Q', base.left_bottom+bevel.left_bottom+round_quarter, height-black_key_bevel.bottom_height-round_quarter,
+                 base.left_bottom+bevel.left_bottom+round, height-black_key_bevel.bottom_height,
             'Z'
         ], [
             'M', left, height,
-            'L', body.left_bottom1+side_bevel.left_bottom1, height-black_key_bevel.bottom_height1-round,
-            'Q', body.left_bottom1+side_bevel.left_bottom1+round_quarter, height-black_key_bevel.bottom_height1-round_quarter,
-                 body.left_bottom1+side_bevel.left_bottom1+round, height-black_key_bevel.bottom_height1,
+            'L', base.left_bottom1+bevel.left_bottom1, height-black_key_bevel.bottom_height1-round,
+            'Q', base.left_bottom1+bevel.left_bottom1+round_quarter, height-black_key_bevel.bottom_height1-round_quarter,
+                 base.left_bottom1+bevel.left_bottom1+round, height-black_key_bevel.bottom_height1,
             'Z'
         ], { class: join("key-left-round-bevel", "black-key-bevel") });
         key_group.appendChild(bevel_round_left);
 
         const bevel_round_right = makeDualPath([
             'M', right, height,
-            'L', body.right_bottom-side_bevel.right_bottom, height-black_key_bevel.bottom_height-round,
-            'Q', body.right_bottom-side_bevel.right_bottom-round_quarter, height-black_key_bevel.bottom_height-round_quarter,
-                 body.right_bottom-side_bevel.right_bottom-round, height-black_key_bevel.bottom_height,
+            'L', base.right_bottom-bevel.right_bottom, height-black_key_bevel.bottom_height-round,
+            'Q', base.right_bottom-bevel.right_bottom-round_quarter, height-black_key_bevel.bottom_height-round_quarter,
+                 base.right_bottom-bevel.right_bottom-round, height-black_key_bevel.bottom_height,
             'Z'
         ], [
             'M', right, height,
-            'L', body.right_bottom1-side_bevel.right_bottom1, height-black_key_bevel.bottom_height1-round,
-            'Q', body.right_bottom1-side_bevel.right_bottom1-round_quarter, height-black_key_bevel.bottom_height1-round_quarter,
-                 body.right_bottom1-side_bevel.right_bottom1-round, height-black_key_bevel.bottom_height1,
+            'L', base.right_bottom1-bevel.right_bottom1, height-black_key_bevel.bottom_height1-round,
+            'Q', base.right_bottom1-bevel.right_bottom1-round_quarter, height-black_key_bevel.bottom_height1-round_quarter,
+                 base.right_bottom1-bevel.right_bottom1-round, height-black_key_bevel.bottom_height1,
             'Z'
         ], { class: join("key-right-round-bevel", "black-key-bevel") });
         key_group.appendChild(bevel_round_right);
 
         if ( !nograd ) {
             const top_border_line = makeDualPath([
-                'M', body.left_bottom+side_bevel.left_bottom+round, height-black_key_bevel.bottom_height,
-                'H', body.right_bottom-side_bevel.right_bottom-round,
+                'M', base.left_bottom+bevel.left_bottom+round, height-black_key_bevel.bottom_height,
+                'H', base.right_bottom-bevel.right_bottom-round,
                 'V', height-black_key_bevel.bottom_height-1,
-                'H', body.left_bottom+side_bevel.left_bottom+round,
+                'H', base.left_bottom+bevel.left_bottom+round,
                 'Z'
             ], [
-                'M', body.left_bottom1+side_bevel.left_bottom1+round, height-black_key_bevel.bottom_height1,
-                'H', body.right_bottom1-side_bevel.right_bottom1-round,
+                'M', base.left_bottom1+bevel.left_bottom1+round, height-black_key_bevel.bottom_height1,
+                'H', base.right_bottom1-bevel.right_bottom1-round,
                 'V', height-black_key_bevel.bottom_height1-1,
-                'H', body.left_bottom1+side_bevel.left_bottom1+round,
+                'H', base.left_bottom1+bevel.left_bottom1+round,
                 'Z'
             ], { class: join("top-border-line", nograd) });
             key_group.appendChild(top_border_line);
@@ -651,23 +651,21 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
     }
 
     let width = 0;
-    let white_left = 0;
 
     for ( let key = first_key; key <= last_key; key++ ) {
         const note = key % 12;
 
         if ( isWhiteKey(note) ) {
             const white_key = drawWhiteKey(key, note,
-                white_left, white_key_width, white_key_height, white_key_rounding
+                width, white_key_width, white_key_height, white_key_rounding
             );
             white_keys_g.appendChild(white_key);
             keys[key] = white_key;
             width += white_key_width;
-            white_left += white_key_width;
         } else {
-            const black_left = white_left - black_key_width_half + (BK_OFFSETS[note]*black_key_width);
+            const black_left = width - black_key_width_half + (BK_OFFSETS[note]*black_key_width);
             const black_key = drawBlackKey(key,
-                black_left, black_key_width, black_key_height, black_key_rounding, white_left
+                black_left, black_key_width, black_key_height, black_key_rounding, width
             );
             black_keys_g.appendChild(black_key);
             keys[key] = black_key;
@@ -1044,4 +1042,14 @@ export function isBlackKey(key) {
  */
 function join(...items) {
     return items.filter(Boolean).join(' ');
+}
+
+
+/**
+ * @param {number} x 
+ * @param {number} y 
+ * @returns {{x: number, y: number}}
+ */
+function xy(x, y) {
+    return { x, y };
 }
