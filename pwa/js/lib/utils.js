@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
 const DIGITS = ['0','1','2','3','4','5','6','7','8','9'];
-const HEX_DIGITS = DIGITS.concat(['A','a','B','b','C','c','D','d','E','e','F','f']);
 
 
 /**
