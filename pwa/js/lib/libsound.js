@@ -31,6 +31,7 @@ import { SoundFont2 } from "soundfont2";
 let audio_ctx = null;
 
 
+/** @abstract */
 class InternalSoundPlayer {
     loaded = false;
     name = "";
