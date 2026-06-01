@@ -17,9 +17,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 "use strict";
 
 
-const DIGITS = ['0','1','2','3','4','5','6','7','8','9'];
-
-
 /**
  * Generates consecutive numbers from _start_, stopping before _stop_.
  * @param {Number} start Number with which to start the generator.
