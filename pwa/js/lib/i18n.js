@@ -23,6 +23,7 @@ export const i18n = {
     data: {},
     lang: null,
     fallback_lang: "en",
+    ampersandTag: "u",
 
     get language() {
         return this.lang ? this.lang : this.fallback_lang;
@@ -66,11 +67,13 @@ export const i18n = {
     translateElement(elm) {
         if ( elm.hasAttribute("i18n") ) {
             const params = Array.from(elm.children).map((elm) => elm.outerHTML);
-            elm.setHTMLUnsafe(this.getp(
-                elm.getAttribute("i18n"), 
-                elm.innerHTML, 
-                params
-            ));
+            const s = ampersandToTag(
+                this.getp(
+                    elm.getAttribute("i18n"), 
+                    elm.innerHTML, 
+                    params
+            ), this.ampersandTag);
+            elm.setHTMLUnsafe(s);
         }
     },
 
@@ -151,4 +154,11 @@ async function fetchJson(filepath) {
             : `Could not fetch file: '${filepath}'`
         );
     return await response.json();
+}
+
+
+function ampersandToTag(s, tag = "u") {
+    return s.replace(/&&|&(.)/g, (_, c) =>
+        c ? ( tag ? `<${tag}>${c}</${tag}>` : c ) : "&"
+    );
 }
