@@ -123,8 +123,8 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         if ( key < first_key || key > last_key )
             keys[key] = null;
 
-    const white_keys_g = SvgTools.createGroup();
-    const black_keys_g = SvgTools.createGroup();
+    const white_keys_g = SvgTools.createGroup({id: "white-keys"});
+    const black_keys_g = SvgTools.createGroup({id: "black-keys"});
 
     function drawWhiteKey(key, note, offset, width, height, round) {
         const left = offset + stroke_width_half + white_key_gap_half;
