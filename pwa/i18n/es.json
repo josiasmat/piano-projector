@@ -19,6 +19,7 @@
         "label-btn-label": "Etiquetar",
         "mark-btn-label": "Marcar",
         "control-menu-midi-requesting": "Solicitando acceso a MIDI…",
+        "control-menu-midi-notfound": "No se encontraron dispositivos MIDI.",
         "control-menu-midi-denied": "Acceso a MIDI bloqueado.",
         "control-menu-midi-browser-unsupported": "Tu navegador no es compatible con la API Web MIDI.%0Para usar MIDI, intenta actualizar tu navegador o cambiar%1a %2%0o a %3.",
         "control-menu-computer-kbd": "Teclado del ordenador",

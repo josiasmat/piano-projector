@@ -40,9 +40,8 @@ export function updateControlMenu() {
     setHiddenAttr(toolbar.menus.control.denied, midi_control.access !== "denied");
     setHiddenAttr(toolbar.menus.control.unavailable, is_mobile || midi_control.access !== "unavailable");
     setHiddenAttr(toolbar.menus.control.prompt, midi_control.access !== "prompt" );
-    setHiddenAttr(toolbar.menus.control.divider, 
-        (midi_control.access === "granted" && !midi_control.ports?.length) 
-        || ( is_mobile && midi_control.access === "unavailable")
+    setHiddenAttr(toolbar.menus.control.notfound,
+        !(midi_control.access == "granted" && midi_control.ports.length == 0)
     );
 
     setCheckedAttr(toolbar.menus.control.kbd, settings.pc_keyboard_connected);

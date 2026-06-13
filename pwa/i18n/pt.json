@@ -19,6 +19,7 @@
         "label-btn-label": "Rotular",
         "mark-btn-label": "Marcar",
         "control-menu-midi-requesting": "Solicitando acesso ao MIDI…",
+        "control-menu-midi-notfound": "Nenhum dispositivo MIDI encontrado.",
         "control-menu-midi-denied": "Acesso ao MIDI bloqueado.",
         "control-menu-midi-browser-unsupported": "Seu navegador não suporta a API Web MIDI.%0Para usar MIDI, tente atualizar seu navegador ou mudar%1para o %2%0ou o %3.",
         "control-menu-computer-kbd": "Teclado do computador",

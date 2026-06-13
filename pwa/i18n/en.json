@@ -19,6 +19,7 @@
         "label-btn-label": "Label",
         "mark-btn-label": "Mark",
         "control-menu-midi-requesting": "Requesting MIDI access…",
+        "control-menu-midi-notfound": "No MIDI devices found.",
         "control-menu-midi-denied": "MIDI access denied.",
         "control-menu-midi-browser-unsupported": "Your browser does not support the Web MIDI API.%0To use MIDI, try updating your browser or switching%1to %2%0or %3.",
         "control-menu-computer-kbd": "Computer keyboard",

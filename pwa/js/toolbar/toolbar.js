@@ -110,6 +110,7 @@ export const toolbar = {
         control: {
             top: _id("midi-connection-menu"),
             divider: _selectorFirst("#midi-connection-menu sl-divider"),
+            notfound: _id("mi-control-midi-notfound"),
             denied: _id("mi-control-midi-denied"),
             unavailable: _id("mi-control-midi-unavailable"),
             prompt: _id("mi-control-midi-prompt"),

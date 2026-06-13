@@ -26,13 +26,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             <sl-icon id="connection-power-icon" class="led-strong" slot="prefix" name="power"></sl-icon>
         </sl-button>
         <sl-menu id="midi-connection-menu">
-            <sl-menu-item id="mi-control-midi-prompt" disabled loading>
+
+            <sl-menu-item id="mi-control-midi-prompt" disabled loading hidden>
                 <span data-nosnippet i18n="control-menu-midi-requesting">Requesting MIDI access…</span>
             </sl-menu-item>
-            <sl-menu-item id="mi-control-midi-denied" disabled>
+            <sl-menu-item id="mi-control-midi-notfound" disabled hidden>
+                <span data-nosnippet i18n="control-menu-midi-notfound">No MIDI devices found.</span>
+            </sl-menu-item>
+            <sl-menu-item id="mi-control-midi-denied" disabled hidden>
                 <span data-nosnippet i18n="control-menu-midi-denied">MIDI access denied.</span>
             </sl-menu-item>
-            <sl-menu-item id="mi-control-midi-unavailable" disabled>
+            <sl-menu-item id="mi-control-midi-unavailable" disabled hidden>
                 <span data-nosnippet i18n="control-menu-midi-browser-unsupported">
                     Your browser does not support the Web MIDI API.<br />
                     To use MIDI, try updating your browser or switching<br />
