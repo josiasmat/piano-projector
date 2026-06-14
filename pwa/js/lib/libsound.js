@@ -21,7 +21,7 @@ import {
     SplendidGrandPiano, 
     ElectricPiano,
     Versilian,
-    Soundfont2Sampler
+    Soundfont2
 } from 'smplr/dist/index.mjs';
 
 import { SoundFont2 } from "soundfont2";
@@ -58,17 +58,17 @@ export class SmplrPlayer extends InternalSoundPlayer {
                    options: { instrument: "CP80", volume: 70 } },
         harpsi:  { loader: Versilian, 
                    options: { instrument: "Chordophones/Zithers/Harpsichord, Unk", volume: 100 } },
-        organ1:  { loader: Soundfont2Sampler, 
+        organ1:  { loader: Soundfont2, 
                    options: { createSoundfont: (data) => new SoundFont2(data), 
                               url: "assets/sf/organ.sf2", patch: "b3slow", volume: 70 } },
-        organ2:  { loader: Soundfont2Sampler, 
+        organ2:  { loader: Soundfont2, 
                    options: { createSoundfont: (data) => new SoundFont2(data), 
                               url: "assets/sf/organ.sf2", patch: "b3fast", volume: 70 } },
-        organ3:  { loader: Soundfont2Sampler, 
+        organ3:  { loader: Soundfont2, 
                    options: { createSoundfont: (data) => new SoundFont2(data), 
                               url: "assets/sf/organ.sf2", patch: "percorg", volume: 60 } },
     };
-    cache = new SmplrCacheStorage("sound_v1");;
+    cache = SmplrCacheStorage("sound_v1");;
 
     play(note, vel=this.default_vel) {
         if ( this.name == "epiano1" ) note += 12;
@@ -86,7 +86,7 @@ export class SmplrPlayer extends InternalSoundPlayer {
     }
 
     unload() {
-        this.stopAll();
+        this.player?.dispose();
         this.player = null;
         this.name = "";
         this.loaded = false;
@@ -107,8 +107,8 @@ export class SmplrPlayer extends InternalSoundPlayer {
             params.storage = this.cache;
             this.loaded = false;
             this.name = name;
-            this.player = new params.loader(audio_ctx, params.options);
-            this.player.load.then(() => {
+            this.player = params.loader(audio_ctx, params.options);
+            this.player.ready.then(() => {
                 if ( Object.hasOwn(params.options, "patch") )
                     this.player.loadInstrument(params.options.patch);
                 this.loaded = true;
