@@ -720,10 +720,10 @@ export function drawPianoKeyboard(svg, keys, options = {}) {
         ], true));
         svg_defs.appendChild(makeGradient("black-key-top-border-line-gradient", [
             { offset: "0%", "stop-color": "#fff", "stop-opacity": "0%" },
-            { offset: "15%", "stop-color": "#fff", "stop-opacity": "30%" },
-            { offset: "40%", "stop-color": "#fff", "stop-opacity": "60%" },
-            { offset: "60%", "stop-color": "#fff", "stop-opacity": "60%" },
-            { offset: "85%", "stop-color": "#fff", "stop-opacity": "30%" },
+            { offset: "10%", "stop-color": "#fff", "stop-opacity": "25%" },
+            { offset: "35%", "stop-color": "#fff", "stop-opacity": "65%" },
+            { offset: "65%", "stop-color": "#fff", "stop-opacity": "65%" },
+            { offset: "90%", "stop-color": "#fff", "stop-opacity": "25%" },
             { offset: "100%", "stop-color": "#fff", "stop-opacity": "0%" }
         ], false));
     }
